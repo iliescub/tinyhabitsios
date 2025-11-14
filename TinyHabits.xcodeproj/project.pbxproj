@@ -338,7 +338,6 @@
 				4C0A56D92B4A0F8E00A1F806 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-+
 			defaultConfigurationName = Release;
 		};
 		4C0A56D92B4A0F8E00A1F802 /* Build configuration list for PBXProject "TinyHabits" */ = {
@@ -355,4 +354,3 @@
 	};
 	rootObject = 4C0A56D92B4A0F8E00A1F701 /* Project object */;
 }
-
