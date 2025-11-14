@@ -3,11 +3,11 @@ import SwiftData
 
 struct MainTabView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \Habit.order, order: .forward, filter: #Predicate<Habit> { !$0.isArchived })
+    @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.order, order: .forward)
     private var habits: [Habit]
 
     @State private var selectedTab: Int = 0
-
+    init() {}
     var body: some View {
         TabView(selection: $selectedTab) {
             TodayView(habits: Array(habits.prefix(3)))

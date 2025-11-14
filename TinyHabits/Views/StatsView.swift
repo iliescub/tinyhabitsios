@@ -4,7 +4,7 @@ import Charts
 
 struct StatsView: View {
     @Environment(\.modelContext) private var context
-    @Query(sort: \Habit.createdAt, order: .forward, filter: #Predicate<Habit> { !$0.isArchived })
+    @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.createdAt, order: .forward)
     private var habits: [Habit]
     @Query private var entries: [HabitEntry]
 
@@ -16,7 +16,7 @@ struct StatsView: View {
             calendar.date(byAdding: .day, value: -offset, to: today)
         }.reversed()
     }
-
+    init() {}
     var body: some View {
         NavigationStack {
             ScrollView {
