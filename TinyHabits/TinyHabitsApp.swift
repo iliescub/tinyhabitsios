@@ -13,8 +13,8 @@ struct TinyHabitsApp: App {
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-//            Habit.self,
-//            HabitEntry.self
+            Habit.self,
+            HabitEntry.self
         ])
 
         do {
@@ -39,11 +39,11 @@ struct RootView: View {
     
     var body: some View {
         Group {
-            if hasCompletedOnboarding {
-                //                MainTabView()
-            } else {
-                //                OnboardingView()
-            }
+//            if hasCompletedOnboarding {
+//                //                MainTabView()
+//            } else {
+                                OnboardingView()
+   //         }
         }
     }
 }
