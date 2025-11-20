@@ -39,11 +39,11 @@ struct RootView: View {
     
     var body: some View {
         Group {
-//            if hasCompletedOnboarding {
-//                //                MainTabView()
-//            } else {
-                                OnboardingView()
-   //         }
+            if hasCompletedOnboarding {
+                MainTabView()
+            } else {
+                OnboardingView()
+            }
         }
     }
 }
