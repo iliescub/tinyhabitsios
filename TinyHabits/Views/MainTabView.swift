@@ -18,9 +18,9 @@ struct MainTabView: View {
     init() {}
     var body: some View {
         TabView(selection: $selectedTab) {
-            TodayView(habits: Array(habits.prefix(3)))
+            FocusView(habits: Array(habits))
                 .tabItem {
-                    Label("Today", systemImage: "checkmark.circle")
+                    Label("Focus", systemImage: "checkmark.circle")
                 }
                 .tag(0)
 

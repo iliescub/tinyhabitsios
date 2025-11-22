@@ -4,151 +4,177 @@ import PhotosUI
 struct ProfileView: View {
     @AppStorage("profile_name") private var name: String = ""
     @AppStorage("profile_age") private var age: Int = 30
-
     @AppStorage("profile_heightCm") private var heightCm: Int = 170
     @AppStorage("profile_weightKg") private var weightKg: Int = 70
-//    @AppStorage("profile_activityLevel") private var activityLevel: Double = 3
-//    @AppStorage("profile_goalRaw") private var goalRaw: String = ActivityGoal.balance.rawValue
-//    @AppStorage("profile_notes") private var notes: String = ""
-    @State private var profileImage: UIImage? //= ProfileImageStore.shared.load()
-    @State private var isShowingPhotoPicker = false
+    @AppStorage("motivation_dailyQuotes") private var showDailyQuotes: Bool = true
+    @AppStorage("motivation_haptics") private var enableHaptics: Bool = true
+    @AppStorage("accentTheme") private var accentRaw: String = AccentTheme.blue.rawValue
+    @AppStorage("profile_imageData") private var storedImageData: Data = Data()
 
-//    private var selectedGoal: ActivityGoal {
-//        ActivityGoal(rawValue: goalRaw) ?? .balance
-//    }
+    @State private var profileImage: UIImage?
+    @State private var selectedPhotoItem: PhotosPickerItem?
+
+    private var accent: Color { AccentTheme(rawValue: accentRaw)?.color ?? .blue }
+    private var accentGradient: [Color] {
+        [
+            accent.adjustingBrightness(by: -0.06),
+            accent.adjustingBrightness(by: 0.12)
+        ]
+    }
 
     var body: some View {
         NavigationStack {
-            Form {
-                accountSection
-                physicalSection
-//                goalSection
-//                notesSection
+            ScrollView {
+                VStack(spacing: 20) {
+                    hero
+                    photoCard
+                    statsCard
+//                    motivationCard
+                }
+                .padding()
             }
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Profile")
-//            .sheet(isPresented: $isShowingPhotoPicker) {
-//                ProfileImagePicker { image in
-//                    if let image {
-//                        profileImage = image
-//                        ProfileImageStore.shared.save(image: image)
-//                    }
-//                }
-//            }
+        }
+        .onAppear(perform: loadImageFromStore)
+        .onChange(of: selectedPhotoItem) { _, newValue in
+            guard let newValue else { return }
+            Task {
+                if let data = try? await newValue.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    let compressed = compress(image: image)
+                    profileImage = compressed
+                    if let compressedData = compressed.jpegData(compressionQuality: 0.8) {
+                        storedImageData = compressedData
+                    }
+                }
+            }
         }
     }
 
-    private var accountSection: some View {
-        Section("Profile") {
-            HStack {
-                VStack {
+    // MARK: - Sections
+
+    private var hero: some View {
+        ZStack(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LinearGradient(colors: accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+                .shadow(color: accent.opacity(0.25), radius: 18, y: 10)
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text(name.isEmpty ? "Let’s personalize your journey" : "Keep going, \(name)")
+                    .font(.title2.bold())
+                    .foregroundStyle(.white)
+                Text("Small steps, daily. Update your stats and stay motivated.")
+                    .foregroundStyle(.white.opacity(0.85))
+                    .font(.subheadline)
+            }
+            .padding(20)
+        }
+        .frame(height: 140)
+    }
+
+    private var photoCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Profile")
+                .font(.headline)
+            HStack(spacing: 16) {
+                ZStack {
                     if let profileImage {
                         Image(uiImage: profileImage)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
                     } else {
-                        Image("ProfilePlaceholder")
+                        Image(systemName: "person.crop.circle.fill")
                             .resizable()
-                            .scaledToFill()
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
+                            .scaledToFit()
+                            .foregroundStyle(accent.opacity(0.6))
+                            .padding(12)
                     }
-                    Button("Change photo") {
-                        isShowingPhotoPicker = true
-                    }
-                    .font(.caption)
                 }
-                .frame(width: 120)
+                .frame(width: 90, height: 90)
+                .background(Color(.secondarySystemBackground), in: Circle())
 
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 10) {
                     TextField("Full name", text: $name)
                         .textContentType(.name)
-                    VStack(alignment: .leading) {
+                        .textFieldStyle(.roundedBorder)
+                    HStack {
                         Text("Age: \(age)")
-                        Slider(
-                            value: Binding(
-                                get: { Double(age) },
-                                set: { age = Int($0.rounded()) }
-                            ),
-                            in: 13...100,
-                            step: 1
-                        )
+                        Slider(value: Binding(get: { Double(age) }, set: { age = Int($0.rounded()) }), in: 13...100, step: 1)
                     }
                 }
             }
+
+            PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                Label("Update photo", systemImage: "photo")
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(accent)
+        }
+        .padding()
+        .background(cardBackground())
+    }
+
+    private var statsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Body stats")
+                .font(.headline)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Height: \(heightCm) cm")
+                    Slider(value: Binding(get: { Double(heightCm) }, set: { heightCm = Int($0.rounded()) }), in: 120...230, step: 1)
+                }
+                HStack {
+                    Text("Weight: \(weightKg) kg")
+                    Slider(value: Binding(get: { Double(weightKg) }, set: { weightKg = Int($0.rounded()) }), in: 40...200, step: 1)
+                }
+            }
+        }
+        .padding()
+        .background(cardBackground())
+    }
+
+    private var motivationCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Motivation")
+                .font(.headline)
+            Toggle("Daily quote on launch", isOn: $showDailyQuotes)
+            Toggle("Celebration haptics", isOn: $enableHaptics)
+            Text("Keep the vibes strong with small nudges and celebratory feedback.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(cardBackground())
+    }
+
+    // MARK: - Helpers
+
+    private func loadImageFromStore() {
+        if !storedImageData.isEmpty, let image = UIImage(data: storedImageData) {
+            profileImage = image
         }
     }
 
-    private var physicalSection: some View {
-        Section("Physical Details") {
-            VStack(alignment: .leading) {
-                Text("Height: \(heightCm) cm")
-                Slider(
-                    value: Binding(
-                        get: { Double(heightCm) },
-                        set: { heightCm = Int($0.rounded()) }
-                    ),
-                    in: 120...230,
-                    step: 1
-                )
-            }
-            VStack(alignment: .leading) {
-                Text("Weight: \(weightKg) kg")
-                Slider(
-                    value: Binding(
-                        get: { Double(weightKg) },
-                        set: { weightKg = Int($0.rounded()) }
-                    ),
-                    in: 40...200,
-                    step: 1
-                )
-            }
+    private func compress(image: UIImage, maxDimension: CGFloat = 400) -> UIImage {
+        let size = image.size
+        let maxSide = max(size.width, size.height)
+        guard maxSide > maxDimension else { return image }
 
-//            VStack(alignment: .leading, spacing: 8) {
-//                Text("Activity level")
-//                Slider(value: $activityLevel, in: 1...5, step: 1)
-//                Text(activityDescription)
-//                    .font(.caption)
-//                    .foregroundStyle(.secondary)
-//            }
+        let scale = maxDimension / maxSide
+        let targetSize = CGSize(width: size.width * scale, height: size.height * scale)
+
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
         }
     }
 
-//    private var goalSection: some View {
-//        Section("Focus") {
-//            Picker("Primary goal", selection: Binding(
-//                get: { selectedGoal },
-//                set: { goalRaw = $0.rawValue }
-//            )) {
-//                ForEach(ActivityGoal.allCases) { goal in
-//                    Text(goal.title).tag(goal)
-//                }
-//            }
-//            Text(selectedGoal.description)
-//                .font(.caption)
-//                .foregroundStyle(.secondary)
-//        }
-//    }
-
-//    private var notesSection: some View {
-//        Section("Notes") {
-//            TextField("Past injuries, dietary preferences…", text: $notes, axis: .vertical)
-//            Text("Saved locally, never uploaded.")
-//                .font(.caption2)
-//                .foregroundStyle(.secondary)
-//        }
-//    }
-//
-//    private var activityDescription: String {
-//        switch Int(activityLevel) {
-//        case 1: return "Mostly sedentary"
-//        case 2: return "Lightly active"
-//        case 3: return "Moderately active"
-//        case 4: return "Very active"
-//        default: return "Athlete mode"
-//        }
-//    }
+    private func cardBackground() -> some View {
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(Color(.systemBackground))
+            .shadow(color: Color.black.opacity(0.06), radius: 10, y: 6)
+    }
 }
 
 //enum ActivityGoal: String, CaseIterable, Identifiable {
@@ -180,4 +206,3 @@ struct ProfileView: View {
 //            return "Dial in restorative rituals—sleep, mobility, and mindfulness."
 //        }
 //    }
-

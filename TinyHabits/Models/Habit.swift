@@ -24,7 +24,7 @@ final class Habit {
     var dailyTarget: Int = 1
 
     @Relationship(deleteRule: .cascade, inverse: \HabitEntry.habit)
-    var entries: [HabitEntry]
+    var entries: [HabitEntry] = []
 
     init(
         id: UUID = UUID(),
@@ -46,7 +46,6 @@ final class Habit {
         self.reminders = reminders.sorted { ($0.hour, $0.minute) < ($1.hour, $1.minute) }
         self.createdAt = createdAt
         self.dailyTarget = max(1, dailyTarget)
-        self.entries = []
     }
 
     var reminderComponents: [DateComponents] {

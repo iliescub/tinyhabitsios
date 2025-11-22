@@ -12,7 +12,7 @@ import UIKit
 
 struct OnboardingView: View {
     @Environment(\.modelContext) private var context
-//    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @AppStorage("profile_name") private var storedName: String = ""
     @AppStorage("profile_age") private var storedAge: Int = 30
     @AppStorage("profile_heightCm") private var storedHeightCm: Int = 170
@@ -28,6 +28,7 @@ struct OnboardingView: View {
     @State private var customHabitTarget: Int = 1
     @Namespace private var habitSelectionNamespace
     @State private var heroAnimate = false
+    @State private var sparklePulse = false
     @State private var showingSaveError = false
     @State private var profileName: String = ""
     @State private var profileAge: Int = 30
@@ -44,7 +45,7 @@ struct OnboardingView: View {
     
     private var accentThemes: [AccentTheme] { AccentTheme.allCases }
     private var accentTheme: AccentTheme {
-    AccentTheme(rawValue: storedAccentTheme) ?? .blue
+        AccentTheme(rawValue: storedAccentTheme) ?? .blue
     }
     
     private let curated: [CuratedHabit] = CuratedHabit.onboardingOptions
@@ -54,6 +55,9 @@ struct OnboardingView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
+//                    stepIndicator
+//                        .padding(.top, 8)
+
                     heroSection
                         .padding(.top, 12)
 
@@ -79,6 +83,9 @@ struct OnboardingView: View {
             withAnimation(.spring(response: 0.9, dampingFraction: 0.8).delay(0.1)) {
                 heroAnimate = true
             }
+            withAnimation(.easeInOut(duration: 1.6).repeatForever()) {
+                sparklePulse.toggle()
+            }
 //            seedProfileStateIfNeeded()
         }
         .alert("Something Went Wrong", isPresented: $showingSaveError, actions: {
@@ -100,40 +107,122 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Theme")
                 .font(.headline)
-                .foregroundStyle(themeManager.accent.color.opacity(0.8))
-            Slider(
-                value: Binding(
-                    get: { accentSliderValue },
-                    set: { newValue in
-                        accentSliderValue = newValue
-                        updateAccentTheme(with: newValue)
+                .foregroundStyle(.primary.opacity(0.8))
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(Array(accentThemes.enumerated()), id: \.element.id) { index, theme in
+                        let gradient = gradientForTheme(theme)
+                        Button {
+                            accentSliderValue = Double(index)
+                            updateAccentTheme(with: Double(index))
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .fill(
+                                        LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                            .strokeBorder(.white.opacity(0.25), lineWidth: 1)
+                                    )
+                                    .shadow(color: gradient.first?.opacity(0.35) ?? .clear, radius: 12, y: 6)
+                                    .frame(width: 110, height: 70)
+                                    .overlay(alignment: .topTrailing) {
+                                        Circle()
+                                            .fill(theme.color)
+                                            .frame(width: 22, height: 22)
+                                            .shadow(color: theme.color.opacity(0.4), radius: 8, y: 4)
+                                            .padding(8)
+                                    }
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                            .stroke(index == Int(accentSliderValue.rounded()) ? theme.color.opacity(0.9) : .clear, lineWidth: 3)
+                                    )
+                                Text(theme.rawValue.capitalized)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .buttonStyle(.plain)
                     }
-                ),
-                in: 0...Double(max(accentThemes.count - 1, 1)),
-                step: 1
-            )
-//            HStack(spacing: 12) {
-//                ForEach(Array(accentThemes.enumerated()), id: \.element.id) { index, theme in
-//                    Circle()
-//                        .fill(theme.color)
-//                        .frame(width: 28, height: 28)
-//                        .overlay(
-//                            Circle()
-//                                .stroke(
-//                                    index == Int(accentSliderValue.rounded()) ? Color.primary : .clear,
-//                                    lineWidth: 2
-//                                )
-//                        )
-//                        .accessibilityLabel(Text(theme.rawValue.capitalized))
-//                }
-//            }
+                }
+            }
+
+//            themePreview(gradient: gradientForTheme(accentTheme))
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(glassBackground())
         .shadow(color: themeManager.accent.color.opacity(0.2), radius: 8, y: 4)
     }
     
+    private func gradientForTheme(_ theme: AccentTheme) -> [Color] {
+        let base = theme.color
+        let complement = base.complementary
+        return [
+            complement.adjustingBrightness(by: -0.08),
+            complement.adjustingBrightness(by: 0.12)
+        ]
+    }
 
+    private func themePreview(gradient: [Color]) -> some View {
+        RoundedRectangle(cornerRadius: 22, style: .continuous)
+            .fill(
+                LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+            )
+            .overlay(
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 10) {
+                        Circle().fill(themeManager.accent.color.opacity(0.3)).frame(width: 12, height: 12)
+                        Circle().fill(themeManager.accent.color.opacity(0.5)).frame(width: 12, height: 12)
+                        Circle().fill(themeManager.accent.color.opacity(0.8)).frame(width: 12, height: 12)
+                    }
+                    Text("Live preview")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white.opacity(0.9))
+                    Text("See how buttons & cards will glow with this accent.")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            )
+            .frame(maxWidth: .infinity)
+            .frame(height: 100)
+            .shadow(color: gradient.first?.opacity(0.25) ?? .clear, radius: 12, y: 8)
+    }
+    
+    private var stepIndicator: some View {
+        HStack(spacing: 10) {
+            stepPill(isActive: step == .profile, label: "Profile")
+            stepPill(isActive: step == .habits, label: "Habits")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func stepPill(isActive: Bool, label: String) -> some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(isActive ? themeManager.accent.color : .secondary.opacity(0.2))
+                .frame(width: 10, height: 10)
+                .shadow(color: isActive ? themeManager.accent.color.opacity(0.4) : .clear, radius: 6, y: 2)
+            Text(label)
+                .font(.caption.bold())
+                .foregroundStyle(isActive ? .primary : .secondary)
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .background(
+            Capsule(style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    Capsule(style: .continuous)
+                        .strokeBorder(isActive ? themeManager.accent.color.opacity(0.6) : Color.white.opacity(0.15), lineWidth: 1)
+                )
+                .shadow(color: isActive ? themeManager.accent.color.opacity(0.25) : .clear, radius: 10, y: 6)
+        )
+    }
+    
     private var heroSection: some View {
         ZStack(alignment: .bottomLeading) {
             RoundedRectangle(cornerRadius: 32, style: .continuous)
@@ -147,21 +236,23 @@ struct OnboardingView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-//                .overlay(
-//                    Circle()
-//                        .fill(.white.opacity(0.2))
-//                        .scaleEffect(heroAnimate ? 1.1 : 0.8)
-//                        .offset(x: heroAnimate ? 40 : -20, y: heroAnimate ? -30 : -60)
-//                        .blur(radius: 20)
-//                )
-//                .overlay(
-//                    Circle()
-//                        .strokeBorder(.white.opacity(0.3), lineWidth: 3)
-//                        .scaleEffect(heroAnimate ? 0.35 : 0.2)
-//                        .offset(x: heroAnimate ? 100 : 30, y: heroAnimate ? -60 : -10)
-//                )
+                .overlay(
+                    Circle()
+                        .fill(.white.opacity(0.15))
+                        .scaleEffect(heroAnimate ? 1.05 : 0.8)
+                        .offset(x: heroAnimate ? 40 : -20, y: heroAnimate ? -20 : -60)
+                        .blur(radius: 30)
+                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: heroAnimate)
+                )
+                .overlay(
+                    Circle()
+                        .strokeBorder(.white.opacity(0.25), lineWidth: 3)
+                        .scaleEffect(heroAnimate ? 0.42 : 0.25)
+                        .offset(x: heroAnimate ? 100 : 30, y: heroAnimate ? -60 : -10)
+                        .shadow(color: .white.opacity(0.35), radius: 12)
+                        .animation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true), value: heroAnimate)
+                )
             
-
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("TinyHabits")
@@ -177,15 +268,16 @@ struct OnboardingView: View {
                     .frame(maxHeight: .infinity)
                     .layoutPriority(1)
                     .padding(.vertical, 8)
-                    .offset(y: heroAnimate ? -4 : 10)
+                    .offset(y: heroAnimate ? -8 : 10)
+                    .scaleEffect(heroAnimate ? 1.02 : 0.98)
                 Spacer(minLength: 0)
                 
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
                         .font(.system(size: 34, weight: .semibold))
                         .foregroundStyle(themeManager.accent.color.opacity(0.8))
-                        .scaleEffect(heroAnimate ? 1 : 0.8)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.7).repeatForever(autoreverses: true), value: heroAnimate)
+                        .scaleEffect(sparklePulse ? 1.08 : 0.92)
+                        .animation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true), value: sparklePulse)
                     Text("Small steps. Big change.")
                         .foregroundStyle(themeManager.accent.color.opacity(0.8))
                         .font(.headline)
@@ -196,23 +288,31 @@ struct OnboardingView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: 260)
-        .shadow(color: themeManager.accent.color.opacity(0.4), radius: 12, y: 8)
+        .shadow(color: themeManager.accent.color.opacity(0.4), radius: 18, y: 10)
     }
     
     @ViewBuilder
     private var heroImageView: some View {
-        if UIImage(named: AssetNames.onboardingHero) != nil {
-            Image(AssetNames.onboardingHero)
-                .resizable()
-                .scaledToFit()
-                .accessibilityHidden(true)
-        } else {
-            Image(systemName: "figure.run")
-                .resizable()
-                .scaledToFit()
-                .foregroundStyle(themeManager.accent.color.opacity(0.8))
-                .accessibilityLabel("Running illustration")
+        GeometryReader { proxy in
+            let parallax = proxy.frame(in: .global).minY / 40
+            Group {
+                if UIImage(named: AssetNames.onboardingHero) != nil {
+                    Image(AssetNames.onboardingHero)
+                        .resizable()
+                        .scaledToFit()
+                        .accessibilityHidden(true)
+                } else {
+                    Image(systemName: "figure.run")
+                        .resizable()
+                        .scaledToFit()
+                        .foregroundStyle(themeManager.accent.color.opacity(0.8))
+                        .accessibilityLabel("Running illustration")
+                }
+            }
+            .offset(y: parallax)
+            .animation(.easeOut(duration: 0.6), value: parallax)
         }
+        .frame(height: 140)
     }
 
     @ViewBuilder
@@ -242,8 +342,9 @@ struct OnboardingView: View {
                 }
             } label: {
                 Text("Continue to Habits")
+                    .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(.vertical, 16)
                     .background(
                         LinearGradient(
                             colors: [
@@ -253,10 +354,15 @@ struct OnboardingView: View {
                             startPoint: .leading,
                             endPoint: .trailing
                         )
+                        .opacity(0.95)
                     )
-                    .foregroundStyle(themeManager.accent.color.opacity(0.8))
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .shadow(color: .purple.opacity(0.2), radius: 15, y: 8)
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule(style: .continuous))
+                    .shadow(color: themeManager.accent.color.opacity(0.35), radius: 18, y: 10)
+                    .overlay(
+                        Capsule()
+                            .stroke(themeManager.accent.color.opacity(0.5), lineWidth: 1.4)
+                    )
             }
         }
     }
@@ -276,8 +382,8 @@ struct OnboardingView: View {
                 .foregroundStyle(themeManager.accent.color.opacity(0.8))
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Physical Details")
-                    .font(.subheadline)
+//                Text("Physical Details")
+//                    .font(.subheadline)
                 
                 Stepper("Height: \(profileHeight) cm", value: $profileHeight, in: 120...230)
                 Stepper("Weight: \(profileWeight) kg", value: $profileWeight, in: 40...200)
@@ -309,7 +415,7 @@ struct OnboardingView: View {
 //            }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(glassBackground())
         .shadow(color: themeManager.accent.color.opacity(0.3), radius: 12, y: 8)
     }
     
@@ -325,8 +431,9 @@ struct OnboardingView: View {
                 completeOnboarding()
             } label: {
                 Text("Start Tracking")
+                    .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
-                    .padding()
+                    .padding(.vertical, 16)
                     .background(
                         LinearGradient(
                             colors: [
@@ -337,10 +444,13 @@ struct OnboardingView: View {
                             endPoint: .trailing
                         )
                     )
-                    .foregroundStyle(themeManager.accent.color.opacity(0.8))
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .shadow(color: .purple.opacity(0.2), radius: 15, y: 8)
-
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule(style: .continuous))
+                    .shadow(color: themeManager.accent.color.opacity(0.35), radius: 18, y: 10)
+                    .overlay(
+                        Capsule()
+                            .stroke(themeManager.accent.color.opacity(0.5), lineWidth: 1.4)
+                    )
             }
             .disabled(!canCompleteOnboarding)
 
@@ -363,10 +473,13 @@ struct OnboardingView: View {
                 ForEach(curated) { habit in
                     curatedHabitButton(for: habit)
                 }
+                if !customHabitName.trimmingCharacters(in: .whitespaces).isEmpty {
+                    customHabitPreview
+                }
             }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(glassBackground())
     }
 
     
@@ -380,7 +493,47 @@ struct OnboardingView: View {
             Stepper("Daily target: \(customHabitTarget)", value: $customHabitTarget, in: 1...10000, step: 1)
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(glassBackground())
+    }
+
+    private var customHabitPreview: some View {
+        let trimmed = customHabitName.trimmingCharacters(in: .whitespaces)
+        return HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.secondary.opacity(0.15))
+                    .frame(width: 48, height: 48)
+                Image(systemName: "plus.circle.fill")
+                    .foregroundStyle(themeManager.accent.color)
+                    .font(.title3)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(trimmed)
+                    .font(.headline)
+                Text("Daily target: \(customHabitTarget)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(themeManager.accent.color)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.08), radius: 8, y: 4)
+        )
+    }
+    
+    private func glassBackground(cornerRadius: CGFloat = 24) -> some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(.ultraThinMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.12), radius: 10, y: 8)
     }
     
     
@@ -467,7 +620,7 @@ struct OnboardingView: View {
             let model = Habit(
                 name: trimmedName,
                 iconSystemName: "circle",
-                accentColorKey: AccentTheme.blue.rawValue,
+                accentColorKey: accentTheme.rawValue,
                 order: createdCount,
                 dailyTarget: customHabitTarget
             )
@@ -478,7 +631,7 @@ struct OnboardingView: View {
             if context.hasChanges {
                 try context.save()
             }
-//            hasCompletedOnboarding = true
+            hasCompletedOnboarding = true
         } catch {
             showingSaveError = true
         }

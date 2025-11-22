@@ -14,7 +14,7 @@ final class HabitEntry {
     var statusRaw: Int
     var progressValue: Int
 
-    @Relationship var habit: Habit
+@Relationship var habit: Habit
 
     var status: HabitStatus {
         get { HabitStatus(rawValue: statusRaw) ?? .pending }
