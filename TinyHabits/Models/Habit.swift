@@ -23,7 +23,7 @@ final class Habit {
     var createdAt: Date
     var dailyTarget: Int = 1
 
-    @Relationship(deleteRule: .cascade, inverse: \HabitEntry.habit)
+    @Relationship(deleteRule: .cascade)
     var entries: [HabitEntry] = []
 
     init(

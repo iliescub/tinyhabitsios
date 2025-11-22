@@ -74,6 +74,15 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     func clearBadge() {
         notificationCenter.setBadgeCount(0, withCompletionHandler: { _ in })
     }
+    
+    func rescheduleAll(for habits: [Habit]) {
+        ensureAuthorization { granted in
+            guard granted else { return }
+            for habit in habits where !habit.reminders.isEmpty && !habit.isArchived {
+                self.scheduleReminders(for: habit)
+            }
+        }
+    }
 
     // UNUserNotificationCenterDelegate
     func userNotificationCenter(

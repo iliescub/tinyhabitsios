@@ -15,6 +15,13 @@ final class HapticManager {
     private init() {}
 
     func play(_ type: HapticType) {
+        // Ensure execution on the main thread to avoid silent failures.
+        if !Thread.isMainThread {
+            DispatchQueue.main.async { [weak self] in
+                self?.play(type)
+            }
+            return
+        }
         switch type {
         case .success:
             let generator = UINotificationFeedbackGenerator()

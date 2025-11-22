@@ -40,6 +40,7 @@ struct RootView: View {
     @AppStorage("motivation_dailyQuotes") private var showDailyQuotes: Bool = true
     @AppStorage("motivation_haptics") private var enableHaptics: Bool = true
     @AppStorage("profile_imageData") private var storedImageData: Data = Data()
+    @Environment(\.modelContext) private var context
     
     var body: some View {
         Group {
@@ -62,5 +63,12 @@ struct RootView: View {
         showDailyQuotes = false
         enableHaptics = true
         storedImageData = Data()
+    }
+    
+    private func rescheduleRemindersIfNeeded() {
+        guard hasCompletedOnboarding else { return }
+        let descriptor = FetchDescriptor<Habit>(predicate: #Predicate { !$0.isArchived })
+        let habits = (try? context.fetch(descriptor)) ?? []
+        NotificationManager.shared.rescheduleAll(for: habits)
     }
 }

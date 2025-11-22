@@ -1,10 +1,10 @@
 import SwiftUI
 import SwiftData
-import UIKit
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
-    @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.order, order: .forward) private var habits: [Habit]
+    @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.order, order: .forward)
+    private var habits: [Habit]
 
     @AppStorage("accentTheme") private var accentRaw: String = AccentTheme.blue.rawValue
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = true
@@ -15,24 +15,18 @@ struct SettingsView: View {
     @AppStorage("motivation_dailyQuotes") private var showDailyQuotes: Bool = true
     @AppStorage("motivation_haptics") private var enableHaptics: Bool = true
 
-    @State private var newHabitName: String = ""
-    @State private var newHabitIcon: String = "sparkles"
-    @State private var newHabitColor: AccentTheme = .blue
-    @State private var newHabitTarget: Int = 1
+    @StateObject private var viewModel = SettingsViewModel()
     @State private var showingResetConfirmation = false
 
     private var accent: Color { AccentTheme(rawValue: accentRaw)?.color ?? .blue }
-    private var accentGradient: [Color] {
-        [
-            accent.adjustingBrightness(by: -0.06),
-            accent.adjustingBrightness(by: 0.14)
-        ]
-    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    if let error = viewModel.errorMessage {
+                        ErrorBanner(message: error)
+                    }
                     hero
                     themeCard
                     habitsCard
@@ -44,27 +38,22 @@ struct SettingsView: View {
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Settings")
         }
+        .onAppear {
+            viewModel.setContext(context)
+            viewModel.hasCompletedOnboarding = hasCompletedOnboarding
+        }
     }
 
-    // MARK: - Sections
+    // MARK: Sections
 
     private var hero: some View {
-        ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(LinearGradient(colors: accentGradient, startPoint: .topLeading, endPoint: .bottomTrailing))
-                .shadow(color: accent.opacity(0.25), radius: 18, y: 10)
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Tune your experience")
-                    .font(.title2.bold())
-                    .foregroundStyle(.white)
-                Text("Keep themes and habits aligned so staying consistent feels effortless.")
-                    .foregroundStyle(.white.opacity(0.85))
-                    .font(.subheadline)
-            }
-            .padding(20)
-        }
-        .frame(height: 140)
+        HeroHeader(
+            title: "Tune your experience",
+            subtitle: "Keep themes and habits aligned so staying consistent feels effortless.",
+            accent: accent,
+            quote: showDailyQuotes ? MotivationProvider.dailyQuote() : nil,
+            imageName: AssetNames.onboardingHero
+        )
     }
 
     private var themeCard: some View {
@@ -78,33 +67,15 @@ struct SettingsView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
                     ForEach(AccentTheme.allCases) { theme in
-                        let gradient = gradientForTheme(theme)
-                        Button {
+                        ThemeChip(theme: theme, isSelected: accentRaw == theme.rawValue) {
                             accentRaw = theme.rawValue
-                        } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(
-                                        LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .strokeBorder(theme.color.opacity(accentRaw == theme.rawValue ? 0.9 : 0.2), lineWidth: 3)
-                                    )
-                                    .frame(width: 120, height: 70)
-                                    .shadow(color: gradient.first?.opacity(0.25) ?? .clear, radius: 10, y: 6)
-                                Text(theme.rawValue.capitalized)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
         }
         .padding()
-        .background(cardBackground())
+        .background(DesignTokens.cardBackground())
     }
 
     private var habitsCard: some View {
@@ -118,15 +89,17 @@ struct SettingsView: View {
             VStack(spacing: 12) {
                 ForEach(CuratedHabit.onboardingOptions) { curated in
                     curatedHabitButton(for: curated)
-                        .disabled(activeHabits.count >= 3 && !isHabitExisting(name: curated.name))
+                        .disabled(viewModel.activeHabits(using: habits).count >= 3 && !isHabitExisting(name: curated.name))
                 }
                 ForEach(customHabits) { habit in
-                    customHabitRow(for: habit)
+                    HabitRow(habit: habit, showDetails: false, onDelete: {
+                        viewModel.deleteHabit(habit)
+                    })
                 }
             }
 
-            if activeHabits.count > 3 {
-                Text("You currently track \(activeHabits.count) habits. TinyHabits works best with 3—remove one to add another.")
+            if viewModel.activeHabits(using: habits).count > 3 {
+                Text("You currently track \(viewModel.activeHabits(using: habits).count) habits. TinyHabits works best with 3—remove one to add another.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -136,39 +109,26 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Custom habit")
                     .font(.subheadline.weight(.semibold))
-                TextField("Name (e.g. Journal 5 min)", text: $newHabitName)
+                TextField("Name (e.g. Journal 5 min)", text: $viewModel.newHabitName)
                     .textFieldStyle(.roundedBorder)
-                TextField("SF Symbol (e.g. book.fill)", text: $newHabitIcon)
+                TextField("SF Symbol (e.g. book.fill)", text: $viewModel.newHabitIcon)
                     .textFieldStyle(.roundedBorder)
-                Picker("Accent", selection: $newHabitColor) {
+                Picker("Accent", selection: $viewModel.newHabitColor) {
                     ForEach(AccentTheme.allCases) { theme in
                         Text(theme.rawValue.capitalized).tag(theme)
                     }
                 }
-                Stepper("Daily target: \(newHabitTarget)", value: $newHabitTarget, in: 1...10000, step: 1)
+                Stepper("Daily target: \(viewModel.newHabitTarget)", value: $viewModel.newHabitTarget, in: 1...10000, step: 1)
 
                 Button {
-                    addHabit()
+                    viewModel.addCustomHabit(currentHabits: habits)
                 } label: {
                     Label("Add Custom Habit", systemImage: "plus.circle.fill")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(accent)
-                .disabled(newHabitName.trimmingCharacters(in: .whitespaces).isEmpty || activeHabits.count >= 3)
-
-                if !newHabitName.trimmingCharacters(in: .whitespaces).isEmpty {
-                    existingHabitRow(
-                        habit: Habit(
-                            name: newHabitName.trimmingCharacters(in: .whitespaces),
-                            iconSystemName: resolvedSymbolName(newHabitIcon),
-                            accentColorKey: newHabitColor.rawValue,
-                            order: 0,
-                            dailyTarget: newHabitTarget
-                        )
-                    )
-                    .opacity(0.7)
-                }
+                .disabled(viewModel.newHabitName.trimmingCharacters(in: .whitespaces).isEmpty || viewModel.activeHabits(using: habits).count >= 3)
             }
             .padding()
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -176,10 +136,10 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Your habits")
                     .font(.subheadline.weight(.semibold))
-                ForEach(activeHabits) { habit in
-                    existingHabitRow(habit: habit)
+                ForEach(viewModel.activeHabits(using: habits)) { habit in
+                    HabitRow(habit: habit, onDelete: { viewModel.deleteHabit(habit) })
                 }
-                if activeHabits.isEmpty {
+                if viewModel.activeHabits(using: habits).isEmpty {
                     Text("No habits yet. Add or pick a curated one above.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -187,65 +147,11 @@ struct SettingsView: View {
             }
         }
         .padding()
-        .background(cardBackground())
+        .background(DesignTokens.cardBackground())
     }
 
-    private var motivationCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Motivation")
-                .font(.headline)
-            Toggle("Daily quote on launch", isOn: $showDailyQuotes)
-            Toggle("Celebration haptics", isOn: $enableHaptics)
-            Text("Tiny nudges keep momentum high without overwhelming you.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding()
-        .background(cardBackground())
-    }
-
-    private var resetCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Reset")
-                .font(.headline)
-            Text("Clears all habits, reminders, and profile data, then reopens onboarding.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Button(role: .destructive) {
-                showingResetConfirmation = true
-            } label: {
-                Label("Reset TinyHabits", systemImage: "arrow.counterclockwise")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .padding()
-        .background(cardBackground())
-        .alert("Reset TinyHabits?", isPresented: $showingResetConfirmation) {
-            Button("Cancel", role: .cancel) {}
-            Button("Reset", role: .destructive) {
-                resetAppData()
-            }
-        } message: {
-            Text("This removes all saved data and returns you to the onboarding experience.")
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func cardBackground() -> some View {
-        RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .fill(Color(.systemBackground))
-            .shadow(color: Color.black.opacity(0.06), radius: 10, y: 6)
-    }
-
-    private func gradientForTheme(_ theme: AccentTheme) -> [Color] {
-        let base = theme.color
-        let complement = base.complementary
-        return [
-            complement.adjustingBrightness(by: -0.08),
-            complement.adjustingBrightness(by: 0.12)
-        ]
+    private var customHabits: [Habit] {
+        viewModel.activeHabits(using: habits).filter { !isCuratedName($0.name) }
     }
 
     private func curatedHabitButton(for curated: CuratedHabit) -> some View {
@@ -253,10 +159,10 @@ struct SettingsView: View {
         return Button {
             if isSelected {
                 if let habit = habits.first(where: { $0.name.caseInsensitiveCompare(curated.name) == .orderedSame }) {
-                    deleteHabit(habit)
+                    viewModel.deleteHabit(habit)
                 }
             } else {
-                addCuratedHabit(curated)
+                viewModel.addCurated(curated, currentHabits: habits)
             }
         } label: {
             HStack(spacing: 12) {
@@ -297,192 +203,78 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    private func addHabit() {
-        guard refreshedActiveHabits().count < 3 else { return }
-
-        let sanitizedName = newHabitName.trimmingCharacters(in: .whitespaces)
-        guard !sanitizedName.isEmpty else { return }
-        let sanitizedIcon = resolvedSymbolName(newHabitIcon)
-
-        let habit = Habit(
-            name: sanitizedName,
-            iconSystemName: sanitizedIcon,
-            accentColorKey: newHabitColor.rawValue,
-            order: refreshedActiveHabits().count,
-            dailyTarget: newHabitTarget
-        )
-        context.insert(habit)
-//        saveContext()
-
-        newHabitName = ""
-        newHabitIcon = "sparkles"
-        newHabitColor = .blue
-        newHabitTarget = 1
+    private var motivationCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Motivation")
+                .font(.headline)
+            Toggle("Daily quote on launch", isOn: $showDailyQuotes)
+            Toggle("Celebration haptics", isOn: $enableHaptics)
+            Text("Tiny nudges keep momentum high without overwhelming you.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(DesignTokens.cardBackground())
     }
 
-    private func addCuratedHabit(_ curated: CuratedHabit) {
-        guard refreshedActiveHabits().count < 3, !isHabitExisting(name: curated.name) else { return }
-        let model = Habit(
-            name: curated.name,
-            iconSystemName: curated.icon,
-            accentColorKey: curated.color.rawValue,
-            order: refreshedActiveHabits().count,
-            dailyTarget: curated.defaultTarget
-        )
-        context.insert(model)
-//        saveContext()
-    }
-
-    private func isHabitExisting(name: String) -> Bool {
-        let target = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return activeHabits.contains { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == target }
-    }
-
-    private var activeHabits: [Habit] {
-        refreshedActiveHabits()
-    }
-
-    private var customHabits: [Habit] {
-        activeHabits.filter { !isCuratedName($0.name) }
-    }
-
-    private func refreshedActiveHabits() -> [Habit] {
-        let descriptor = FetchDescriptor<Habit>(
-            predicate: #Predicate { !$0.isArchived },
-            sortBy: [SortDescriptor(\Habit.order, order: .forward)]
-        )
-        let fetched = (try? context.fetch(descriptor)) ?? habits
-        return fetched.sorted { $0.order < $1.order }
-    }
-
-    private func deleteHabit(_ habit: Habit) {
-        NotificationManager.shared.cancelReminders(for: habit)
-        context.delete(habit)
-        normalizeHabitOrder()
-//        saveContext()
-    }
-
-    private func normalizeHabitOrder() {
-        let descriptor = FetchDescriptor<Habit>(
-            predicate: #Predicate { !$0.isArchived },
-            sortBy: [SortDescriptor(\Habit.order, order: .forward)]
-        )
-        if let orderedHabits = try? context.fetch(descriptor) {
-            for (index, habit) in orderedHabits.enumerated() {
-                habit.order = index
+    private var resetCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Reset")
+                .font(.headline)
+            Text("Clears all habits, reminders, and profile data, then reopens onboarding.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Button(role: .destructive) {
+                showingResetConfirmation = true
+            } label: {
+                Label("Reset TinyHabits", systemImage: "arrow.counterclockwise")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+        .background(DesignTokens.cardBackground())
+        .alert("Reset TinyHabits?", isPresented: $showingResetConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Reset", role: .destructive) {
+                var profile = ProfileState(
+                    name: storedName,
+                    age: storedAge,
+                    heightCm: storedHeightCm,
+                    weightKg: storedWeightKg,
+                    accentRaw: accentRaw
+                )
+                viewModel.resetAll(profile: &profile)
+                storedName = profile.name
+                storedAge = profile.age
+                storedHeightCm = profile.heightCm
+                storedWeightKg = profile.weightKg
+                accentRaw = profile.accentRaw
+                hasCompletedOnboarding = viewModel.hasCompletedOnboarding
+            }
+        } message: {
+            Text("This removes all saved data and returns you to the onboarding experience.")
         }
     }
 
-    private func resolvedSymbolName(_ rawValue: String) -> String {
-        let trimmed = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return "circle" }
-        return UIImage(systemName: trimmed) == nil ? "circle" : trimmed
-    }
+    // MARK: Helpers
 
     private func isCuratedName(_ name: String) -> Bool {
         let target = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return CuratedHabit.onboardingOptions.contains { $0.name.lowercased() == target }
     }
 
-    private func customHabitRow(for habit: Habit) -> some View {
-        let accent = (AccentTheme(rawValue: habit.accentColorKey) ?? .blue).color
-        return HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(accent)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(habit.name)
-                    .font(.headline)
-                Text("Daily target: \(habit.dailyTarget)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button(role: .destructive) {
-                deleteHabit(habit)
-            } label: {
-                Image(systemName: "trash")
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 6, y: 3)
-        )
+    private func isHabitExisting(name: String) -> Bool {
+        let target = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return viewModel.activeHabits(using: habits).contains { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == target }
     }
 
-    private func existingHabitRow(habit: Habit) -> some View {
-        let accent = (AccentTheme(rawValue: habit.accentColorKey) ?? .blue).color
-        return HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(accent)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(habit.name)
-                    .font(.headline)
-                Text("Daily target: \(habit.dailyTarget)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            NavigationLink {
-                HabitDetailView(habit: habit)
-            } label: {
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.secondary)
-            }
-            Button(role: .destructive) {
-                deleteHabit(habit)
-            } label: {
-                Image(systemName: "trash")
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
+    private func saveContext() {
+        guard context.hasChanges else { return }
+        do {
+            try context.save()
+        } catch {
+            print("SettingsView save error: \(error)")
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 6, y: 3)
-        )
     }
-
-    private func resetAppData() {
-        let entryDescriptor = FetchDescriptor<HabitEntry>()
-        let habitDescriptor = FetchDescriptor<Habit>()
-
-        let entries = (try? context.fetch(entryDescriptor)) ?? []
-        for entry in entries {
-            context.delete(entry)
-        }
-//        saveContext()
-
-        let allHabits = (try? context.fetch(habitDescriptor)) ?? []
-        for habit in allHabits {
-            NotificationManager.shared.cancelReminders(for: habit)
-            context.delete(habit)
-        }
-//        saveContext()
-
-        storedName = ""
-        storedAge = 30
-        storedHeightCm = 170
-        storedWeightKg = 70
-        accentRaw = AccentTheme.blue.rawValue
-        hasCompletedOnboarding = false
-        newHabitName = ""
-        newHabitIcon = "sparkles"
-        newHabitColor = .blue
-    }
-
-//    private func saveContext() {
-//        guard context.hasChanges else { return }
-//        do {
-//            try context.save()
-//        } catch {
-//            print("SettingsView save error: \(error)")
-//        }
-//    }
 }
