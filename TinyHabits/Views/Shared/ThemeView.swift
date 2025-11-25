@@ -29,20 +29,9 @@ struct ThemeView: View {
                         }
                     }
                 }
-            }
-                    .background(
-                        GeometryReader { geometry in
-                            Color.clear
-                            .onAppear {
-                                updateThemeCardFrame(geometry.frame(in: .named("MainTabSpace")))
-                            }
-                            .onChange(of: geometry.frame(in: .named("MainTabSpace"))) { _, frame in
-                                updateThemeCardFrame(frame)
-                            }
-                        }
-                    )
+        }
 
-            themePreview(gradient: gradientForTheme(accentTheme))
+//            themePreview(gradient: gradientForTheme(accentTheme))
         }
         .onAppear {
             syncAccentSlider()
@@ -53,6 +42,20 @@ struct ThemeView: View {
         .padding()
         .background(glassBackground())
         .shadow(color: themeManager.accent.color.opacity(0.2), radius: 8, y: 4)
+        .background(
+            GeometryReader { geometry in
+                Color.clear
+                    .onAppear {
+                        updateThemeCardFrame(geometry.frame(in: .named("MainTabSpace")))
+                    }
+                    .onChange(of: geometry.frame(in: .named("MainTabSpace"))) { _, frame in
+                        updateThemeCardFrame(frame)
+                    }
+            }
+        )
+        .onDisappear {
+            clearThemeCardFrame()
+        }
     }
 
     private func themePreview(gradient: [Color]) -> some View {
@@ -119,10 +122,12 @@ struct ThemeView: View {
 
         private var gradient: [Color] {
             let base = theme.color
-            let complement = base.complementary
+//            let complement = base.complementary
             return [
-                complement.adjustingBrightness(by: -0.08),
-                complement.adjustingBrightness(by: 0.12)
+//                complement.adjustingBrightness(by: -0.08),
+//                complement.adjustingBrightness(by: 0.12)
+                base.adjustingBrightness(by: -0.08),
+                base.adjustingBrightness(by: 0.12)
             ]
         }
 
@@ -131,13 +136,14 @@ struct ThemeView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(
+//                            DesignTokens.gradientThemeBackground(theme)
                             LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(theme.color.opacity(isSelected ? 0.9 : 0.2), lineWidth: 3)
+                                .strokeBorder(theme.color.complementary.opacity(isSelected ? 0.9 : 0.2), lineWidth: 3)
                         )
-                        .frame(width: 120, height: 70)
+                        .frame(width: 70, height: 30)
                         .shadow(color: gradient.first?.opacity(0.25) ?? .clear, radius: 10, y: 6)
                     Text(theme.rawValue.capitalized)
                         .font(.caption)
@@ -149,7 +155,19 @@ struct ThemeView: View {
     }
     
     private func updateThemeCardFrame(_ frame: CGRect) {
+        guard frame != .zero else { return }
         themeCardFrame = frame
-        swipeGuard.blockedRegions = [frame]
+        var regions = swipeGuard.blockedRegions.filter { $0 != .zero }
+        if let existingIndex = regions.firstIndex(of: frame) {
+            regions[existingIndex] = frame
+        } else {
+            regions.append(frame)
+        }
+        swipeGuard.blockedRegions = regions
+    }
+
+    private func clearThemeCardFrame() {
+        swipeGuard.blockedRegions.removeAll { $0 == themeCardFrame }
+        themeCardFrame = .zero
     }
 }

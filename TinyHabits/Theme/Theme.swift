@@ -34,6 +34,16 @@ struct ThemeManager {
         get { AccentTheme(rawValue: storedAccent) ?? .blue }
         set { storedAccent = newValue.rawValue }
     }
+    
+    /// Secondary shade in the  range for gradient backgrounds.
+    var AccentVariantGrad1: Color {
+        accent.color.adjustingBrightness(by: -0.1)
+    }
+    /// Third shade in the complementary range for gradient backgrounds.
+    var AccentVariantGrad2: Color {
+        accent.color.adjustingBrightness(by: 0.1)
+    }
+    
 
     var complementaryAccent: Color {
         accent.color.complementary

@@ -26,7 +26,6 @@ struct OnboardingView: View {
         AccentTheme(rawValue: storedAccentTheme) ?? .blue
     }
 
-    private let curated: [CuratedHabit] = CuratedHabit.onboardingOptions
     private var themeManager = ThemeManager()
 
     private enum OnboardingStep {
@@ -59,7 +58,6 @@ struct OnboardingView: View {
             )
         }
         .onAppear {
-            viewModel.setContext(context)
             habitsViewModel.setContext(context)
             withAnimation(.spring(response: 0.9, dampingFraction: 0.8).delay(0.1)) {
                 heroAnimate = true
@@ -68,11 +66,6 @@ struct OnboardingView: View {
                 sparklePulse.toggle()
             }
         }
-        .alert("Something Went Wrong", isPresented: $viewModel.showingSaveError, actions: {
-            Button("OK", role: .cancel) {}
-        }, message: {
-            Text("We couldn't save your habits. Please try again after restarting the app.")
-        })
         .alert("Complete Your Profile", isPresented: $viewModel.showingProfileValidation, actions: {
             Button("OK", role: .cancel) {}
         }, message: {
@@ -205,17 +198,12 @@ struct OnboardingView: View {
                 .textFieldStyle(.roundedBorder)
                 .textContentType(.name)
                 .foregroundStyle(themeManager.accent.color.opacity(0.8))
-            Stepper("Age: \(viewModel.profileAge)", value: $viewModel.profileAge, in: 13...100)
-                .foregroundStyle(themeManager.accent.color.opacity(0.8))
+            ProfileStatsView(
+                age: $viewModel.profileAge,
+                heightCm: $viewModel.profileHeight,
+                weightKg: $viewModel.profileWeight
+            )
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Physical Details")
-                    .font(.subheadline)
-
-                Stepper("Height: \(viewModel.profileHeight) cm", value: $viewModel.profileHeight, in: 120...230)
-                Stepper("Weight: \(viewModel.profileWeight) kg", value: $viewModel.profileWeight, in: 40...200)
-            }
-            .foregroundStyle(themeManager.accent.color.opacity(0.8))
         }
         .padding()
 //        .background(glassBackground())
@@ -245,6 +233,5 @@ struct OnboardingView: View {
     private var canCompleteOnboarding: Bool {
         viewModel.isProfileComplete && habitsViewModel.activeHabits(using: habits).count > 0 && habitsViewModel.activeHabits(using: habits).count <= 3
     }
-
 
 }

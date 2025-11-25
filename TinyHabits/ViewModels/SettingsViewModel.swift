@@ -39,17 +39,17 @@ final class SettingsViewModel: ObservableObject {
         resetCustomFields()
     }
 
-    func addCurated(_ curated: CuratedHabit, currentHabits: [Habit]) {
+    func addCurated(_ curated: Habit, currentHabits: [Habit]) {
         guard let context else { return }
         guard !isHabitExisting(name: curated.name, in: currentHabits) else { return }
         guard activeHabits(using: currentHabits).count < 3 else { return }
 
         let model = Habit(
             name: curated.name,
-            iconSystemName: curated.icon,
-            accentColorKey: curated.color.rawValue,
+            iconSystemName: curated.iconSystemName,
+            accentColorKey: curated.accentColorKey,
             order: activeHabits(using: currentHabits).count,
-            dailyTarget: curated.defaultTarget
+            dailyTarget: curated.dailyTarget
         )
         context.insert(model)
         persist()
@@ -78,7 +78,6 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func activateHabit(_ habit: Habit, currentHabits: [Habit]) {
-        guard let context else { return }
         guard activeHabits(using: currentHabits).count < 3 else { return }
         habit.isArchived = false
         habit.order = activeHabits(using: currentHabits).count

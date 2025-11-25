@@ -283,7 +283,7 @@ struct SettingsView: View {
 
     private func isCuratedName(_ name: String) -> Bool {
         let target = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return CuratedHabit.onboardingOptions.contains { $0.name.lowercased() == target }
+        return Habit.curatedTemplates.contains { $0.name.lowercased() == target }
     }
 
     private func isHabitExisting(name: String) -> Bool {

@@ -9,7 +9,7 @@ struct HabitsView: View {
 
     @AppStorage("accentTheme") private var storedAccentTheme: String = AccentTheme.blue.rawValue
 
-    private let curated: [CuratedHabit] = CuratedHabit.onboardingOptions
+    private let curated: [Habit] = Habit.curatedTemplates
     private var accentTheme: AccentTheme {
         AccentTheme(rawValue: storedAccentTheme) ?? .blue
     }
@@ -29,6 +29,7 @@ struct HabitsView: View {
                 }
                 ForEach(customHabits) { habit in
                     customHabitButton(for: habit)
+                        .disabled(viewModel.activeHabits(using: habits).count >= 3 && habit.isArchived)
                 }
             }
 
@@ -45,8 +46,12 @@ struct HabitsView: View {
                     .font(.subheadline.weight(.semibold))
                 TextField("Name (e.g. Journal 5 min)", text: $viewModel.newHabitName)
                     .textFieldStyle(.roundedBorder)
-                TextField("SF Symbol (e.g. book.fill)", text: $viewModel.newHabitIcon)
-                    .textFieldStyle(.roundedBorder)
+                Picker("Icon", selection: $viewModel.newHabitIcon) {
+                    ForEach(availableIcons, id: \.self) { icon in
+                        Label(icon, systemImage: icon).tag(icon)
+                    }
+                }
+                .pickerStyle(.menu)
                 Picker("Accent", selection: $viewModel.newHabitColor) {
                     ForEach(AccentTheme.allCases) { theme in
                         Text(theme.rawValue.capitalized).tag(theme)
@@ -88,7 +93,12 @@ struct HabitsView: View {
         habits.filter { !isCuratedName($0.name) }
     }
 
-    private func curatedHabitButton(for curated: CuratedHabit) -> some View {
+    private var availableIcons: [String] {
+        ["book.fill", "figure.walk", "drop.fill", "sparkles", "heart.fill"]
+    }
+
+    private func curatedHabitButton(for curated: Habit) -> some View {
+        let accent = (AccentTheme(rawValue: curated.accentColorKey) ?? .blue).color
         let isSelected = isHabitExisting(name: curated.name)
         return Button {
             if isSelected {
@@ -102,9 +112,9 @@ struct HabitsView: View {
             HStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(isSelected ? curated.color.color : Color.secondary.opacity(0.15))
+                        .fill(isSelected ? accent : Color.secondary.opacity(0.15))
                         .frame(width: 48, height: 48)
-                    Image(systemName: curated.icon)
+                    Image(systemName: curated.iconSystemName)
                         .foregroundStyle(isSelected ? .white : .primary)
                         .font(.title3)
                 }
@@ -123,14 +133,14 @@ struct HabitsView: View {
                         .padding(6)
                         .background(
                             Circle()
-                                .fill(curated.color.color)
+                                .fill(accent)
                         )
                 }
             }
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isSelected ? curated.color.color.opacity(0.15) : Color(.systemBackground))
+                    .fill(isSelected ? accent.opacity(0.15) : Color(.systemBackground))
                     .shadow(color: Color.black.opacity(isSelected ? 0.15 : 0.05), radius: isSelected ? 10 : 4, y: isSelected ? 6 : 2)
             )
         }
@@ -140,55 +150,62 @@ struct HabitsView: View {
     private func customHabitButton(for habit: Habit) -> some View {
         let accent = (AccentTheme(rawValue: habit.accentColorKey) ?? .blue).color
         let isSelected = !habit.isArchived
-        return HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isSelected ? accent.opacity(0.15) : Color.secondary.opacity(0.15))
-                    .frame(width: 48, height: 48)
-                Image(systemName: habit.iconSystemName)
-                    .foregroundStyle(isSelected ? .white : accent)
-                    .font(.title3)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(habit.name)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                Text("Daily target: \(habit.dailyTarget)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            if isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.white)
-                    .padding(6)
-                    .background(
-                        Circle()
-                            .fill(accent)
-                        )
-            }
-            Button(role: .destructive) {
-                viewModel.deleteHabit(habit)
-            } label: {
-                Image(systemName: "trash")
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isSelected ? accent.opacity(0.15) : Color(.systemBackground))
-                    .shadow(color: Color.black.opacity(isSelected ? 0.15 : 0.05), radius: isSelected ? 10 : 4, y: isSelected ? 6 : 2)
-        )
-        .contentShape(Rectangle())
-        .onTapGesture {
+
+
+        return Button {
             if isSelected {
                 viewModel.archiveHabit(habit)
             } else {
                 viewModel.activateHabit(habit, currentHabits: habits)
             }
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(isSelected ? accent.opacity(0.15) : Color.secondary.opacity(0.15))
+                        .frame(width: 48, height: 48)
+                    Image(systemName: habit.iconSystemName)
+                        .foregroundStyle(isSelected ? .white : accent)
+                        .font(.title3)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(habit.name)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text("Daily target: \(habit.dailyTarget)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                HStack(spacing: 8) {
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.white)
+                            .padding(6)
+                            .background(
+                                Circle()
+                                    .fill(accent)
+                            )
+                    }
+                    Button(role: .destructive) {
+                        viewModel.deleteHabit(habit)
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(isSelected ? accent.opacity(0.15) : Color(.systemBackground))
+                    .shadow(color: Color.black.opacity(isSelected ? 0.15 : 0.05), radius: isSelected ? 10 : 4, y: isSelected ? 6 : 2)
+            )
+            .opacity(!isSelected ? 0.6 : 1)
         }
+        .buttonStyle(.plain)
+
     }
 
     private func isCuratedName(_ name: String) -> Bool {

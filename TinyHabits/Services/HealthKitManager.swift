@@ -24,6 +24,9 @@ final class HealthKitManager {
         if let heartType = HKQuantityType.quantityType(forIdentifier: .heartRate) {
             typesToRead.insert(heartType)
         }
+        if let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) {
+            typesToRead.insert(sleepType)
+        }
 
         healthStore.requestAuthorization(toShare: nil, read: typesToRead) { granted, _ in
             DispatchQueue.main.async {
@@ -80,6 +83,51 @@ final class HealthKitManager {
             let bpm = sample.quantity.doubleValue(for: HKUnit(from: "count/min"))
             completion(bpm)
         }
+        healthStore.execute(query)
+    }
+
+    func fetchLastNightSleepHours(completion: @escaping (Double?) -> Void) {
+        guard HKHealthStore.isHealthDataAvailable(),
+              let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            completion(nil)
+            return
+        }
+
+        let calendar = Calendar.current
+        let end = Date()
+        let start = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: end)) ?? end.addingTimeInterval(-86_400)
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+
+        let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+            guard error == nil else {
+                completion(nil)
+                return
+            }
+
+            let asleepValues: Set<Int> = {
+                if #available(iOS 16.0, *) {
+                    return [
+                        HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue,
+                        HKCategoryValueSleepAnalysis.asleepCore.rawValue,
+                        HKCategoryValueSleepAnalysis.asleepDeep.rawValue,
+                        HKCategoryValueSleepAnalysis.asleepREM.rawValue
+                    ]
+                } else {
+                    return [HKCategoryValueSleepAnalysis.asleep.rawValue, HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue]
+                }
+            }()
+
+            let totalSeconds: TimeInterval = samples?
+                .compactMap { $0 as? HKCategorySample }
+                .filter { asleepValues.contains($0.value) }
+                .reduce(0) { partial, sample in
+                    partial + sample.endDate.timeIntervalSince(sample.startDate)
+                } ?? 0
+
+            let hours = totalSeconds / 3600
+            completion(hours > 0 ? hours : nil)
+        }
+
         healthStore.execute(query)
     }
 }

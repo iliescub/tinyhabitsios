@@ -19,6 +19,7 @@ struct HabitDetailView: View {
     @State private var showingPermissionAlert = false
     @State private var stepCount: Int?
     @State private var heartRate: Double?
+    @State private var sleepHours: Double?
     @State private var healthError: String?
     @State private var healthAuthResult: HealthAuthorizationResult?
     @State private var isRequestInProgress = false
@@ -28,6 +29,13 @@ struct HabitDetailView: View {
     private var entries: [HabitEntry] {
         habit.entries.sorted { $0.date > $1.date }
     }
+    
+    private var todayEntry: HabitEntry? {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: Date())
+        let end = calendar.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(86_400)
+        return entries.first { $0.date >= start && $0.date < end }
+    }
 
     var body: some View {
         ScrollView {
@@ -35,6 +43,8 @@ struct HabitDetailView: View {
                 header
 
                 streakCard
+
+                dailyAchievement
 
                 recentHistory
 
@@ -220,6 +230,7 @@ struct HabitDetailView: View {
             HStack(spacing: 12) {
                 healthMetric(title: "Steps today", value: stepCountString, detail: "From HealthKit")
                 healthMetric(title: "Heart rate", value: heartRateString, detail: "Latest reading")
+                healthMetric(title: "Sleep", value: sleepString, detail: "Last night")
             }
 
             if let message = healthMessageText {
@@ -236,6 +247,56 @@ struct HabitDetailView: View {
                 .fill(Color(.systemBackground))
                 .shadow(color: Color.black.opacity(0.06), radius: 10, y: 6)
         )
+    }
+
+    private var dailyAchievement: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Today's progress")
+                .font(.headline)
+            let target = max(1, habit.dailyTarget)
+            let current = todayEntry?.progressValue ?? 0
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Achieved: \(current)")
+                    Spacer()
+                    Text("Target: \(target)")
+                        .foregroundStyle(.secondary)
+                }
+                Slider(
+                    value: Binding(
+                        get: { Double(todayEntry?.progressValue ?? 0) },
+                        set: { newValue in
+                            updateTodayProgress(to: Int(newValue.rounded()), target: target)
+                        }
+                    ),
+                    in: 0...Double(target),
+                    step: 1
+                )
+            }
+            .padding(.vertical, 4)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.06), radius: 10, y: 6)
+        )
+    }
+
+    private func updateTodayProgress(to newValue: Int, target: Int) {
+        let clamped = max(0, min(target, newValue))
+        let entry: HabitEntry
+        if let existing = todayEntry {
+            entry = existing
+        } else {
+            let created = HabitEntry(date: Date(), status: .pending, habit: habit, progressValue: 0)
+            context.insert(created)
+            entry = created
+        }
+        entry.progressValue = clamped
+        entry.status = clamped >= target ? .done : .pending
+        if enableHaptics { HapticManager.shared.play(.light) }
+        try? context.save()
     }
 
     private func healthMetric(title: String, value: String, detail: String) -> some View {
@@ -270,6 +331,13 @@ struct HabitDetailView: View {
         }
         return "—"
     }
+    
+    private var sleepString: String {
+        if let hours = sleepHours {
+            return String(format: "%.1f h", hours)
+        }
+        return "—"
+    }
 
     private var healthMessageText: String? {
         if let error = healthError {
@@ -297,8 +365,7 @@ struct HabitDetailView: View {
             }
         } else if stepCount == nil || heartRate == nil {
             healthButton(title: "Refresh data") {
-                fetchSteps()
-                fetchHeartRate()
+                refreshHealthData()
             }
         }
     }
@@ -331,6 +398,7 @@ struct HabitDetailView: View {
             case .granted:
                 fetchSteps()
                 fetchHeartRate()
+                fetchSleep()
             case .denied:
                 DispatchQueue.main.async {
                     healthError = "Grant Health permissions to show daily progress."
@@ -341,6 +409,13 @@ struct HabitDetailView: View {
                 }
             }
         }
+    }
+
+    private func refreshHealthData() {
+        healthError = nil
+        fetchSteps()
+        fetchHeartRate()
+        fetchSleep()
     }
 
     private func fetchSteps() {
@@ -363,6 +438,14 @@ struct HabitDetailView: View {
                 } else {
                     healthError = "Could not read heart rate."
                 }
+            }
+        }
+    }
+
+    private func fetchSleep() {
+        HealthKitManager.shared.fetchLastNightSleepHours { hours in
+            DispatchQueue.main.async {
+                sleepHours = hours
             }
         }
     }

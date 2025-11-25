@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum DesignTokens {
     static let cornerRadius: CGFloat = 16
@@ -21,4 +22,15 @@ enum DesignTokens {
             .fill(Color(.systemBackground))
             .shadow(color: shadow, radius: shadowRadius, y: shadowY)
     }
+    
+//    static func gradientThemeBackground(themeManager: ThemeManager = ThemeManager()) -> LinearGradient {
+//        LinearGradient(
+//            colors: [
+//                themeManager.complementary1AccentVariant,
+//                themeManager.complementary2AccentVariant
+//            ],
+//            startPoint: .leading,
+//            endPoint: .trailing
+//        )
+//    }
 }
