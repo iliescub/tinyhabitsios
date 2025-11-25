@@ -35,13 +35,14 @@ final class StatsViewModel: ObservableObject {
             let dayStart = calendar.startOfDay(for: day)
             let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart.addingTimeInterval(86_400)
 
-            let entriesForDay = entries.filter {
-                $0.date >= dayStart && $0.date < dayEnd && !$0.habit.isArchived
+            let entriesForDay = entries.filter { entry in
+                guard let habit = entry.habit else { return false }
+                return entry.date >= dayStart && entry.date < dayEnd && !habit.isArchived
             }
 
             let done = entriesForDay.filter { $0.status == .done }.count
 
-            let habitsOnDay: Set<UUID> = Set(entriesForDay.map { $0.habit.id })
+            let habitsOnDay: Set<UUID> = Set(entriesForDay.compactMap { $0.habit?.id })
             let totalHabits = habitsOnDay.isEmpty ? habits.count : habitsOnDay.count
 
             let percent = totalHabits == 0 ? 0 : Double(done) / Double(totalHabits)

@@ -48,9 +48,12 @@ final class FocusViewModel: ObservableObject {
 
     func toggleDone(for habit: Habit) {
         guard let entry = todayEntry(for: habit) else { return }
-        entry.status = entry.status == .done ? .pending : .done
+        let wasDone = entry.status == .done
+        entry.status = wasDone ? .pending : .done
         if entry.status == .done {
             entry.progressValue = max(entry.progressValue, max(1, habit.dailyTarget))
+        } else if wasDone {
+            entry.progressValue = 0
         }
         persist()
     }
@@ -80,7 +83,7 @@ final class FocusViewModel: ObservableObject {
 
         let descriptor = FetchDescriptor<HabitEntry>(
             predicate: #Predicate { entry in
-                entry.habit.id == habitID &&
+                entry.habit?.id == habitID &&
                 entry.date >= start &&
                 entry.date < end
             },
@@ -91,6 +94,7 @@ final class FocusViewModel: ObservableObject {
         }
         let newEntry = HabitEntry(date: Date(), status: .pending, habit: habit, progressValue: 0)
         context.insert(newEntry)
+        persist()
         return newEntry
     }
 

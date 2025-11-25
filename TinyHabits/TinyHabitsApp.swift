@@ -10,26 +10,15 @@ import SwiftData
 
 @main
 struct TinyHabitsApp: App {
-    
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Habit.self,
-            HabitEntry.self
-        ])
-
-        do {
-            return try ModelContainer(for: schema)
-        } catch {
-            fatalError("Failed to create ModelContainer: \(error)")
-        }
-    }()
-    
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     
+    @StateObject private var swipeGuard = SwipeGuard()
+
     var body: some Scene {
         WindowGroup {
             RootView()
-                .modelContainer(sharedModelContainer)
+                .modelContainer(PersistenceController.shared.container)
+                .environmentObject(swipeGuard)
         }
     }
 }
@@ -41,7 +30,10 @@ struct RootView: View {
     @AppStorage("motivation_haptics") private var enableHaptics: Bool = true
     @AppStorage("profile_imageData") private var storedImageData: Data = Data()
     @Environment(\.modelContext) private var context
-    
+    @State private var showQuoteOverlay = true
+    @State private var quoteOverlayPresented = false
+    @State private var quoteText = MotivationProvider.dailyQuote()
+
     var body: some View {
         Group {
             if hasCompletedOnboarding {
@@ -50,8 +42,15 @@ struct RootView: View {
                 OnboardingView()
             }
         }
+        .overlay(alignment: .center) {
+            if showQuoteOverlay && showDailyQuotes {
+                DailyQuoteOverlay(quote: quoteText)
+                    .transition(.opacity)
+            }
+        }
         .onAppear {
             resetNotificationsIfNeeded()
+            presentQuoteOverlay()
         }
     }
     
@@ -70,5 +69,16 @@ struct RootView: View {
         let descriptor = FetchDescriptor<Habit>(predicate: #Predicate { !$0.isArchived })
         let habits = (try? context.fetch(descriptor)) ?? []
         NotificationManager.shared.rescheduleAll(for: habits)
+    }
+
+    private func presentQuoteOverlay() {
+        guard !quoteOverlayPresented, showDailyQuotes else { return }
+        quoteOverlayPresented = true
+        showQuoteOverlay = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation(.easeOut(duration: 0.35)) {
+                showQuoteOverlay = false
+            }
+        }
     }
 }

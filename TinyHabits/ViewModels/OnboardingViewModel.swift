@@ -86,7 +86,7 @@ final class OnboardingViewModel: ObservableObject {
         !selectedHabits.isEmpty || !customHabitName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    private var isProfileComplete: Bool {
+    var isProfileComplete: Bool {
         !profileName.trimmingCharacters(in: .whitespaces).isEmpty && profileAge >= 13
     }
 }

@@ -20,7 +20,7 @@ final class Habit {
     var order: Int
     var isArchived: Bool
     @Attribute var reminders: [HabitReminder] = []
-    var createdAt: Date
+//    var createdAt: Date
     var dailyTarget: Int = 1
 
     @Relationship(deleteRule: .cascade)
@@ -34,7 +34,7 @@ final class Habit {
         order: Int,
         isArchived: Bool = false,
         reminders: [HabitReminder] = [],
-        createdAt: Date = .now,
+//        createdAt: Date = .now,
         dailyTarget: Int = 1
     ) {
         self.id = id
@@ -44,7 +44,7 @@ final class Habit {
         self.order = order
         self.isArchived = isArchived
         self.reminders = reminders.sorted { ($0.hour, $0.minute) < ($1.hour, $1.minute) }
-        self.createdAt = createdAt
+//        self.createdAt = createdAt
         self.dailyTarget = max(1, dailyTarget)
     }
 

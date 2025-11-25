@@ -41,6 +41,7 @@ struct FocusView: View {
                                         habit: habit,
                                         progress: snapshot.completion,
                                         subtitle: snapshot.status == .done ? "Crushed for today." : "Daily target: \(snapshot.target)",
+                                        primaryLabel: snapshot.status == .done ? "Revert done" : "Mark done",
                                         onPrimary: { handlePrimary(for: habit, snapshot: snapshot) },
                                         onSecondary: snapshot.status == .done ? nil : { incrementProgress(for: habit) }
                                     )
@@ -82,7 +83,7 @@ struct FocusView: View {
             title: greetingTitle,
             subtitle: viewModel.heroMessage(completedCount: completedCount, total: displayedHabits.count),
             accent: accentColor,
-            quote: showDailyQuotes ? viewModel.quote : nil,
+            quote: nil,
             imageName: AssetNames.onboardingHero
         )
     }

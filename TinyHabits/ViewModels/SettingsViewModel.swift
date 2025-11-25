@@ -58,8 +58,30 @@ final class SettingsViewModel: ObservableObject {
     func deleteHabit(_ habit: Habit) {
         guard let context else { return }
         NotificationManager.shared.cancelReminders(for: habit)
+        habit.reminders.removeAll()
         context.delete(habit)
         normalizeOrder()
+        persist()
+    }
+
+    func archiveHabit(_ habit: Habit) {
+        guard let context else { return }
+        NotificationManager.shared.cancelReminders(for: habit)
+        for entry in habit.entries {
+            context.delete(entry)
+        }
+        habit.entries.removeAll()
+        habit.reminders.removeAll()
+        habit.isArchived = true
+        normalizeOrder()
+        persist()
+    }
+
+    func activateHabit(_ habit: Habit, currentHabits: [Habit]) {
+        guard let context else { return }
+        guard activeHabits(using: currentHabits).count < 3 else { return }
+        habit.isArchived = false
+        habit.order = activeHabits(using: currentHabits).count
         persist()
     }
 

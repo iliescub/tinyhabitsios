@@ -24,7 +24,7 @@ final class HabitStore: ObservableObject {
 
         let descriptor = FetchDescriptor<HabitEntry>(
             predicate: #Predicate { entry in
-                entry.habit.id == habitID &&
+                entry.habit?.id == habitID &&
                 entry.date >= start &&
                 entry.date < end
             },

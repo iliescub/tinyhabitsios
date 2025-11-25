@@ -13,10 +13,13 @@ struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
 
     @StateObject private var viewModel = OnboardingViewModel()
+    @StateObject private var habitsViewModel = SettingsViewModel()
+    @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.order, order: .forward)
+    private var habits: [Habit]
 
-    @Namespace private var habitSelectionNamespace
     @State private var heroAnimate = false
     @State private var sparklePulse = false
+    @State private var currentStep: OnboardingStep = .profile
 
     private var accentThemes: [AccentTheme] { AccentTheme.allCases }
     private var accentTheme: AccentTheme {
@@ -25,6 +28,11 @@ struct OnboardingView: View {
 
     private let curated: [CuratedHabit] = CuratedHabit.onboardingOptions
     private var themeManager = ThemeManager()
+
+    private enum OnboardingStep {
+        case profile
+        case habits
+    }
 
     var body: some View {
         NavigationStack {
@@ -51,7 +59,8 @@ struct OnboardingView: View {
             )
         }
         .onAppear {
-            syncAccentSlider()
+            viewModel.setContext(context)
+            habitsViewModel.setContext(context)
             withAnimation(.spring(response: 0.9, dampingFraction: 0.8).delay(0.1)) {
                 heroAnimate = true
             }
@@ -69,100 +78,102 @@ struct OnboardingView: View {
         }, message: {
             Text("Add your name and age before picking habits.")
         })
-        .onChange(of: storedAccentTheme) { _, _ in
-            syncAccentSlider()
-        }
+//        .onChange(of: storedAccentTheme) { _, _ in
+//            syncAccentSlider()
+//        }
     }
 
     private var stepContent: some View {
         VStack(spacing: 20) {
-            themeSelector
-            profileSection
+    
 
             VStack(spacing: 24) {
-                curatedHabitsSection
-                customHabitSection
-
-                Button {
-                    completeOnboarding()
-                } label: {
-                    Text("Start Tracking")
-                        .font(.headline.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    themeManager.complementary1AccentVariant,
-                                    themeManager.complementary2AccentVariant
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule(style: .continuous))
-                        .shadow(color: themeManager.accent.color.opacity(0.35), radius: 18, y: 10)
-                        .overlay(
-                            Capsule()
-                                .stroke(themeManager.accent.color.opacity(0.5), lineWidth: 1.4)
-                        )
+//                stepIndicator
+                if currentStep == .profile {
+                    ThemeView()
+                    profileStep
+                } else {
+                    HabitsView()
+                        .environmentObject(habitsViewModel)
+                    habitsStep
                 }
-                .disabled(!viewModel.canCompleteOnboarding(accentThemes: accentThemes, storedAccentTheme: storedAccentTheme))
             }
         }
     }
 
-    private var themeSelector: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Theme")
-                .font(.headline)
-                .foregroundStyle(.primary.opacity(0.8))
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 14) {
-                    ForEach(Array(accentThemes.enumerated()), id: \.element.id) { index, theme in
-                        ThemeChip(theme: theme, isSelected: Int(viewModel.accentSliderValue.rounded()) == index) {
-                            viewModel.accentSliderValue = Double(index)
-                            updateAccentTheme(with: Double(index))
-                        }
-                    }
-                }
-            }
-
-            themePreview(gradient: gradientForTheme(accentTheme))
+    private var stepIndicator: some View {
+        HStack(spacing: 12) {
+            stepCircle(isActive: currentStep == .profile, title: "1")
+            stepCircle(isActive: currentStep == .habits, title: "2")
+            Text(currentStep == .profile ? "Profile" : "Habits")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
         }
-        .padding()
-        .background(glassBackground())
-        .shadow(color: themeManager.accent.color.opacity(0.2), radius: 8, y: 4)
     }
 
+    private func stepCircle(isActive: Bool, title: String) -> some View {
+        Circle()
+            .strokeBorder(isActive ? themeManager.accent.color : Color.secondary.opacity(0.4), lineWidth: 2)
+            .background(Circle().fill(isActive ? themeManager.accent.color.opacity(0.2) : Color.clear))
+            .frame(width: 30, height: 30)
+            .overlay(Text(title).font(.caption))
+    }
 
-    private func themePreview(gradient: [Color]) -> some View {
-        RoundedRectangle(cornerRadius: 22, style: .continuous)
-            .fill(
-                LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
-            )
-            .overlay(
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 10) {
-                        Circle().fill(themeManager.accent.color.opacity(0.3)).frame(width: 12, height: 12)
-                        Circle().fill(themeManager.accent.color.opacity(0.5)).frame(width: 12, height: 12)
-                        Circle().fill(themeManager.accent.color.opacity(0.8)).frame(width: 12, height: 12)
-                    }
-                    Text("Live preview")
-                        .font(.caption.bold())
-                        .foregroundStyle(.white.opacity(0.9))
-                    Text("See how buttons & cards will glow with this accent.")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.8))
-                }
-                .padding(14)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            )
-            .frame(maxWidth: .infinity)
-            .frame(height: 100)
-            .shadow(color: gradient.first?.opacity(0.25) ?? .clear, radius: 12, y: 8)
+    private var profileStep: some View {
+        VStack(spacing: 16) {
+            profileSection
+            Button {
+                currentStep = .habits
+            } label: {
+                Text("Next: Choose habits")
+                    .font(.headline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(themeManager.accent.color)
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule(style: .continuous))
+            }
+            .disabled(!viewModel.isProfileComplete)
+            .opacity(viewModel.isProfileComplete ? 1 : 0.5)
+        }
+    }
+    private var habitsStep: some View {
+        VStack(spacing: 12) {
+            Button(action: {
+                currentStep = .profile
+            }) {
+                Label("Back to profile", systemImage: "chevron.left")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+
+            Button {
+                completeOnboarding()
+            } label: {
+                Text("Start Tracking")
+                    .font(.headline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                themeManager.complementary1AccentVariant,
+                                themeManager.complementary2AccentVariant
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundStyle(.white)
+                    .clipShape(Capsule(style: .continuous))
+                    .shadow(color: themeManager.accent.color.opacity(0.35), radius: 18, y: 10)
+                    .overlay(
+                        Capsule()
+                            .stroke(themeManager.accent.color.opacity(0.5), lineWidth: 1.4)
+                    )
+            }
+            .disabled(!canCompleteOnboarding)
+        }
     }
 
     private var heroSection: some View {
@@ -207,140 +218,21 @@ struct OnboardingView: View {
             .foregroundStyle(themeManager.accent.color.opacity(0.8))
         }
         .padding()
-        .background(glassBackground())
+//        .background(glassBackground())
         .shadow(color: themeManager.accent.color.opacity(0.3), radius: 12, y: 8)
     }
 
-    private var curatedHabitsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Curated Habits")
-                .font(.headline)
-
-            VStack(spacing: 12) {
-                ForEach(curated) { habit in
-                    curatedHabitButton(for: habit)
-                }
-                if !viewModel.customHabitName.trimmingCharacters(in: .whitespaces).isEmpty {
-                    customHabitButton
-                }
-            }
-        }
-        .padding()
-        .background(glassBackground())
-    }
-
-    private var customHabitSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Custom habit")
-                .font(.headline)
-            TextField("Custom habit (optional)", text: $viewModel.customHabitName)
-                .textFieldStyle(.roundedBorder)
-                .submitLabel(.done)
-            Stepper("Daily target: \(viewModel.customHabitTarget)", value: $viewModel.customHabitTarget, in: 1...10000, step: 1)
-        }
-        .padding()
-        .background(glassBackground())
-    }
-
-    private func curatedHabitButton(for habit: CuratedHabit) -> some View {
-        let isSelected = viewModel.selectedHabits.contains(habit)
-        return Button {
-            viewModel.toggleSelection(habit)
-        } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill((isSelected ? habit.color.color : Color.secondary.opacity(0.15)))
-                        .frame(width: 48, height: 48)
-                    Image(systemName: habit.icon)
-                        .foregroundStyle(isSelected ? .white : .primary)
-                        .font(.title3)
-                        .symbolEffect(.pulse.byLayer, value: isSelected)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(habit.name)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    Text(isSelected ? "Added to your plan" : "Tap to include")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.white)
-                        .padding(6)
-                        .background(
-                            Circle()
-                                .fill(habit.color.color)
-                                .matchedGeometryEffect(id: habit.id, in: habitSelectionNamespace)
-                        )
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(isSelected ? habit.color.color.opacity(0.15) : Color(.systemBackground))
-                    .shadow(
-                        color: Color.black.opacity(isSelected ? 0.2 : 0.05),
-                        radius: isSelected ? 12 : 4,
-                        y: isSelected ? 8 : 2
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var customHabitButton: some View {
-        let trimmed = viewModel.customHabitName.trimmingCharacters(in: .whitespaces)
-        let isSelected = viewModel.selectedHabits.contains(where: { $0.name.lowercased() == trimmed.lowercased() })
-        return Button {
-            let custom = CuratedHabit(name: trimmed, icon: "sparkles", color: accentTheme, defaultTarget: viewModel.customHabitTarget)
-            viewModel.toggleSelection(custom)
-        } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(isSelected ? accentTheme.color : Color.secondary.opacity(0.15))
-                        .frame(width: 48, height: 48)
-                    Image(systemName: "sparkles")
-                        .foregroundStyle(isSelected ? .white : themeManager.accent.color)
-                        .font(.title3)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(trimmed)
-                        .font(.headline)
-                    Text("Daily target: \(viewModel.customHabitTarget)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.white)
-                        .padding(6)
-                        .background(Circle().fill(accentTheme.color))
-                }
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isSelected ? accentTheme.color.opacity(0.15) : Color(.systemBackground))
-                    .shadow(color: Color.black.opacity(isSelected ? 0.15 : 0.08), radius: isSelected ? 10 : 6, y: isSelected ? 6 : 4)
-            )
-        }
-        .buttonStyle(.plain)
-    }
 
     private func completeOnboarding() {
-        guard viewModel.canCompleteOnboarding(accentThemes: accentThemes, storedAccentTheme: storedAccentTheme) else {
+        guard canCompleteOnboarding else {
             viewModel.showingProfileValidation = true
             return
         }
-        viewModel.save(accentThemes: accentThemes, storedAccentTheme: storedAccentTheme)
         persistProfile()
         hasCompletedOnboarding = true
+        if context.hasChanges {
+            try? context.save()
+        }
     }
 
     private func persistProfile() {
@@ -350,34 +242,9 @@ struct OnboardingView: View {
         storedWeightKg = viewModel.profileWeight
     }
 
-    private func updateAccentTheme(with sliderValue: Double) {
-        let index = max(0, min(accentThemes.count - 1, Int(sliderValue.rounded())))
-        let selectedTheme = accentThemes[index]
-        storedAccentTheme = selectedTheme.rawValue
+    private var canCompleteOnboarding: Bool {
+        viewModel.isProfileComplete && habitsViewModel.activeHabits(using: habits).count > 0 && habitsViewModel.activeHabits(using: habits).count <= 3
     }
 
-    private func syncAccentSlider() {
-        if let index = viewModel.accentIndex(accentThemes: accentThemes, stored: storedAccentTheme) {
-            viewModel.accentSliderValue = Double(index)
-        }
-    }
 
-    private func gradientForTheme(_ theme: AccentTheme) -> [Color] {
-        let base = theme.color
-        let complement = base.complementary
-        return [
-            complement.adjustingBrightness(by: -0.08),
-            complement.adjustingBrightness(by: 0.12)
-        ]
-    }
-
-    private func glassBackground(cornerRadius: CGFloat = 24) -> some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(.ultraThinMaterial)
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.12), radius: 10, y: 8)
-    }
 }

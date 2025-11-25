@@ -3,6 +3,7 @@ import PhotosUI
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @State private var profileImagePickerItem: PhotosPickerItem?
 
     private var accent: Color { AccentTheme(rawValue: viewModel.accentRaw)?.color ?? .blue }
 
@@ -34,19 +35,36 @@ struct ProfileView: View {
             Text("Profile")
                 .font(.headline)
             HStack(spacing: 16) {
-                ZStack {
-                    if let image = viewModel.profileImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        Image(systemName: "person.crop.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .foregroundStyle(accent.opacity(0.6))
-                            .padding(12)
+                let currentImage = viewModel.profileImage
+                PhotosPicker(selection: $profileImagePickerItem, matching: .images, photoLibrary: .shared()) {
+                    ZStack {
+                        if let image = currentImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                        } else {
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundStyle(accent.opacity(0.6))
+                                .padding(12)
+                        }
+                        Circle()
+                            .strokeBorder(Color.white.opacity(0.5), lineWidth: 1.5)
+                            .padding(4)
                     }
                 }
+                .onChange(of: profileImagePickerItem) { _, item in
+                    Task {
+                        if let data = try? await item?.loadTransferable(type: Data.self) {
+                            await MainActor.run {
+                                viewModel.updatePhoto(data: data)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+                .contentShape(Circle())
                 .frame(width: 90, height: 90)
                 .background(Color(.secondarySystemBackground), in: Circle())
 
@@ -60,18 +78,9 @@ struct ProfileView: View {
                     }
                 }
             }
-
-            PhotosPicker(selection: Binding(get: { nil }, set: { item in
-                Task {
-                    if let data = try? await item?.loadTransferable(type: Data.self) {
-                        viewModel.updatePhoto(data: data)
-                    }
-                }
-            }), matching: .images) {
-                Label("Update photo", systemImage: "photo")
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(accent)
+            Text("Tap the avatar to update your photo.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .padding()
         .background(DesignTokens.cardBackground())

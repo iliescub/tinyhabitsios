@@ -43,7 +43,6 @@ struct StatsView: View {
         }
     }
 
-    // MARK: - Sections
 
     private var heroCard: some View {
         HeroHeader(
@@ -155,7 +154,6 @@ struct StatsView: View {
         )
     }
 
-    // MARK: - Small views
 
     private func heroChip(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
