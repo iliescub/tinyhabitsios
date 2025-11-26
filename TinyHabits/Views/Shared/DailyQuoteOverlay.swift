@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DailyQuoteOverlay: View {
     let quote: String
+    let onDismiss: (() -> Void)?
 
     var body: some View {
         ZStack {
@@ -34,6 +35,10 @@ struct DailyQuoteOverlay: View {
                     )
             )
             .padding(32)
+            .onTapGesture {
+                onDismiss?()
+            }
         }
+        .accessibilityAddTraits(.isButton)
     }
 }

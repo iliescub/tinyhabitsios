@@ -19,10 +19,10 @@ final class StatsViewModel: ObservableObject {
 
     func refresh(habits: [Habit], entries: [HabitEntry]) {
         self.activeHabits = habits
-        computeStats(habits: habits, entries: entries)
+        computeStats(entries: entries)
     }
 
-    private func computeStats(habits: [Habit], entries: [HabitEntry]) {
+    private func computeStats(entries: [HabitEntry]) {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let days = (0..<7).map { offset in
@@ -36,21 +36,22 @@ final class StatsViewModel: ObservableObject {
             let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? dayStart.addingTimeInterval(86_400)
 
             let entriesForDay = entries.filter { entry in
-                guard let habit = entry.habit else { return false }
-                return entry.date >= dayStart && entry.date < dayEnd && !habit.isArchived
+                guard entry.habit != nil else { return false }
+                return entry.date >= dayStart && entry.date < dayEnd
             }
 
             let done = entriesForDay.filter { $0.status == .done }.count
-
-            let habitsOnDay: Set<UUID> = Set(entriesForDay.compactMap { $0.habit?.id })
-            let totalHabits = habitsOnDay.isEmpty ? habits.count : habitsOnDay.count
+            let uniqueHabitsForDay: Set<UUID> = Set(entriesForDay.compactMap { $0.habit?.id })
+            let totalHabits = uniqueHabitsForDay.count
 
             let percent = totalHabits == 0 ? 0 : Double(done) / Double(totalHabits)
             stats.append(DayStat(date: day, done: done, total: totalHabits, percent: percent))
         }
 
         weekStats = stats
-        weeklyCompletionPercentString = "\(Int((stats.reduce(0) { $0 + $1.percent } / Double(stats.count)) * 100))%"
+        let daysWithHabits = stats.filter { $0.total > 0 }
+        let average = daysWithHabits.isEmpty ? 0 : (daysWithHabits.reduce(0) { $0 + $1.percent } / Double(daysWithHabits.count))
+        weeklyCompletionPercentString = "\(Int(average * 100))%"
         currentStreak = computeStreak(stats: stats)
         updateBestDay(stats: stats)
     }
@@ -59,6 +60,8 @@ final class StatsViewModel: ObservableObject {
         let reversed = stats.reversed()
         var streak = 0
         for stat in reversed {
+            // Skip days where no habits were active yet.
+            if stat.total == 0 { continue }
             if stat.done > 0 {
                 streak += 1
             } else {
@@ -69,7 +72,9 @@ final class StatsViewModel: ObservableObject {
     }
 
     private func updateBestDay(stats: [DayStat]) {
-        guard let best = stats.max(by: { $0.percent < $1.percent }), best.percent > 0 else {
+        guard let best = stats
+            .filter({ $0.total > 0 })
+            .max(by: { $0.percent < $1.percent }), best.percent > 0 else {
             bestDayTitle = "—"
             bestDayDetail = "Complete a habit to unlock insights."
             return

@@ -14,7 +14,7 @@ final class FocusViewModel: ObservableObject {
     func setContext(_ context: ModelContext) { self.context = context }
 
     func heroMessage(completedCount: Int, total: Int) -> String {
-        if completedCount == 0 { return "Pick one tiny habit and knock it out. Momentum beats motivation." }
+        if completedCount == 0 { return "Pick one habit and knock it out. Momentum beats motivation." }
         if completedCount < total { return "Great start! Keep stacking wins to lock in your streak." }
         return "Perfect day. Enjoy the glow, you earned it."
     }

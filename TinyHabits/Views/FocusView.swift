@@ -84,7 +84,7 @@ struct FocusView: View {
             subtitle: viewModel.heroMessage(completedCount: completedCount, total: displayedHabits.count),
             accent: accentColor,
             quote: nil,
-            imageName: AssetNames.onboardingHero
+            imageName: AssetNames.focusHero
         )
     }
 

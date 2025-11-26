@@ -22,7 +22,7 @@ struct HeroHeader: View {
                 )
                 .shadow(color: accent.opacity(0.25), radius: 20, y: 12)
 
-            HStack(spacing: 16) {
+            HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(title)
                         .font(.title2.bold())
@@ -37,7 +37,7 @@ struct HeroHeader: View {
                             .padding(.top, 4)
                     }
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, 6)
 
                 Spacer()
 

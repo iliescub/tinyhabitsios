@@ -55,10 +55,10 @@ struct SettingsView: View {
     private var hero: some View {
         HeroHeader(
             title: "Tune your experience",
-            subtitle: "Keep themes and habits aligned so staying consistent feels effortless.",
+            subtitle: "Keep themes and habits aligned so achievement feels effortless.",
             accent: accent,
             quote: nil,
-            imageName: AssetNames.onboardingHero
+            imageName: AssetNames.settingsHero
         )
     }
 
@@ -253,6 +253,7 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .tint(accent)
         }
         .padding()
         .background(DesignTokens.cardBackground())
@@ -272,6 +273,8 @@ struct SettingsView: View {
                 storedHeightCm = profile.heightCm
                 storedWeightKg = profile.weightKg
                 accentRaw = profile.accentRaw
+                showDailyQuotes = false
+                enableHaptics = true
                 hasCompletedOnboarding = viewModel.hasCompletedOnboarding
             }
         } message: {

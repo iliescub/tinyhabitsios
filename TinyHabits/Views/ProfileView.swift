@@ -16,11 +16,12 @@ struct ProfileView: View {
                         subtitle: viewModel.quote.isEmpty ? "Small steps, daily. Update your stats and stay motivated." : viewModel.quote,
                         accent: accent,
                         quote: nil,
-                        imageName: AssetNames.onboardingHero
+                        imageName: AssetNames.profileHero
                     )
 
                     photoCard
                     ProfileStatsView(viewModel: viewModel)
+                    HealthKitView()
 //                    motivationCard
                 }
                 .padding()

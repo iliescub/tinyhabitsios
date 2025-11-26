@@ -95,8 +95,16 @@ final class HealthKitManager {
 
         let calendar = Calendar.current
         let end = Date()
-        let start = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: end)) ?? end.addingTimeInterval(-86_400)
-        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictStartDate)
+        // Define a "night" window: from yesterday 6pm to today 2pm to capture typical overnight sleep.
+        let startOfToday = calendar.startOfDay(for: end)
+        guard let start = calendar.date(byAdding: .hour, value: -18, to: startOfToday) else {
+            completion(nil)
+            return
+        }
+        let endWindow = calendar.date(byAdding: .hour, value: 14, to: startOfToday) ?? end
+        let cappedEnd = min(end, endWindow)
+
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: cappedEnd, options: [])
 
         let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
             guard error == nil else {
@@ -116,15 +124,51 @@ final class HealthKitManager {
                     return [HKCategoryValueSleepAnalysis.asleep.rawValue, HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue]
                 }
             }()
-
-            let totalSeconds: TimeInterval = samples?
+            let asleepSamples: [HKCategorySample] = samples?
                 .compactMap { $0 as? HKCategorySample }
                 .filter { asleepValues.contains($0.value) }
-                .reduce(0) { partial, sample in
-                    partial + sample.endDate.timeIntervalSince(sample.startDate)
-                } ?? 0
+                .sorted(by: { $0.startDate < $1.startDate }) ?? []
 
-            let hours = totalSeconds / 3600
+            guard !asleepSamples.isEmpty else {
+                completion(nil)
+                return
+            }
+
+            // Group samples into sessions separated by an awake gap to avoid merging naps.
+            let gapThreshold: TimeInterval = 20 * 60 // 20 minutes
+            var groupedSessions: [[HKCategorySample]] = []
+            var currentSession: [HKCategorySample] = []
+
+            for sample in asleepSamples {
+                if let last = currentSession.last,
+                   sample.startDate.timeIntervalSince(last.endDate) > gapThreshold {
+                    groupedSessions.append(currentSession)
+                    currentSession = []
+                }
+                currentSession.append(sample)
+            }
+            if !currentSession.isEmpty {
+                groupedSessions.append(currentSession)
+            }
+
+            func sessionDuration(_ session: [HKCategorySample]) -> TimeInterval {
+                session.reduce(0) { $0 + $1.endDate.timeIntervalSince($1.startDate) }
+            }
+
+            // Keep sessions that end within the night window (yesterday 6pm to today 2pm).
+            let nightSessions = groupedSessions.filter { session in
+                guard let endDate = session.last?.endDate else { return false }
+                return endDate >= start && endDate <= cappedEnd
+            }
+
+            let candidateSessions = nightSessions.isEmpty ? groupedSessions : nightSessions
+
+            guard let primarySession = candidateSessions.max(by: { sessionDuration($0) < sessionDuration($1) }) else {
+                completion(nil)
+                return
+            }
+
+            let hours = sessionDuration(primarySession) / 3600
             completion(hours > 0 ? hours : nil)
         }
 

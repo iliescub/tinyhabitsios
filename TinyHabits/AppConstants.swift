@@ -14,4 +14,8 @@ enum RemoteImageURLs {
 
 enum AssetNames {
     static let onboardingHero = "OnboardingHero"
+    static let focusHero = "FocusHero"
+    static let profileHero = "ProfileHero"
+    static let statsHero = "StatsHero"
+    static let settingsHero = "SettingsHero"
 }

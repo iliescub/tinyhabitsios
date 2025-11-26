@@ -13,6 +13,7 @@ struct HabitsView: View {
     private var accentTheme: AccentTheme {
         AccentTheme(rawValue: storedAccentTheme) ?? .blue
     }
+    private var accentColor: Color { accentTheme.color }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -51,12 +52,14 @@ struct HabitsView: View {
                         Label(icon, systemImage: icon).tag(icon)
                     }
                 }
+                .tint(accentColor)
                 .pickerStyle(.menu)
                 Picker("Accent", selection: $viewModel.newHabitColor) {
                     ForEach(AccentTheme.allCases) { theme in
                         Text(theme.rawValue.capitalized).tag(theme)
                     }
                 }
+                .tint(accentColor)
                 Stepper("Daily target: \(viewModel.newHabitTarget)", value: $viewModel.newHabitTarget, in: 1...10000, step: 1)
 
                 Button {
@@ -66,7 +69,7 @@ struct HabitsView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(accentTheme.color)
+                .tint(accentColor)
                 .disabled(viewModel.newHabitName.trimmingCharacters(in: .whitespaces).isEmpty || viewModel.activeHabits(using: habits).count >= 3)
             }
             .padding()

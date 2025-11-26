@@ -14,11 +14,16 @@ struct MainTabView: View {
     @EnvironmentObject private var swipeGuard: SwipeGuard
     @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.order, order: .forward)
     private var habits: [Habit]
+    @AppStorage("accentTheme") private var accentRaw: String = AccentTheme.blue.rawValue
 
     @State private var selectedTab: Int = 0
 
     private let tabCount = 4
     private var dragThreshold: CGFloat { 50 }
+
+    private var accent: Color {
+        AccentTheme(rawValue: accentRaw)?.color ?? .blue
+    }
 
     init() {}
     var body: some View {
@@ -47,6 +52,7 @@ struct MainTabView: View {
                 }
                 .tag(3)
         }
+        .tint(accent)
         .coordinateSpace(name: "MainTabSpace")
         .highPriorityGesture(
             DragGesture(minimumDistance: dragThreshold, coordinateSpace: .named("MainTabSpace"))

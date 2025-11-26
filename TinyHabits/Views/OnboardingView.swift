@@ -25,8 +25,10 @@ struct OnboardingView: View {
     private var accentTheme: AccentTheme {
         AccentTheme(rawValue: storedAccentTheme) ?? .blue
     }
-
-    private var themeManager = ThemeManager()
+    private var accentColor: Color { accentTheme.color }
+    private var complementaryAccent: Color { accentColor.complementary }
+    private var complementaryAccentVariant1: Color { complementaryAccent.adjustingBrightness(by: -0.1) }
+    private var complementaryAccentVariant2: Color { complementaryAccent.adjustingBrightness(by: 0.1) }
 
     private enum OnboardingStep {
         case profile
@@ -48,8 +50,8 @@ struct OnboardingView: View {
             .background(
                 LinearGradient(
                     colors: [
-                        Color.blue.opacity(0.15),
-                        Color.purple.opacity(0.05)
+                        accentColor.opacity(0.15),
+                        complementaryAccent.opacity(0.05)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -71,9 +73,6 @@ struct OnboardingView: View {
         }, message: {
             Text("Add your name and age before picking habits.")
         })
-//        .onChange(of: storedAccentTheme) { _, _ in
-//            syncAccentSlider()
-//        }
     }
 
     private var stepContent: some View {
@@ -106,8 +105,8 @@ struct OnboardingView: View {
 
     private func stepCircle(isActive: Bool, title: String) -> some View {
         Circle()
-            .strokeBorder(isActive ? themeManager.accent.color : Color.secondary.opacity(0.4), lineWidth: 2)
-            .background(Circle().fill(isActive ? themeManager.accent.color.opacity(0.2) : Color.clear))
+            .strokeBorder(isActive ? accentColor : Color.secondary.opacity(0.4), lineWidth: 2)
+            .background(Circle().fill(isActive ? accentColor.opacity(0.2) : Color.clear))
             .frame(width: 30, height: 30)
             .overlay(Text(title).font(.caption))
     }
@@ -122,7 +121,7 @@ struct OnboardingView: View {
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(themeManager.accent.color)
+                    .background(accentColor)
                     .foregroundStyle(.white)
                     .clipShape(Capsule(style: .continuous))
             }
@@ -139,6 +138,8 @@ struct OnboardingView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
+            .tint(accentColor)
+//            .tint(accentColor)
 
             Button {
                 completeOnboarding()
@@ -147,23 +148,23 @@ struct OnboardingView: View {
                     .font(.headline.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(
-                        LinearGradient(
-                            colors: [
-                                themeManager.complementary1AccentVariant,
-                                themeManager.complementary2AccentVariant
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+                    .background(accentColor
+//                        LinearGradient(
+//                            colors: [
+//                                complementaryAccentVariant1,
+//                                complementaryAccentVariant2
+//                            ],
+//                            startPoint: .leading,
+//                            endPoint: .trailing
+//                        )
                     )
                     .foregroundStyle(.white)
                     .clipShape(Capsule(style: .continuous))
-                    .shadow(color: themeManager.accent.color.opacity(0.35), radius: 18, y: 10)
-                    .overlay(
-                        Capsule()
-                            .stroke(themeManager.accent.color.opacity(0.5), lineWidth: 1.4)
-                    )
+//                    .shadow(color: accentColor.opacity(0.35), radius: 18, y: 10)
+//                    .overlay(
+//                        Capsule()
+//                            .stroke(accentColor.opacity(0.5), lineWidth: 1.4)
+//                    )
             }
             .disabled(!canCompleteOnboarding)
         }
@@ -173,8 +174,8 @@ struct OnboardingView: View {
         HeroHeader(
             title: "TinyHabits",
             subtitle: "Pick up to 3 habits to focus on daily.",
-            accent: themeManager.accent.color,
-            quote: "Small steps. Big change.",
+            accent: accentColor,
+            quote: "Small steps. Big changes.",
             imageName: AssetNames.onboardingHero
         )
         .overlay(
@@ -192,12 +193,12 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Create Your Profile")
                 .font(.headline)
-                .foregroundStyle(themeManager.accent.color.opacity(0.8))
+                .foregroundStyle(accentColor.opacity(0.8))
 
-            TextField("Full name", text: $viewModel.profileName)
+            TextField("Add your name before moving to habits", text: $viewModel.profileName)
                 .textFieldStyle(.roundedBorder)
                 .textContentType(.name)
-                .foregroundStyle(themeManager.accent.color.opacity(0.8))
+                .foregroundStyle(accentColor.opacity(0.8))
             ProfileStatsView(
                 age: $viewModel.profileAge,
                 heightCm: $viewModel.profileHeight,
@@ -207,7 +208,7 @@ struct OnboardingView: View {
         }
         .padding()
 //        .background(glassBackground())
-        .shadow(color: themeManager.accent.color.opacity(0.3), radius: 12, y: 8)
+        .shadow(color: accentColor.opacity(0.3), radius: 12, y: 8)
     }
 
 

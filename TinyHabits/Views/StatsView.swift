@@ -21,6 +21,25 @@ struct StatsView: View {
             accent.adjustingBrightness(by: 0.12)
         ]
     }
+    private var habitsFingerprint: Int {
+        var hasher = Hasher()
+        for habit in habits {
+            hasher.combine(habit.id)
+            hasher.combine(habit.isArchived)
+            hasher.combine(habit.createdAt.timeIntervalSinceReferenceDate)
+        }
+        return hasher.finalize()
+    }
+    private var entriesFingerprint: Int {
+        var hasher = Hasher()
+        for entry in entries {
+            hasher.combine(entry.id)
+            hasher.combine(entry.statusRaw)
+            hasher.combine(entry.progressValue)
+            hasher.combine(entry.date.timeIntervalSinceReferenceDate)
+        }
+        return hasher.finalize()
+    }
 
     var body: some View {
         NavigationStack {
@@ -41,6 +60,12 @@ struct StatsView: View {
             viewModel.setContext(context)
             viewModel.refresh(habits: habits, entries: entries)
         }
+        .onChange(of: habitsFingerprint) { _, _ in
+            viewModel.refresh(habits: habits, entries: entries)
+        }
+        .onChange(of: entriesFingerprint) { _, _ in
+            viewModel.refresh(habits: habits, entries: entries)
+        }
     }
 
 
@@ -50,7 +75,7 @@ struct StatsView: View {
             subtitle: "\(heroTitle) · \(heroSubtitle)",
             accent: accent,
             quote: nil,
-            imageName: AssetNames.onboardingHero
+            imageName: AssetNames.statsHero
         )
     }
 
