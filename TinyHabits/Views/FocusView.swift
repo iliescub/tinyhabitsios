@@ -58,9 +58,14 @@ struct FocusView: View {
             .navigationTitle("Focus")
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
         }
-        .onAppear {
+        .task {
+            // Set context immediately when view loads
             viewModel.setContext(context)
             viewModel.loadQuote(showDailyQuotes: showDailyQuotes)
+        }
+        .onChange(of: context) { _, newContext in
+            // Update context if it changes
+            viewModel.setContext(newContext)
         }
     }
 

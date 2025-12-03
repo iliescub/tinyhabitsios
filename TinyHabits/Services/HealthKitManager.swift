@@ -80,7 +80,9 @@ final class HealthKitManager {
                 completion(nil)
                 return
             }
-            let bpm = sample.quantity.doubleValue(for: HKUnit(from: "count/min"))
+            // Use proper HealthKit unit constants instead of string-based initialization
+            let bpmUnit = HKUnit.count().unitDivided(by: .minute())
+            let bpm = sample.quantity.doubleValue(for: bpmUnit)
             completion(bpm)
         }
         healthStore.execute(query)

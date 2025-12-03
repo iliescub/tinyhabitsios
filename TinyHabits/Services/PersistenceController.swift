@@ -35,7 +35,9 @@ final class PersistenceController {
 
     private static var storeURL: URL {
         let manager = FileManager.default
-        let appSupport = manager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = manager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            fatalError("Unable to locate application support directory")
+        }
         let directory = appSupport.appendingPathComponent("TinyHabits", isDirectory: true)
         try? manager.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory.appendingPathComponent("TinyHabitsModel.sqlite")

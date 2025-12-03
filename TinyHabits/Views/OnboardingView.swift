@@ -59,8 +59,15 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
             )
         }
-        .onAppear {
+        .task {
+            // Set context immediately when view loads
             habitsViewModel.setContext(context)
+        }
+        .onChange(of: context) { _, newContext in
+            // Update context if it changes
+            habitsViewModel.setContext(newContext)
+        }
+        .onAppear {
             withAnimation(.spring(response: 0.9, dampingFraction: 0.8).delay(0.1)) {
                 heroAnimate = true
             }

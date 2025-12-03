@@ -31,13 +31,26 @@ final class HabitStore: ObservableObject {
             sortBy: [SortDescriptor(\HabitEntry.date, order: .reverse)]
         )
 
+        // Check for existing entry
         if let existing = try? context.fetch(descriptor).first {
             return existing
         }
 
+        // Create new entry
         let entry = HabitEntry(date: date, status: .pending, habit: habit, progressValue: 0)
         context.insert(entry)
-        persist(context)
+
+        // Save immediately to prevent race conditions
+        do {
+            try context.save()
+        } catch {
+            // If save fails (e.g., due to conflict), try to fetch the entry that was created by another call
+            print("HabitStore save error: \(error)")
+            if let existing = try? context.fetch(descriptor).first {
+                return existing
+            }
+        }
+
         return entry
     }
 

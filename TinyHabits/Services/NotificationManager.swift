@@ -47,14 +47,24 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     func isAuthorized() async -> Bool {
         await withCheckedContinuation { continuation in
-            notificationCenter.getNotificationSettings { settings in
+            notificationCenter.getNotificationSettings { [weak self] settings in
+                guard let self else {
+                    continuation.resume(returning: false)
+                    return
+                }
                 continuation.resume(returning: self.isAuthorized(status: settings.authorizationStatus))
             }
         }
     }
 
     func fetchAuthorizationStatus(completion: @escaping (Bool) -> Void) {
-        notificationCenter.getNotificationSettings { settings in
+        notificationCenter.getNotificationSettings { [weak self] settings in
+            guard let self else {
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+                return
+            }
             self.dispatchToMain {
                 completion(self.isAuthorized(status: settings.authorizationStatus))
             }
@@ -121,7 +131,8 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
     
     func rescheduleAll(for habits: [Habit]) {
-        ensureAuthorization { granted, _ in
+        ensureAuthorization { [weak self] granted, _ in
+            guard let self else { return }
             guard granted else { return }
             for habit in habits where !habit.reminders.isEmpty && !habit.isArchived {
                 self.scheduleReminders(for: habit)

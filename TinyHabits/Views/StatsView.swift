@@ -14,6 +14,20 @@ struct StatsView: View {
 
     @StateObject private var viewModel = StatsViewModel()
 
+    @State private var habitsFingerprint: Int = 0
+    @State private var entriesFingerprint: Int = 0
+
+    // Simple fingerprint for detecting entry changes
+    private var entriesChangeDetector: Int {
+        var hasher = Hasher()
+        for entry in entries {
+            hasher.combine(entry.id)
+            hasher.combine(entry.statusRaw)
+            hasher.combine(entry.progressValue)
+        }
+        return hasher.finalize()
+    }
+
     private var accent: Color { AccentTheme(rawValue: accentRaw)?.color ?? .blue }
     private var accentGradient: [Color] {
         [
@@ -21,7 +35,8 @@ struct StatsView: View {
             accent.adjustingBrightness(by: 0.12)
         ]
     }
-    private var habitsFingerprint: Int {
+
+    private func computeHabitsFingerprint() -> Int {
         var hasher = Hasher()
         for habit in habits {
             hasher.combine(habit.id)
@@ -30,7 +45,8 @@ struct StatsView: View {
         }
         return hasher.finalize()
     }
-    private var entriesFingerprint: Int {
+
+    private func computeEntriesFingerprint() -> Int {
         var hasher = Hasher()
         for entry in entries {
             hasher.combine(entry.id)
@@ -56,15 +72,39 @@ struct StatsView: View {
             .navigationTitle("Stats")
             .navigationBarTitleDisplayMode(.large)
         }
-        .onAppear {
+        .task {
+            // Set context and compute initial fingerprints
             viewModel.setContext(context)
+            habitsFingerprint = computeHabitsFingerprint()
+            entriesFingerprint = computeEntriesFingerprint()
             viewModel.refresh(habits: habits, entries: entries)
         }
-        .onChange(of: habitsFingerprint) { _, _ in
-            viewModel.refresh(habits: habits, entries: entries)
+        .onChange(of: context) { _, newContext in
+            viewModel.setContext(newContext)
         }
-        .onChange(of: entriesFingerprint) { _, _ in
-            viewModel.refresh(habits: habits, entries: entries)
+        .onChange(of: habits.count) { _, _ in
+            // Recalculate fingerprint when habit count changes
+            let newFingerprint = computeHabitsFingerprint()
+            if newFingerprint != habitsFingerprint {
+                habitsFingerprint = newFingerprint
+                viewModel.refresh(habits: habits, entries: entries)
+            }
+        }
+        .onChange(of: entries.count) { _, _ in
+            // Recalculate fingerprint when entry count changes
+            let newFingerprint = computeEntriesFingerprint()
+            if newFingerprint != entriesFingerprint {
+                entriesFingerprint = newFingerprint
+                viewModel.refresh(habits: habits, entries: entries)
+            }
+        }
+        .onChange(of: entriesChangeDetector) { _, _ in
+            // Detect changes to entry status or progress (not just count)
+            let newFingerprint = computeEntriesFingerprint()
+            if newFingerprint != entriesFingerprint {
+                entriesFingerprint = newFingerprint
+                viewModel.refresh(habits: habits, entries: entries)
+            }
         }
     }
 

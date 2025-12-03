@@ -10,6 +10,9 @@ struct HabitDetailView: View {
 
     let habit: Habit
 
+    // Query all entries to ensure SwiftData tracks changes
+    @Query(sort: \HabitEntry.date, order: .reverse) private var allEntries: [HabitEntry]
+
     private var accent: Color {
         AccentTheme(rawValue: habit.accentColorKey)?.color ?? AccentTheme(rawValue: accentRaw)?.color ?? .blue
     }
@@ -17,6 +20,8 @@ struct HabitDetailView: View {
     @State private var reminderTime: Date = Date()
     @State private var reminderEnabled: Bool = false
     @State private var showingPermissionAlert = false
+    @State private var saveError: String?
+    @State private var showingSaveErrorAlert = false
 //    @State private var stepCount: Int?
 //    @State private var heartRate: Double?
 //    @State private var sleepHours: Double?
@@ -27,7 +32,8 @@ struct HabitDetailView: View {
     @Environment(\.openURL) private var openURL
 
     private var entries: [HabitEntry] {
-        habit.entries.sorted { $0.date > $1.date }
+        // Filter from @Query results to ensure SwiftData change tracking
+        allEntries.filter { $0.habit?.id == habit.id }
     }
     
     private var todayEntry: HabitEntry? {
@@ -42,9 +48,9 @@ struct HabitDetailView: View {
             VStack(spacing: 20) {
                 header
 
-                streakCard
-
                 dailyAchievement
+                
+                streakCard
 
                 recentHistory
 
@@ -68,6 +74,11 @@ struct HabitDetailView: View {
         .navigationTitle(habit.name)
         .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .alert("Save Failed", isPresented: $showingSaveErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(saveError ?? "Unable to save changes. Please try again.")
+        }
     }
 
     private var header: some View {
@@ -296,7 +307,12 @@ struct HabitDetailView: View {
         entry.progressValue = clamped
         entry.status = clamped >= target ? .done : .pending
         if enableHaptics { HapticManager.shared.play(.light) }
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            saveError = "Failed to save progress: \(error.localizedDescription)"
+            showingSaveErrorAlert = true
+        }
     }
 
 //    private func healthMetric(title: String, value: String, detail: String) -> some View {
@@ -460,7 +476,8 @@ struct HabitDetailView: View {
     private var last7Days: [Date] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        return (0..<7).compactMap { calendar.date(byAdding: .day, value: -$0, to: today) }.reversed()
+        // Returns [today, yesterday, 2 days ago, ..., 6 days ago] (newest to oldest)
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: -$0, to: today) }
     }
 
     private func status(on date: Date) -> HabitStatus {
@@ -479,10 +496,16 @@ struct HabitDetailView: View {
     private var currentStreak: Int {
         let calendar = Calendar.current
         var streak = 0
-        for day in last7Days.reversed() {
-            if status(on: day) == .done {
+        // Iterate from newest (today) to oldest, counting consecutive done days
+        for day in last7Days {
+            let dayStatus = status(on: day)
+            if dayStatus == .done {
                 streak += 1
+            } else if dayStatus == .skipped {
+                // Skipped days always break the streak, even if it's today
+                break
             } else if !calendar.isDateInToday(day) {
+                // Pending days in the past break the streak, but not today
                 break
             }
         }
@@ -498,8 +521,11 @@ struct HabitDetailView: View {
             if entry.status == .done {
                 current += 1
                 best = max(best, current)
+            } else if entry.status == .skipped {
+                // Skipped days always break the streak, even if it's today
+                current = 0
             } else {
-                // reset when skipped/pending
+                // Pending days only break the streak if they're in the past
                 if !calendar.isDateInToday(entry.date) {
                     current = 0
                 }
@@ -567,7 +593,13 @@ struct HabitDetailView: View {
         } else {
             NotificationManager.shared.cancelReminders(for: habit)
             habit.reminders.removeAll()
-            try? context.save()
+            do {
+                try context.save()
+            } catch {
+                saveError = "Failed to remove reminder: \(error.localizedDescription)"
+                showingSaveErrorAlert = true
+                reminderEnabled = true
+            }
         }
     }
 
@@ -603,7 +635,9 @@ struct HabitDetailView: View {
             var components = DateComponents()
             components.hour = first.hour
             components.minute = first.minute
-            reminderTime = Calendar.current.date(from: components) ?? Date()
+            // Use a sensible default time (8:00 AM) if date creation fails
+            let defaultTime = Calendar.current.date(from: DateComponents(hour: 8, minute: 0)) ?? Date()
+            reminderTime = Calendar.current.date(from: components) ?? defaultTime
         } else {
             reminderEnabled = false
             reminderTime = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date()) ?? Date()

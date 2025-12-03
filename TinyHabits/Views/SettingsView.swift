@@ -293,13 +293,4 @@ struct SettingsView: View {
         let target = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return viewModel.activeHabits(using: habits).contains { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == target }
     }
-
-    private func saveContext() {
-        guard context.hasChanges else { return }
-        do {
-            try context.save()
-        } catch {
-            print("SettingsView save error: \(error)")
-        }
-    }
 }

@@ -7,6 +7,17 @@ enum HabitStatus: Int, Codable {
     case skipped = 2
 }
 
+enum HabitEntryError: Error {
+    case missingHabit
+
+    var localizedDescription: String {
+        switch self {
+        case .missingHabit:
+            return "Habit entry is missing its associated habit"
+        }
+    }
+}
+
 @Model
 final class HabitEntry {
     @Attribute(.unique) var id: UUID
@@ -14,11 +25,23 @@ final class HabitEntry {
     var statusRaw: Int
     var progressValue: Int
 
+    /// The associated habit for this entry.
+    /// Note: This is optional due to SwiftData inverse relationship requirements,
+    /// but should never be nil in practice. Use `validatedHabit()` for safer access.
     @Relationship(inverse: \Habit.entries) var habit: Habit?
 
     var status: HabitStatus {
         get { HabitStatus(rawValue: statusRaw) ?? .pending }
         set { statusRaw = newValue.rawValue }
+    }
+
+    /// Returns the associated habit or throws an error if nil.
+    /// This should never fail in normal operation as every entry must have a habit.
+    func validatedHabit() throws -> Habit {
+        guard let habit = habit else {
+            throw HabitEntryError.missingHabit
+        }
+        return habit
     }
 
     init(

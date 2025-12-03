@@ -48,12 +48,16 @@ final class FocusViewModel: ObservableObject {
 
     func toggleDone(for habit: Habit) {
         guard let entry = todayEntry(for: habit) else { return }
-        let wasDone = entry.status == .done
-        entry.status = wasDone ? .pending : .done
+
+        // Handle all three status states explicitly
         if entry.status == .done {
-            entry.progressValue = max(entry.progressValue, max(1, habit.dailyTarget))
-        } else if wasDone {
+            // Unmarking as done: reset to pending with zero progress
+            entry.status = .pending
             entry.progressValue = 0
+        } else {
+            // Marking as done (from .pending or .skipped): set progress to at least target
+            entry.status = .done
+            entry.progressValue = max(entry.progressValue, max(1, habit.dailyTarget))
         }
         persist()
     }

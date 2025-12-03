@@ -40,7 +40,9 @@ final class StatsViewModel: ObservableObject {
                 return entry.date >= dayStart && entry.date < dayEnd
             }
 
-            let done = entriesForDay.filter { $0.status == .done }.count
+            // Count unique habits that are done (not total entries)
+            let doneHabits: Set<UUID> = Set(entriesForDay.filter { $0.status == .done }.compactMap { $0.habit?.id })
+            let done = doneHabits.count
             let uniqueHabitsForDay: Set<UUID> = Set(entriesForDay.compactMap { $0.habit?.id })
             let totalHabits = uniqueHabitsForDay.count
 

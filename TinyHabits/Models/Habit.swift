@@ -59,7 +59,7 @@ extension Habit {
         [
             Habit(name: "Drink Water", iconSystemName: "drop.fill", accentColorKey: AccentTheme.blue.rawValue, order: 0, dailyTarget: 2000),
             Habit(name: "Stretch", iconSystemName: "figure.cooldown", accentColorKey: AccentTheme.green.rawValue, order: 1, dailyTarget: 5),
-            Habit(name: "Read 10 Minutes", iconSystemName: "book.fill", accentColorKey: AccentTheme.orange.rawValue, order: 2, dailyTarget: 30),
+            Habit(name: "Read", iconSystemName: "book.fill", accentColorKey: AccentTheme.orange.rawValue, order: 2, dailyTarget: 30),
             Habit(name: "Walk", iconSystemName: "figure.walk", accentColorKey: AccentTheme.green.rawValue, order: 3, dailyTarget: 5000),
             Habit(name: "Meditate", iconSystemName: "sparkles", accentColorKey: AccentTheme.blue.rawValue, order: 4, dailyTarget: 20)
         ]

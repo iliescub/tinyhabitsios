@@ -73,6 +73,14 @@ struct ProfileView: View {
                     TextField("Full name", text: $viewModel.name)
                         .textContentType(.name)
                         .textFieldStyle(.roundedBorder)
+                        .onChange(of: viewModel.name) { _, newValue in
+                            // Limit to 50 characters and trim excessive whitespace
+                            let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+                            let limited = String(trimmed.prefix(50))
+                            if limited != newValue {
+                                viewModel.name = limited
+                            }
+                        }
 //                    HStack {
 //                        Text("Age: \(viewModel.age)")
 //                        Slider(value: Binding(get: { Double(viewModel.age) }, set: { viewModel.age = Int($0.rounded()) }), in: 13...100, step: 1)
