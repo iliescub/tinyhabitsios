@@ -8,19 +8,22 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 
 ## Layout
 - `TinyHabits/` — current SwiftUI app (being migrated; see the gap analysis in the spec).
-- `Packages/HabitCore/` — shared logic for app, widgets, intents, Watch: SwiftData `SchemaV1`, `DayKey`,
-  `DayEvaluator`, `StreakCalculator`, `GraduationEvaluator`, `HabitWriter` (single writer), packs (JSON).
+- `Packages/HabitCore/` — local package with two products:
+  - `HabitCore`: SwiftData `SchemaV1`, `DayKey`, `DayEvaluator`, `StreakCalculator`, `GraduationEvaluator`, write API, packs (JSON).
+  - `FledgeUI`: `FledgeTheme` tokens, `HabitRing`, `SkyBackground`, `HabitCardModel`, `TodaySummary` (shared with widgets).
 - Planned targets: `WidgetsExtension` (WidgetKit + ControlWidget), Watch app in 1.1.
 
 ## Rules
 - Product: never more than `SlotPolicy.maxActive` (3) active habits; no paid tier unlocks more.
-- All writes go through `HabitWriter`; after a write reload widgets/controls and run the reminder reconciler.
+- All writes go through the HabitCore write API: `ModelContext` extension (`addHabit`, `setDone`, `skip`, `record`, `pause`,
+  `resume`, `graduate`, `deleteHabit`) on the main context, or `HabitWriter` (same code) off the main actor.
+  After a write reload widgets/controls and run the reminder reconciler (from M2/M3).
 - One `DayLog` per habit per `DayKey` ("yyyy-MM-dd", day ends at 3 AM by default). Don't query by `Date` ranges.
 - Manual/widget/intent "done" is sticky; HealthKit values never undo it.
 - Schema must stay CloudKit-compatible: no `@Attribute(.unique)`, defaults on every property, optional relationships.
   Change the schema only through a new `VersionedSchema` + migration stage. Never reset the store.
 - Health data never leaves the device; never put raw Health values in iCloud (App Review 5.1.3(ii)).
-- Swift 6 strict concurrency, `@Observable` view models, iOS 18 minimum. Business logic belongs in HabitCore with
+- Swift 6 language mode (app default isolation MainActor), `@Observable` view models, iOS 18.6 minimum until DEC-1. Business logic belongs in HabitCore with
   Swift Testing coverage, not in views.
 
 ## Design
@@ -32,4 +35,6 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 ## Commands
 - Tests (build dir outside Documents, which is iCloud-synced and breaks codesign with xattrs):
   `cd Packages/HabitCore && swift test --scratch-path /tmp/habitcore-build`
-- App: open `TinyHabits.xcodeproj`, scheme `TinyHabits`.
+- App: open `TinyHabits.xcodeproj`, scheme `TinyHabits` (app display name "Fledge").
+- CLI build (DerivedData outside Documents): `xcodebuild -project TinyHabits.xcodeproj -scheme TinyHabits -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/fledge-dd build`
+- Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`.

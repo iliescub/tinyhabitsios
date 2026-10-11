@@ -6,7 +6,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 ## Start here (status as of 2026-10-11)
 **Decided:** name **Fledge** · positioning: max 3 habits, auto-completed from Apple Health, graduation (Option A) · niche packs (Option B) decided 2027-02-15 · release 2026-12-15.
 **Done:** spec + roadmap (link above, offline copy in `docs/SPEC.md`) · `CLAUDE.md` · this backlog · `Packages/HabitCore` (19 tests passing) · `.gitignore`.
-**Not done yet:** nothing is committed; HabitCore is not linked into the Xcode project; the app still runs on the old models.
+**M0 status (2026-10-11):** app runs on HabitCore/FledgeUI with the new Today screen; 33 package tests pass; debug launch argument `-FledgeDemoData` shows sample habits from an in-memory store. Remaining in M0: CI-1, ACC-1 (yours). HealthKit code was removed and is rewritten in M2 (old sleep-session logic: `git show a43acee:TinyHabits/Services/HealthKitManager.swift`).
 **Design:** brand + full UI concept in `docs/DESIGN.md`, icon in `Design/Icon/` (2026-10-11). HTML mockups: cloud session → `Design/mockups/`.
 **Open decisions:** DEC-1 minimum iOS 26 (recommended in DESIGN.md §4) · prices ($19.99/yr, $39.99 lifetime proposed) · analytics (TelemetryDeck or none) · iPhone-only + English-only assumed.
 
@@ -21,7 +21,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [ ] **DEC-1** Decide minimum iOS 26 (recommended) vs 18; update CORE-2 accordingly (0.1d)
 - [ ] **DES-7** HTML mockups of every screen, state and widget → `Design/mockups/` (cloud) — review and comment (0.5d review)
 - [ ] **DES-2** Build `Fledge.icon` in Icon Composer from the two layers; check all 6 appearances on device (0.5d)
-- [ ] **DES-1** `FledgeTheme` + asset-catalog colours (light/dark) replacing `DesignTokens`/`Theme`/`ThemeView` (0.5d, M0)
+- [x] **DES-1** ✅ `FledgeTheme` in `FledgeUI` (code-defined light/dark colours, shared with widgets), plus `HabitRing`, `SkyBackground`, `HabitCardModel`/`TodaySummary` (tested); new app icon + accent colour in the asset catalog
 - [ ] **DES-3** Bird vector in 4 poses (sitting, ready, flying, sleeping) as SF-Symbol-style SVG/PDF assets (1d, cloud draft + local polish)
 - [ ] **DES-4** `HabitRing` component (app + widgets, done animation, `widgetAccentable`) (1d, M1)
 - [ ] **DES-5** `SkyHeader` time-of-day gradient with Reduce Transparency fallback (0.25d, M1)
@@ -31,11 +31,11 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 ## M0 Foundations — Oct 12 → Oct 25
 - [ ] **ACC-1** Apple setup: App Group, HealthKit + Background Delivery, app record, name reserved (0.5d)
 - [x] **CORE-1** ✅ `HabitCore` package: SchemaV1, DayKey, DayEvaluator, StreakCalculator, GraduationEvaluator, HabitWriter, Essentials pack, 19 tests
-- [ ] **CORE-2** Link HabitCore into the app target; deployment target iOS 18.0; Swift 6 language mode (0.5d)
-- [ ] **CORE-3** App uses `SharedStore.makeContainer()`; delete `PersistenceController` reset path, old `Habit`/`HabitEntry`/`HabitProgress` (1d)
+- [x] **CORE-2** ✅ HabitCore + FledgeUI linked as local package; Swift 6 language mode; iPhone-only, portrait; display name Fledge; entitlements (App Group, HealthKit background delivery). Deployment target stays 18.6 until DEC-1
+- [x] **CORE-3** ✅ App uses `SharedStore.makeContainer()` (App Group store, error screen instead of reset); old models/persistence deleted; write API = `ModelContext` extension shared with `HabitWriter`
   - The app's own `Habit` type conflicts with `HabitCore.Habit` — remove the old models in the same change.
-- [ ] **CLEAN-1** Remove Profile (`ProfileView`, `ProfileViewModel`, `ProfileImagePicker`, `ProfileStatsView`), quote overlay (`DailyQuoteOverlay`, `MotivationProvider`, `MotivationBanner`), `SwipeGuard` + swipe gesture, `HealthKitView`, Unsplash URLs (0.5d)
-- [ ] **NAV-1** Single Today screen with toolbar buttons for Graduates and Settings (replaces `MainTabView`) (0.5d)
+- [x] **CLEAN-1** ✅ Removed Profile (`ProfileView`, `ProfileViewModel`, `ProfileImagePicker`, `ProfileStatsView`), quote overlay (`DailyQuoteOverlay`, `MotivationProvider`, `MotivationBanner`), `SwipeGuard` + swipe gesture, `HealthKitView`, Unsplash URLs (0.5d)
+- [x] **NAV-1** ✅ Single Today screen (sky header, 3 slot cards, glass toolbar → Flown/Settings sheets, floating Add) replacing `MainTabView`; basic Add (template grid), Flown and Settings (paused habits) sheets
 - [ ] **CI-1** Xcode Cloud or GitHub Actions: build + `swift test` on push (0.5d)
 
 ## M1 Core loop — Oct 26 → Nov 8

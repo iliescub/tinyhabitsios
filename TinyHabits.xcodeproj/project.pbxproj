@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F1ED6E0000000000000000A4 /* HabitCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A2 /* HabitCore */; };
+		F1ED6E0000000000000000A5 /* FledgeUI in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A3 /* FledgeUI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		43214C3A2ECE19FF001C8249 /* TinyHabits.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TinyHabits.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +28,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1ED6E0000000000000000A4 /* HabitCore in Frameworks */,
+				F1ED6E0000000000000000A5 /* FledgeUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +72,8 @@
 			);
 			name = TinyHabits;
 			packageProductDependencies = (
+				F1ED6E0000000000000000A2 /* HabitCore */,
+				F1ED6E0000000000000000A3 /* FledgeUI */,
 			);
 			productName = TinyHabits;
 			productReference = 43214C3A2ECE19FF001C8249 /* TinyHabits.app */;
@@ -94,6 +103,9 @@
 			);
 			mainGroup = 43214C312ECE19FE001C8249;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 43214C3B2ECE19FF001C8249 /* Products */;
 			projectDirPath = "";
@@ -257,13 +269,12 @@
 				DEVELOPMENT_TEAM = USASBWPY7T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow TinyHabits to read step counts and heart rate so it can show daily context.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow TinyHabits to access Health data for tracking connections.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Fledge;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Fledge reads only the Health data for habits you choose, such as steps or mindful minutes, to complete them for you. It stays on your iPhone.";
+								INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -277,8 +288,8 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -293,13 +304,12 @@
 				DEVELOPMENT_TEAM = USASBWPY7T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Allow TinyHabits to read step counts and heart rate so it can show daily context.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Allow TinyHabits to access Health data for tracking connections.";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Fledge;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Fledge reads only the Health data for habits you choose, such as steps or mindful minutes, to complete them for you. It stays on your iPhone.";
+								INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -313,8 +323,8 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -340,6 +350,26 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HabitCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F1ED6E0000000000000000A2 /* HabitCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */;
+			productName = HabitCore;
+		};
+		F1ED6E0000000000000000A3 /* FledgeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */;
+			productName = FledgeUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 43214C322ECE19FE001C8249 /* Project object */;
 }

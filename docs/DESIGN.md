@@ -246,10 +246,10 @@ Style: sky gradient background, device frame, caption in SF Pro Rounded Bold, in
 
 | Component | Notes | Ticket |
 | --- | --- | --- |
-| `FledgeTheme` (tokens: colours, radii, spacing, fonts) | Asset catalog colours with light/dark; replaces `DesignTokens`/`Theme`/`ThemeView` | DES-1 |
-| `HabitRing` | Reusable in app + widgets; progress, colour, symbol, done check animation; `widgetAccentable` | DES-4 |
+| `FledgeTheme` (tokens: colours, radii, spacing, fonts) | ✅ In `Packages/HabitCore/Sources/FledgeUI` — colours defined in code with light/dark values so widgets share them | DES-1 |
+| `HabitRing` | ✅ First version in FledgeUI (progress, rest-day dashes, done check); still to add: done animation, `widgetAccentable` | DES-4 |
 | `HabitCard` | All states in 6.1; one accessibility element with custom actions | LOOP-1 |
-| `SkyHeader` | Time-of-day gradient, reduce-transparency fallback | DES-5 |
+| `SkyBackground` | ✅ In FledgeUI: time-of-day gradient, Reduce Transparency fallback | DES-5 |
 | `FledgeProgressTrack` | Day 0–66 track with day-30 tick and bird marker | LOOP-5 |
 | `HeatmapView` | 12×7 grid, rest-day hatching | LOOP-7 |
 | `BirdView` | Vector bird in 4 poses + flight animation (matched geometry with ring) | DES-3 |
