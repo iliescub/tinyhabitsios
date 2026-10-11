@@ -47,3 +47,14 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|flown|settings|paywall|onboarding` to open a screen (screenshots). `-FledgePro` forces Pro.
 - StoreKit testing: the shared scheme uses `Configuration/Fledge.storekit` (run from Xcode; CLI `simctl launch` doesn't load it).
 - Pro rules: `ProPolicy` (free = 1 Health habit); widgets read `ProStatus` from the App Group. Never sell more than 3 slots.
+
+## Release (App Store Connect)
+- App record: "Fledge: Habit Tracker" (Apple ID 6821628229), bundle IDs `com.smartapps.TinyHabits` + `.Widgets`, App Group `group.com.smartapps.TinyHabits`, team `USASBWPY7T`.
+- Signing: **Xcode cloud signing** (automatic). No local distribution certificate — don't create one (it triggers keychain password prompts).
+- Before each upload bump `CURRENT_PROJECT_VERSION` in both targets (app + widget must match).
+- Archive + upload from CLI (Xcode must be signed in to the Apple ID):
+  `xcodebuild archive -project TinyHabits.xcodeproj -scheme TinyHabits -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/Fledge.xcarchive -allowProvisioningUpdates`
+  `xcodebuild -exportArchive -archivePath /tmp/Fledge.xcarchive -exportPath /tmp/fledge-export -exportOptionsPlist Configuration/ExportOptions-AppStore.plist -allowProvisioningUpdates`
+- Or in Xcode: Product › Archive › Distribute App › App Store Connect › Upload.
+- App Store Connect API key: `~/APIkeys/appstoreconnect/AuthKey_YLSMVZ7F79.p8` (issuer ID in the .rtf next to it). Never print files from `~/APIkeys`; reference paths only.
+- Required for validation (already set): privacy manifests (`PrivacyInfo.xcprivacy` in app + widget), `ITSAppUsesNonExemptEncryption = NO`, `NSHealthShareUsageDescription` and `NSHealthUpdateUsageDescription`.

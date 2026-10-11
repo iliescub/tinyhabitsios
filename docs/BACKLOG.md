@@ -3,21 +3,25 @@
 Spec: https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 (offline copy: `docs/SPEC.md`)
 Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = done.
 
-## Start here (status as of 2026-10-11)
-**Decided:** name **Fledge** · positioning: max 3 habits, auto-completed from Apple Health, graduation (Option A) · niche packs (Option B) decided 2027-02-15 · release 2026-12-15.
-**Done:** spec + roadmap (link above, offline copy in `docs/SPEC.md`) · `CLAUDE.md` · this backlog · `Packages/HabitCore` (19 tests passing) · `.gitignore`.
-**M4 status (2026-10-11):** onboarding, paywall + purchases, Pro gates, full Settings, review prompt done; 61 package tests pass. Open: ANA-1 (decision), POL-1 VoiceOver on device, POL-2 polish, App Store Connect products (yours).
-**M3 status (2026-10-11):** widgets (small/medium/large, 3 Lock Screen), Control Center control, Siri/Shortcuts done and building; 57 package tests pass; visual check is WID-5.
-**M2 status (2026-10-11):** Apple Health auto-completion (8 sources, background delivery) and reminders done in code; 54 package tests pass; device verification is HK-5 (yours, checklist below).
-**M1 status (2026-10-11):** core loop complete — add/edit, check-in, amounts, rest days, detail + heatmap, graduation, Flown, day-end setting. 42 package tests pass. Screens can be opened directly in DEBUG with `-FledgeDemoData -FledgeDemoScreen detail|graduation|add|flown|settings`.
-**M0 status (2026-10-11):** app runs on HabitCore/FledgeUI with the new Today screen; 33 package tests pass; debug launch argument `-FledgeDemoData` shows sample habits from an in-memory store. Remaining in M0: CI-1, ACC-1 (yours). HealthKit code was removed and is rewritten in M2 (old sleep-session logic: `git show a43acee:TinyHabits/Services/HealthKitManager.swift`).
-**Design:** brand + full UI concept in `docs/DESIGN.md`, icon in `Design/Icon/` (2026-10-11). HTML mockups: cloud session → `Design/mockups/`.
-**Open decisions:** DEC-1 minimum iOS 26 (recommended in DESIGN.md §4) · prices (StoreKit config uses $2.99/mo, $19.99/yr + 7-day trial, $39.99 lifetime) ($19.99/yr, $39.99 lifetime proposed) · analytics (TelemetryDeck or none) · iPhone-only + English-only assumed.
+## Start here (status as of 2026-10-11, end of session)
 
-**Next session, in order:**
-1. Commit or stash the current changes on `main`, then `git checkout -b relaunch/v1` and commit the relaunch scaffolding.
-2. CORE-2 → CORE-3 → CLEAN-1 → NAV-1 (M0 below). Run the tests after each step.
-3. In parallel (you): ACC-1 and MKT-1 — App Store Connect record for "Fledge", trademark search, domain, App Group + HealthKit capabilities.
+**Shipped to TestFlight:** Fledge **0.1 (1)** uploaded to App Store Connect (app "Fledge: Habit Tracker", Apple ID 6821628229) and processed as **VALID**. Not submitted for review.
+
+**Built so far (branch `relaunch/v1`):** M0–M4 in code — core loop, Apple Health auto-completion + reminders, widgets/Lock Screen/Control Center/Siri, onboarding, paywall (StoreKit 2), Pro gates, Settings. 61 package tests pass; app + widget build with no warnings.
+**Design:** `docs/DESIGN.md`, icon in `Design/Icon/`. Spec + roadmap: link above (offline `docs/SPEC.md`).
+**Decided:** name Fledge · Option A positioning · release 2026-12-15 · Control Center + Siri free (changed vs spec).
+**Open decisions:** DEC-1 minimum iOS 26 (recommended) · prices (StoreKit config uses $2.99/mo, $19.99/yr + 7-day trial, $39.99 lifetime) · ANA-1 analytics (TelemetryDeck or none).
+
+**Next steps, in order**
+1. **TestFlight (you):** App Store Connect › Fledge › TestFlight › add yourself as internal tester (Export Compliance is pre-answered), install 0.1 (1) on your iPhone.
+2. **Device checks (you):** run HK-5 (Health), WID-5 (widgets/control/Siri) and the POL-1 VoiceOver pass from the checklists below; report anything odd.
+3. **REL-0 (you):** create the in-app purchases in App Store Connect (subscription group "Fledge Pro": `com.smartapps.TinyHabits.pro.yearly` with 7-day free trial, `.pro.monthly`; non-consumable `.pro.lifetime`).
+4. **Decide** DEC-1, prices, ANA-1.
+5. **Next coding session:** fix device findings → POL-2 polish (Icon Composer `.icon`, launch screen, feather burst) → REL-1 privacy policy page → REL-2 screenshots (use `-FledgeDemoScreen`) → early review build by Nov 27 → submit Dec 4.
+6. **Cloud sessions** (launch content, mockups) never pushed — install the Claude GitHub App on the repo and resume them, or redo locally.
+7. **Security (you):** rotate the three secrets that were printed during this session (Copernicus key, SSH key `newkeynew`, Voyant signing key).
+
+**How to ship the next build:** bump `CURRENT_PROJECT_VERSION` (build number) in both targets, then see `CLAUDE.md` › Release.
 
 ## Design — Oct 11 → Oct 25 (parallel to M0; mockups run in Claude cloud)
 - [x] **DES-0** ✅ Research, marketing theme "Leave the nest", brand palette (contrast-checked), typography, full screen/widget spec → `docs/DESIGN.md`
@@ -33,7 +37,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [ ] **DES-8** App Store screenshot templates (6, captions from DESIGN.md §9) (cloud draft, final in M4)
 
 ## M0 Foundations — Oct 12 → Oct 25
-- [ ] **ACC-1** Apple setup: App Group `group.com.smartapps.TinyHabits` on both IDs (`com.smartapps.TinyHabits`, `com.smartapps.TinyHabits.Widgets`), HealthKit + Background Delivery on the app, app record, name reserved (0.5d)
+- [x] **ACC-1** ✅ Done 2026-10-11 (App IDs via API, App Group configured, app record created). Apple setup: App Group `group.com.smartapps.TinyHabits` on both IDs (`com.smartapps.TinyHabits`, `com.smartapps.TinyHabits.Widgets`), HealthKit + Background Delivery on the app, app record, name reserved (0.5d)
 - [x] **CORE-1** ✅ `HabitCore` package: SchemaV1, DayKey, DayEvaluator, StreakCalculator, GraduationEvaluator, HabitWriter, Essentials pack, 19 tests
 - [x] **CORE-2** ✅ HabitCore + FledgeUI linked as local package; Swift 6 language mode; iPhone-only, portrait; display name Fledge; entitlements (App Group, HealthKit background delivery). Deployment target stays 18.6 until DEC-1
 - [x] **CORE-3** ✅ App uses `SharedStore.makeContainer()` (App Group store, error screen instead of reset); old models/persistence deleted; write API = `ModelContext` extension shared with `HabitWriter`
@@ -91,7 +95,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [ ] **REL-0** App Store Connect: create the subscription group "Fledge Pro" with `com.smartapps.TinyHabits.pro.yearly` (7-day free trial) and `.pro.monthly`, and the non-consumable `.pro.lifetime`; prices to match the decision
 - [ ] **REL-1** Privacy policy page listing HealthKit types; App Privacy nutrition label (0.5d)
 - [ ] **REL-2** Screenshots (Lock Screen → auto ring → graduation → privacy), 15 s preview video, description, keywords (1.5d)
-- [ ] **REL-3** Early review build submitted by Nov 27 (HealthKit wording, paywall) (0.25d)
+- [~] **REL-3** ✅ First build 0.1 (1) uploaded and VALID in App Store Connect (2026-10-11; added privacy manifests, export-compliance flag, Health purpose strings). Still to do: review build by Nov 27
 - [ ] **REL-4** Public TestFlight Nov 23 for first 100 waitlist users; triage daily (ongoing)
 - [ ] **REL-5** Final submission Dec 4; In-app Event "New Year, 3 Habits" (Dec 26 → Jan 10); New Year offer (0.5d)
 - [ ] **REL-6** Release Dec 15; email waitlist
