@@ -23,6 +23,12 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - Swift 6 strict concurrency, `@Observable` view models, iOS 18 minimum. Business logic belongs in HabitCore with
   Swift Testing coverage, not in views.
 
+## Design
+- UI concept, palette, components and copy: `docs/DESIGN.md` (source of truth); mockups in `Design/mockups/`; icon in `Design/Icon/`.
+- One screen (Today) + sheets; no tab bar. Liquid Glass only on the navigation layer (toolbar, floating Add, sheets), never on cards.
+- Colours from `FledgeTheme`/asset catalog only; brand colours never for body text (use `ink`, `ink2`, `skyText`).
+- No guilt UI: no red failure states, no points/coins. Every animation has a Reduce Motion variant; Dynamic Type to AX5.
+
 ## Commands
 - Tests (build dir outside Documents, which is iCloud-synced and breaks codesign with xattrs):
   `cd Packages/HabitCore && swift test --scratch-path /tmp/habitcore-build`

@@ -7,12 +7,26 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 **Decided:** name **Fledge** · positioning: max 3 habits, auto-completed from Apple Health, graduation (Option A) · niche packs (Option B) decided 2027-02-15 · release 2026-12-15.
 **Done:** spec + roadmap (link above, offline copy in `docs/SPEC.md`) · `CLAUDE.md` · this backlog · `Packages/HabitCore` (19 tests passing) · `.gitignore`.
 **Not done yet:** nothing is committed; HabitCore is not linked into the Xcode project; the app still runs on the old models.
-**Open decisions:** prices ($19.99/yr, $39.99 lifetime proposed) · analytics (TelemetryDeck or none) · iPhone-only + English-only assumed.
+**Design:** brand + full UI concept in `docs/DESIGN.md`, icon in `Design/Icon/` (2026-10-11). HTML mockups: cloud session → `Design/mockups/`.
+**Open decisions:** DEC-1 minimum iOS 26 (recommended in DESIGN.md §4) · prices ($19.99/yr, $39.99 lifetime proposed) · analytics (TelemetryDeck or none) · iPhone-only + English-only assumed.
 
 **Next session, in order:**
 1. Commit or stash the current changes on `main`, then `git checkout -b relaunch/v1` and commit the relaunch scaffolding.
 2. CORE-2 → CORE-3 → CLEAN-1 → NAV-1 (M0 below). Run the tests after each step.
 3. In parallel (you): ACC-1 and MKT-1 — App Store Connect record for "Fledge", trademark search, domain, App Group + HealthKit capabilities.
+
+## Design — Oct 11 → Oct 25 (parallel to M0; mockups run in Claude cloud)
+- [x] **DES-0** ✅ Research, marketing theme "Leave the nest", brand palette (contrast-checked), typography, full screen/widget spec → `docs/DESIGN.md`
+- [x] **DES-2a** ✅ Icon concept: fledgling with checkmark wing; SVG + 1024 PNG + dark/tinted + two layers (`Design/Icon/`)
+- [ ] **DEC-1** Decide minimum iOS 26 (recommended) vs 18; update CORE-2 accordingly (0.1d)
+- [ ] **DES-7** HTML mockups of every screen, state and widget → `Design/mockups/` (cloud) — review and comment (0.5d review)
+- [ ] **DES-2** Build `Fledge.icon` in Icon Composer from the two layers; check all 6 appearances on device (0.5d)
+- [ ] **DES-1** `FledgeTheme` + asset-catalog colours (light/dark) replacing `DesignTokens`/`Theme`/`ThemeView` (0.5d, M0)
+- [ ] **DES-3** Bird vector in 4 poses (sitting, ready, flying, sleeping) as SF-Symbol-style SVG/PDF assets (1d, cloud draft + local polish)
+- [ ] **DES-4** `HabitRing` component (app + widgets, done animation, `widgetAccentable`) (1d, M1)
+- [ ] **DES-5** `SkyHeader` time-of-day gradient with Reduce Transparency fallback (0.25d, M1)
+- [ ] **DES-6** Graduation animation: ring → bird matched geometry + flight, Reduce Motion variant (1d, M1/M4)
+- [ ] **DES-8** App Store screenshot templates (6, captions from DESIGN.md §9) (cloud draft, final in M4)
 
 ## M0 Foundations — Oct 12 → Oct 25
 - [ ] **ACC-1** Apple setup: App Group, HealthKit + Background Delivery, app record, name reserved (0.5d)

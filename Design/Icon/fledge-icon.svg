@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Fledge app icon. Two layers for Icon Composer: #background and #bird. Geometry matches render-icon.swift. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4F8DFF"/>
+      <stop offset="0.6" stop-color="#9CC4FF"/>
+      <stop offset="1" stop-color="#FFD2AE"/>
+    </linearGradient>
+  </defs>
+  <g id="background">
+    <rect width="1024" height="1024" fill="url(#sky)"/>
+  </g>
+  <g id="bird" transform="translate(-28 0)">
+    <ellipse cx="520" cy="314" rx="22" ry="48" transform="rotate(20 520 318)" fill="#FFFFFF"/>
+    <circle cx="512" cy="550" r="250" fill="#FFFFFF"/>
+    <polygon points="748,478 840,514 748,550" fill="#FFB13D"/>
+    <circle cx="666" cy="450" r="26" fill="#1B2240"/>
+    <polyline points="360,588 456,680 612,548" fill="none" stroke="#FF6A52" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
