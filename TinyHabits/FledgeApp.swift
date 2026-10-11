@@ -5,7 +5,7 @@ import FledgeUI
 
 @main
 struct FledgeApp: App {
-    @State private var store = AppStore()
+    @State private var store = AppModel()
 
     var body: some Scene {
         WindowGroup {
@@ -25,13 +25,14 @@ struct FledgeApp: App {
 /// the container is reopened on activation so every view shows their changes.
 @MainActor
 @Observable
-final class AppStore {
+final class AppModel {
     /// Never reset the store on failure (CLAUDE.md); show the error instead.
     private(set) var container: Result<ModelContainer, Error>
     private var seenExternalWrite: Date
 
     init() {
         container = Self.makeContainer()
+        Purchases.shared.start()
         seenExternalWrite = FledgeSettings.lastExternalWrite ?? .distantPast
         #if DEBUG
         if DemoData.isEnabled { return } // keep demo values; don't touch Health
@@ -68,10 +69,38 @@ final class AppStore {
 struct RootView: View {
     let onBecameActive: () -> Void
     @State private var today = DayKey.today()
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @Query private var allHabits: [Habit]
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(FledgeSettings.dayEndHourKey, store: FledgeSettings.defaults) private var dayEndHour = FledgeSettings.defaultDayEndHour
 
     var body: some View {
+        if Self.forcesOnboarding || (!hasCompletedOnboarding && allHabits.isEmpty && !Self.skipsOnboarding) {
+            OnboardingView { hasCompletedOnboarding = true }
+        } else {
+            today_
+        }
+    }
+
+    /// DEBUG: `-FledgeDemoScreen onboarding` always shows onboarding.
+    private static var forcesOnboarding: Bool {
+        #if DEBUG
+        return DemoData.isEnabled && DemoData.screen == "onboarding"
+        #else
+        return false
+        #endif
+    }
+
+    /// DEBUG: demo data and screenshots skip onboarding unless `-FledgeDemoScreen onboarding`.
+    private static var skipsOnboarding: Bool {
+        #if DEBUG
+        return DemoData.isEnabled && DemoData.screen != "onboarding"
+        #else
+        return false
+        #endif
+    }
+
+    private var today_: some View {
         TodayView(day: today)
             .id(today)
             .onChange(of: scenePhase) { _, phase in

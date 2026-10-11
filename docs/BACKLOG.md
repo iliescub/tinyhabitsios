@@ -6,12 +6,13 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 ## Start here (status as of 2026-10-11)
 **Decided:** name **Fledge** · positioning: max 3 habits, auto-completed from Apple Health, graduation (Option A) · niche packs (Option B) decided 2027-02-15 · release 2026-12-15.
 **Done:** spec + roadmap (link above, offline copy in `docs/SPEC.md`) · `CLAUDE.md` · this backlog · `Packages/HabitCore` (19 tests passing) · `.gitignore`.
+**M4 status (2026-10-11):** onboarding, paywall + purchases, Pro gates, full Settings, review prompt done; 61 package tests pass. Open: ANA-1 (decision), POL-1 VoiceOver on device, POL-2 polish, App Store Connect products (yours).
 **M3 status (2026-10-11):** widgets (small/medium/large, 3 Lock Screen), Control Center control, Siri/Shortcuts done and building; 57 package tests pass; visual check is WID-5.
 **M2 status (2026-10-11):** Apple Health auto-completion (8 sources, background delivery) and reminders done in code; 54 package tests pass; device verification is HK-5 (yours, checklist below).
 **M1 status (2026-10-11):** core loop complete — add/edit, check-in, amounts, rest days, detail + heatmap, graduation, Flown, day-end setting. 42 package tests pass. Screens can be opened directly in DEBUG with `-FledgeDemoData -FledgeDemoScreen detail|graduation|add|flown|settings`.
 **M0 status (2026-10-11):** app runs on HabitCore/FledgeUI with the new Today screen; 33 package tests pass; debug launch argument `-FledgeDemoData` shows sample habits from an in-memory store. Remaining in M0: CI-1, ACC-1 (yours). HealthKit code was removed and is rewritten in M2 (old sleep-session logic: `git show a43acee:TinyHabits/Services/HealthKitManager.swift`).
 **Design:** brand + full UI concept in `docs/DESIGN.md`, icon in `Design/Icon/` (2026-10-11). HTML mockups: cloud session → `Design/mockups/`.
-**Open decisions:** DEC-1 minimum iOS 26 (recommended in DESIGN.md §4) · prices ($19.99/yr, $39.99 lifetime proposed) · analytics (TelemetryDeck or none) · iPhone-only + English-only assumed.
+**Open decisions:** DEC-1 minimum iOS 26 (recommended in DESIGN.md §4) · prices (StoreKit config uses $2.99/mo, $19.99/yr + 7-day trial, $39.99 lifetime) ($19.99/yr, $39.99 lifetime proposed) · analytics (TelemetryDeck or none) · iPhone-only + English-only assumed.
 
 **Next session, in order:**
 1. Commit or stash the current changes on `main`, then `git checkout -b relaunch/v1` and commit the relaunch scaffolding.
@@ -77,16 +78,17 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [ ] **WID-5** Visual check on a device or simulator (needs taps): add each widget size, Lock Screen widgets, the control; tinted/clear Home Screen; tap a ring in a widget → app shows it done on next open; Siri: "How are my habits in Fledge"
 
 ## M4 Onboarding, paywall, polish — Nov 16 → Nov 29 (feature freeze Nov 29)
-- [ ] **ONB-1** 4-screen onboarding: promise → pick ≤3 → Health → reminders + widget demo (2d)
-- [ ] **PAY-1** StoreKit 2 products + `.storekit` config; `SubscriptionStoreView` paywall; `ProStatus` cached in App Group for widgets (1.5d)
-- [ ] **PAY-2** Gates: 2nd/3rd auto habit, Pro widgets, Lock Screen, Control, icons, export (0.5d)
-- [ ] **SET-1** Settings: appearance, app icons, ~~day-end hour~~ ✅, ~~Health/notification status~~ ✅, evening summary notification, export CSV, privacy, restore purchases, contact (1d)
-- [ ] **POL-1** Accessibility pass (VoiceOver labels on rings, Dynamic Type), dark mode, localization-ready strings (1d)
-- [ ] **POL-2** App icon, launch screen, celebration animation polish (1d)
-- [ ] **ANA-1** Anonymous analytics (TelemetryDeck or none): install, onboarding step, habit added (source kind only), completion (by), trial, purchase. Never Health values (0.5d)
-- [ ] **REV-1** `requestReview` after 7th completed day or first graduation (0.25d)
+- [x] **ONB-1** ✅ 4 screens: promise (ring fills → bird), pick up to 3 (Pro badge on a 2nd Health habit), connect Health (or "track by tapping"), reminders + widget how-to → paywall (dismissible) → Today. Shown only on first run with an empty nest
+- [x] **PAY-1** ✅ `Purchases` (entitlements + `Transaction.updates`), `ProStatus` in App Group, `PaywallView` (SubscriptionStoreView yearly/monthly + lifetime, restore, policies), `Configuration/Fledge.storekit` wired in the shared scheme. DEBUG `-FledgePro`
+- [x] **PAY-2** ✅ Gates: 2nd/3rd Health habit (Add + onboarding), medium/large/StandBy and Lock Screen widgets, app icon, CSV export. Changed vs spec: Control Center and Siri stay free (a control can't branch on Pro; dead toggle = bad reviews)
+- [x] **SET-1** ✅ Settings: Pro status/manage/restore, day end, notifications + evening summary, Health, app icon (Dawn/Night), paused habits, CSV export, privacy, help & feedback, version
+- [~] **POL-1** ✅ Dark mode and AX5 Dynamic Type checked in the simulator; String Catalog added (`Localizable.xcstrings`, Xcode fills it on build). Still to do on device: full VoiceOver pass
+- [~] **POL-2** ✅ Dawn + Night app icons (alternate icon). Still to do: Icon Composer `.icon` (DES-2), branded launch screen, feather burst on done
+- [ ] **ANA-1** ⏸ Waiting on your decision (TelemetryDeck or none). Anonymous analytics (TelemetryDeck or none): install, onboarding step, habit added (source kind only), completion (by), trial, purchase. Never Health values (0.5d)
+- [x] **REV-1** ✅ Review prompt once: after 7 days with something done, or the first graduation
 
 ## Beta and release — Nov 23 → Dec 15
+- [ ] **REL-0** App Store Connect: create the subscription group "Fledge Pro" with `com.smartapps.TinyHabits.pro.yearly` (7-day free trial) and `.pro.monthly`, and the non-consumable `.pro.lifetime`; prices to match the decision
 - [ ] **REL-1** Privacy policy page listing HealthKit types; App Privacy nutrition label (0.5d)
 - [ ] **REL-2** Screenshots (Lock Screen → auto ring → graduation → privacy), 15 s preview video, description, keywords (1.5d)
 - [ ] **REL-3** Early review build submitted by Nov 27 (HealthKit wording, paywall) (0.25d)

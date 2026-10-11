@@ -12,6 +12,8 @@ struct AddHabitSheet: View {
     @State private var errorMessage: String?
     @State private var noDataDraft: HabitDraft?
     @State private var isPreparing = false
+    @State private var showPaywall = false
+    @State private var purchases = Purchases.shared
 
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: FledgeTheme.Space.m)]
 
@@ -60,6 +62,7 @@ struct AddHabitSheet: View {
                 }
             }
             .task { loadPack() }
+            .sheet(isPresented: $showPaywall) { PaywallView(reason: .secondHealthHabit) }
             .alert(
                 "No recent data in Apple Health",
                 isPresented: Binding(get: { noDataDraft != nil }, set: { if !$0 { noDataDraft = nil } })
@@ -95,13 +98,27 @@ struct AddHabitSheet: View {
             }
             LazyVGrid(columns: columns, spacing: FledgeTheme.Space.m) {
                 ForEach(templates, id: \.name) { template in
-                    NavigationLink(value: HabitDraftRoute(draft: HabitDraft(template: template, colorKey: defaultColorKey, packID: pack.id))) {
-                        TemplateTile(template: template)
+                    if template.source.isAuto && !canAddAuto {
+                        Button { showPaywall = true } label: {
+                            TemplateTile(template: template).overlay(alignment: .topTrailing) { ProBadge().padding(FledgeTheme.Space.s) }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Needs Fledge Pro")
+                    } else {
+                        NavigationLink(value: HabitDraftRoute(draft: HabitDraft(template: template, colorKey: defaultColorKey, packID: pack.id))) {
+                            TemplateTile(template: template)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
+    }
+
+    /// Free tier: one active habit from Apple Health (PAY-2).
+    private var canAddAuto: Bool {
+        let activeAuto = ((try? context.activeHabits()) ?? []).filter { $0.source.isAuto }.count
+        return ProPolicy.canAddAutoHabit(isPro: purchases.isPro, activeAutoCount: activeAuto)
     }
 
     private var defaultColorKey: String {
@@ -121,6 +138,10 @@ struct AddHabitSheet: View {
     private func prepareAndAdd(_ draft: HabitDraft) async {
         if draft.reminderMinutes != nil {
             await Reminders.requestAuthorizationIfNeeded()
+        }
+        if draft.source.isAuto && !canAddAuto {
+            showPaywall = true
+            return
         }
         guard draft.source.isAuto, let sync = HealthSync.shared else {
             add(draft)
@@ -266,6 +287,17 @@ struct TemplateTile: View {
             return "\(isOnce ? "Once" : "\(amount) \(template.unit)") · \(perWeek)× a week"
         }
         return isOnce ? "Once a day" : "\(amount) \(template.unit) a day"
+    }
+}
+
+struct ProBadge: View {
+    var body: some View {
+        Text("Pro")
+            .font(.caption.bold())
+            .padding(.horizontal, FledgeTheme.Space.s)
+            .padding(.vertical, 2)
+            .background(FledgeTheme.Palette.gold.opacity(0.2), in: .capsule)
+            .foregroundStyle(FledgeTheme.Palette.ink)
     }
 }
 

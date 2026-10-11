@@ -27,6 +27,8 @@ struct NestWidgetView: View {
     var body: some View {
         if entry.snapshot.items.isEmpty {
             EmptyNestView()
+        } else if family != .systemSmall && !entry.isPro {
+            ProWidgetView()
         } else {
             switch family {
             case .systemSmall: SmallNestView(snapshot: entry.snapshot)
@@ -151,6 +153,21 @@ struct FreshnessLabel: View {
     }
 }
 
+/// Shown in Pro-only widget slots for free users; tapping opens the app.
+struct ProWidgetView: View {
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: "bird.fill").font(.title2).foregroundStyle(FledgeTheme.Palette.dawn)
+            Text("Fledge Pro")
+                .font(.caption.bold())
+                .foregroundStyle(FledgeTheme.Palette.ink)
+            Text("Unlock in the app")
+                .font(.caption2)
+                .foregroundStyle(FledgeTheme.Palette.ink2)
+        }
+    }
+}
+
 struct EmptyNestView: View {
     var body: some View {
         VStack(spacing: 6) {
@@ -181,7 +198,7 @@ struct NestLockScreenWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: Self.kind, provider: NestProvider()) { entry in
-            NestLockScreenView(snapshot: entry.snapshot)
+            NestLockScreenView(snapshot: entry.snapshot, isPro: entry.isPro)
                 .containerBackground(for: .widget) { Color.clear }
         }
         .configurationDisplayName("Nest summary")
@@ -194,8 +211,12 @@ struct NestLockScreenView: View {
     let snapshot: NestSnapshot
     @Environment(\.widgetFamily) private var family
 
+    var isPro = true
+
     var body: some View {
-        if family == .accessoryInline {
+        if !isPro {
+            Label("Fledge Pro", systemImage: "bird")
+        } else if family == .accessoryInline {
             Label(snapshot.inlineText, systemImage: "bird")
         } else {
             VStack(alignment: .leading, spacing: 4) {
@@ -237,7 +258,9 @@ struct HabitRingLockView: View {
 
     var body: some View {
         let items = entry.snapshot.items
-        if let item = items.first(where: { $0.id == entry.selectedHabitID }) ?? items.first {
+        if !entry.isPro {
+            Image(systemName: "bird").accessibilityLabel("Fledge Pro")
+        } else if let item = items.first(where: { $0.id == entry.selectedHabitID }) ?? items.first {
             ZStack {
                 AccessoryWidgetBackground()
                 HabitRing(

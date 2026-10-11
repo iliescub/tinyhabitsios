@@ -37,6 +37,20 @@ extension FledgeSettings {
     }
 }
 
+extension FledgeSettings {
+    public static let eveningSummaryKey = "eveningSummaryMinutes"
+
+    /// Minutes after midnight for the optional evening summary, nil = off.
+    public static var eveningSummaryMinutes: Int? {
+        get {
+            guard defaults.object(forKey: eveningSummaryKey) != nil else { return nil }
+            let value = defaults.integer(forKey: eveningSummaryKey)
+            return value >= 0 ? value : nil
+        }
+        set { defaults.set(newValue ?? -1, forKey: eveningSummaryKey) }
+    }
+}
+
 extension DayKey {
     /// "Today" using the user's day-end hour.
     public static func today(now: Date = .now, calendar: Calendar = .current) -> DayKey {

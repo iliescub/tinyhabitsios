@@ -42,10 +42,11 @@ enum Reminders {
             )
         }
         let plan = ReminderPlan.reminders(for: inputs, today: today, now: .now)
+            + ReminderPlan.eveningSummaries(minutes: FledgeSettings.eveningSummaryMinutes, habits: inputs, today: today, now: .now)
 
         let ours = await center.pendingNotificationRequests()
             .map(\.identifier)
-            .filter { $0.hasPrefix(ReminderPlan.identifierPrefix) }
+            .filter { $0.hasPrefix(ReminderPlan.identifierPrefix) || $0.hasPrefix(ReminderPlan.summaryIdentifierPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: ours)
 
         for reminder in plan {

@@ -10,6 +10,15 @@ public struct Pack: Codable, Identifiable, Hashable, Sendable {
         public var unit: String
         public var perWeek: Int?
 
+        public init(name: String, symbol: String, source: HabitSourceID, target: Double, unit: String, perWeek: Int? = nil) {
+            self.name = name
+            self.symbol = symbol
+            self.source = source
+            self.target = target
+            self.unit = unit
+            self.perWeek = perWeek
+        }
+
         public var cadence: Cadence { Cadence(perWeek: perWeek ?? 7) }
     }
 

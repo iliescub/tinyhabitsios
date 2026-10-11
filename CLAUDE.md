@@ -24,7 +24,7 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
   `resume`, `graduate`, `deleteHabit`) on the main context, or `HabitWriter` (same code) off the main actor.
   In the app, finish every write with `AppRefresh.afterWrite` (widgets, controls, reminders, Siri parameters).
   Writes from other processes (widgets, Siri) go through `IntentStore.write`, which calls `FledgeSettings.markExternalWrite()`;
-  the app reopens its container on activation when that marker moved (`AppStore.reloadIfChangedElsewhere`).
+  the app reopens its container on activation when that marker moved (`AppModel.reloadIfChangedElsewhere`).
 - One `DayLog` per habit per `DayKey` ("yyyy-MM-dd", day ends at 3 AM by default). Don't query by `Date` ranges.
 - Manual/widget/intent "done" is sticky; HealthKit values never undo it.
 - Schema must stay CloudKit-compatible: no `@Attribute(.unique)`, defaults on every property, optional relationships.
@@ -44,4 +44,6 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
   `cd Packages/HabitCore && swift test --scratch-path /tmp/habitcore-build`
 - App: open `TinyHabits.xcodeproj`, scheme `TinyHabits` (app display name "Fledge").
 - CLI build (DerivedData outside Documents): `xcodebuild -project TinyHabits.xcodeproj -scheme TinyHabits -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/fledge-dd build`
-- Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|flown|settings` to open a screen (screenshots).
+- Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|flown|settings|paywall|onboarding` to open a screen (screenshots). `-FledgePro` forces Pro.
+- StoreKit testing: the shared scheme uses `Configuration/Fledge.storekit` (run from Xcode; CLI `simctl launch` doesn't load it).
+- Pro rules: `ProPolicy` (free = 1 Health habit); widgets read `ProStatus` from the App Group. Never sell more than 3 slots.

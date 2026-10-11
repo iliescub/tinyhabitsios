@@ -9,6 +9,8 @@ struct NestEntry: TimelineEntry {
     let snapshot: NestSnapshot
     /// For the configurable Lock Screen ring.
     var selectedHabitID: UUID?
+    /// Larger sizes, Lock Screen and the control are Pro (PAY-2).
+    var isPro: Bool = ProStatus.isPro
 }
 
 enum NestTimeline {
@@ -49,12 +51,13 @@ enum NestTimeline {
 
 struct NestProvider: TimelineProvider {
     func placeholder(in context: Context) -> NestEntry {
-        NestEntry(date: .now, snapshot: NestTimeline.sample)
+        NestEntry(date: .now, snapshot: NestTimeline.sample, isPro: true)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (NestEntry) -> Void) {
         let snapshot = context.isPreview ? NestTimeline.sample : NestTimeline.snapshot()
-        completion(NestEntry(date: .now, snapshot: snapshot.items.isEmpty && context.isPreview ? NestTimeline.sample : snapshot))
+        // The widget gallery always shows the full design.
+        completion(NestEntry(date: .now, snapshot: snapshot, isPro: context.isPreview || ProStatus.isPro))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<NestEntry>) -> Void) {
@@ -70,7 +73,10 @@ struct HabitRingProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: SelectHabitIntent, in context: Context) async -> NestEntry {
-        NestEntry(date: .now, snapshot: context.isPreview ? NestTimeline.sample : NestTimeline.snapshot(), selectedHabitID: configuration.habit?.id)
+        NestEntry(
+            date: .now, snapshot: context.isPreview ? NestTimeline.sample : NestTimeline.snapshot(),
+            selectedHabitID: configuration.habit?.id, isPro: context.isPreview || ProStatus.isPro
+        )
     }
 
     func timeline(for configuration: SelectHabitIntent, in context: Context) async -> Timeline<NestEntry> {

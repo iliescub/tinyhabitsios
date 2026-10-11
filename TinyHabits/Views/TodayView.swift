@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import StoreKit
 import HabitCore
 import FledgeUI
 
@@ -16,6 +17,8 @@ struct TodayView: View {
     @State private var amountHabit: Habit?
     @State private var amountText = ""
     @State private var errorMessage: String?
+    @Environment(\.requestReview) private var requestReview
+    @AppStorage("reviewRequested") private var reviewRequested = false
 
     init(day: DayKey) {
         self.day = day
@@ -59,6 +62,7 @@ struct TodayView: View {
                 case .add: AddHabitSheet()
                 case .flown: FlownSheet()
                 case .settings: SettingsSheet()
+                case .paywall: PaywallView()
                 }
             }
             .sheet(item: $detailHabit) { habit in
@@ -74,6 +78,7 @@ struct TodayView: View {
                 GraduationView(habit: habit, day: day) {
                     graduatingHabit = nil
                     perform(structural: true) { try context.graduate(habitID: habit.id) }
+                    askForReviewOnce()
                 } onKeep: {
                     graduatingHabit = nil
                 }
@@ -121,7 +126,10 @@ struct TodayView: View {
             model: model,
             actions: HabitCardActions(
                 open: { detailHabit = habit },
-                toggleDone: { perform { try context.setDone(!isDone, habitID: habit.id, on: day, by: .manual) } },
+                toggleDone: {
+                    perform { try context.setDone(!isDone, habitID: habit.id, on: day, by: .manual) }
+                    if !isDone { askForReviewAfterAWeek() }
+                },
                 addIncrement: {
                     perform { try context.addAmount(DayEvaluator.increment(for: habit.target), habitID: habit.id, on: day) }
                 },
@@ -202,6 +210,22 @@ struct TodayView: View {
         perform { try context.addAmount(amount, habitID: habit.id, on: day) }
     }
 
+    // MARK: - Review prompt (REV-1): after 7 days with something done, or the first graduation. Once.
+
+    private func askForReviewAfterAWeek() {
+        let doneDays = Set(activeHabits.flatMap { $0.logs ?? [] }.filter { $0.status == .done }.map(\.dayKey))
+        if doneDays.count >= 7 { askForReviewOnce() }
+    }
+
+    private func askForReviewOnce() {
+        guard !reviewRequested else { return }
+        reviewRequested = true
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            requestReview()
+        }
+    }
+
     #if DEBUG
     private func openDemoScreen() {
         guard DemoData.isEnabled, let screen = DemoData.screen else { return }
@@ -212,6 +236,7 @@ struct TodayView: View {
         case "add": sheet = .add
         case "flown": sheet = .flown
         case "settings": sheet = .settings
+        case "paywall": sheet = .paywall
         default: break
         }
     }
@@ -234,6 +259,6 @@ struct TodayView: View {
 }
 
 enum TodaySheet: String, Identifiable {
-    case add, flown, settings
+    case add, flown, settings, paywall
     var id: String { rawValue }
 }

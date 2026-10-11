@@ -9,6 +9,7 @@ struct HabitControl: ControlWidget {
     static let kind = "com.smartapps.TinyHabits.habitControl"
 
     var body: some ControlWidgetConfiguration {
+        // Free for everyone: control templates can't switch on Pro status, and a dead toggle would be worse.
         AppIntentControlConfiguration(kind: Self.kind, provider: HabitControlProvider()) { value in
             ControlWidgetToggle(isOn: value.isDone, action: SetHabitDoneIntent(habit: value.habit)) {
                 Label(value.habit?.name ?? "Choose a habit", systemImage: value.isDone ? "checkmark.circle.fill" : (value.habit?.symbol ?? "bird"))

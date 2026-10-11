@@ -169,6 +169,16 @@ struct HabitStatusIntent: AppIntent {
     }
 }
 
+/// Opens Fledge (used by Pro-only widgets and controls when Pro isn't active).
+struct OpenFledgeIntent: AppIntent {
+    static let title: LocalizedStringResource = "Open Fledge"
+    static let isDiscoverable = false
+    static let openAppWhenRun = true
+
+    @MainActor
+    func perform() async throws -> some IntentResult { .result() }
+}
+
 // MARK: - Configuration
 
 /// Lets the user pick which habit a Lock Screen ring shows.

@@ -1,18 +1,26 @@
 import SwiftUI
 import SwiftData
+import StoreKit
 import UserNotifications
 import HabitCore
 import FledgeUI
 
-/// Settings (docs/DESIGN.md §6.8). Day end, paused habits and About; the rest arrives with SET-1.
+/// Settings (docs/DESIGN.md §6.8, SET-1).
 struct SettingsSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @Query private var paused: [Habit]
     @State private var errorMessage: String?
-    @AppStorage(FledgeSettings.dayEndHourKey, store: FledgeSettings.defaults) private var dayEndHour = FledgeSettings.defaultDayEndHour
-    @Environment(\.openURL) private var openURL
     @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
+    @State private var purchases = Purchases.shared
+    @State private var showPaywall = false
+    @State private var showManageSubscription = false
+    @State private var exportURL: URL?
+    @State private var appIcon = UIApplication.shared.alternateIconName
+    @State private var summaryOn = FledgeSettings.eveningSummaryMinutes != nil
+    @State private var summaryMinutes = FledgeSettings.eveningSummaryMinutes ?? 21 * 60
+    @AppStorage(FledgeSettings.dayEndHourKey, store: FledgeSettings.defaults) private var dayEndHour = FledgeSettings.defaultDayEndHour
 
     init() {
         let pausedState = HabitState.paused.rawValue
@@ -22,81 +30,204 @@ struct SettingsSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    Picker("Day ends at", selection: $dayEndHour) {
-                        ForEach(Array(FledgeSettings.dayEndHourRange), id: \.self) { hour in
-                            Text(hourLabel(hour)).tag(hour)
-                        }
-                    }
-                } footer: {
-                    Text("Anything you do before this time counts for the previous day — handy for late nights.")
-                }
-
-                Section {
-                    Button {
-                        if let url = URL(string: "x-apple-health://") { openURL(url) }
-                    } label: {
-                        Label("Open the Health app", systemImage: "heart.fill")
-                    }
-                } header: {
-                    Text("Apple Health")
-                } footer: {
-                    Text("Fledge only reads the data for habits you choose, and it never leaves your iPhone. To change access, open Health › your profile › Apps › Fledge.")
-                }
-
-                Section {
-                    LabeledContent("Reminders", value: notificationLabel)
-                    if notificationStatus == .denied {
-                        Button("Turn on in Settings") {
-                            if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
-                        }
-                    }
-                } header: {
-                    Text("Notifications")
-                } footer: {
-                    Text("Reminders are sent only when a habit isn't done yet. Set a time for each habit in its Edit screen.")
-                }
-
-                Section {
-                    if paused.isEmpty {
-                        Text("No paused habits")
-                            .foregroundStyle(FledgeTheme.Palette.ink2)
-                    }
-                    ForEach(paused) { habit in
-                        HStack {
-                            Label(habit.name, systemImage: habit.symbol)
-                            Spacer()
-                            Button("Resume") { resume(habit) }
-                                .buttonStyle(.borderless)
-                        }
-                    }
-                } header: {
-                    Text("Paused habits")
-                } footer: {
-                    Text("Pausing frees a slot and keeps the habit's history.")
-                }
-
-                Section("About") {
-                    LabeledContent("Version", value: appVersion)
-                    Label("No account. Your Health data stays on your iPhone.", systemImage: "lock.fill")
-                        .foregroundStyle(FledgeTheme.Palette.ink2)
-                }
+                proSection
+                daySection
+                notificationsSection
+                healthSection
+                appearanceSection
+                pausedSection
+                dataSection
+                aboutSection
             }
             .navigationTitle("Settings")
-            .task {
-                notificationStatus = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
-            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
             }
-            .alert("Couldn't resume", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            .task {
+                notificationStatus = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+                exportURL = makeExport()
+            }
+            .sheet(isPresented: $showPaywall) { PaywallView() }
+            .manageSubscriptionsSheet(isPresented: $showManageSubscription)
+            .alert("Couldn't do that", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(errorMessage ?? "")
             }
         }
+    }
+
+    // MARK: Sections
+
+    private var proSection: some View {
+        Section {
+            if purchases.isPro {
+                Label("Fledge Pro is active", systemImage: "checkmark.seal.fill")
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                Button("Manage subscription") { showManageSubscription = true }
+            } else {
+                Button {
+                    showPaywall = true
+                } label: {
+                    Label("Get Fledge Pro", systemImage: "bird.fill")
+                        .font(.headline)
+                }
+            }
+            Button("Restore purchases") {
+                Task { await purchases.restore() }
+            }
+        } footer: {
+            if !purchases.isPro {
+                Text("Pro lets all three habits complete from Apple Health and unlocks every widget, the Lock Screen and Control Center.")
+            }
+        }
+    }
+
+    private var daySection: some View {
+        Section {
+            Picker("Day ends at", selection: $dayEndHour) {
+                ForEach(Array(FledgeSettings.dayEndHourRange), id: \.self) { hour in
+                    Text(hourLabel(hour)).tag(hour)
+                }
+            }
+        } footer: {
+            Text("Anything you do before this time counts for the previous day — handy for late nights.")
+        }
+    }
+
+    private var notificationsSection: some View {
+        Section {
+            LabeledContent("Reminders", value: notificationLabel)
+            if notificationStatus == .denied {
+                Button("Turn on in Settings") {
+                    if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
+                }
+            }
+            Toggle("Evening summary", isOn: $summaryOn)
+                .onChange(of: summaryOn) { _, on in
+                    FledgeSettings.eveningSummaryMinutes = on ? summaryMinutes : nil
+                    Task {
+                        if on { await Reminders.requestAuthorizationIfNeeded() }
+                        await Reminders.reconcile(context: context)
+                    }
+                }
+            if summaryOn {
+                DatePicker("Time", selection: summaryTime, displayedComponents: .hourAndMinute)
+            }
+        } header: {
+            Text("Notifications")
+        } footer: {
+            Text("Reminders are sent only when a habit isn't done yet. The evening summary is skipped when all three are done.")
+        }
+    }
+
+    private var healthSection: some View {
+        Section {
+            Button {
+                if let url = URL(string: "x-apple-health://") { openURL(url) }
+            } label: {
+                Label("Open the Health app", systemImage: "heart.fill")
+            }
+        } header: {
+            Text("Apple Health")
+        } footer: {
+            Text("Fledge only reads the data for habits you choose, and it never leaves your iPhone. To change access, open Health › your profile › Apps › Fledge.")
+        }
+    }
+
+    private var appearanceSection: some View {
+        Section("App icon") {
+            ForEach(AppIconOption.allCases) { option in
+                Button {
+                    setIcon(option)
+                } label: {
+                    HStack {
+                        Image(option.previewImage)
+                            .resizable()
+                            .frame(width: 44, height: 44)
+                            .clipShape(.rect(cornerRadius: 10))
+                            .accessibilityHidden(true)
+                        Text(option.title).foregroundStyle(FledgeTheme.Palette.ink)
+                        Spacer()
+                        if option.alternateName == appIcon {
+                            Image(systemName: "checkmark").foregroundStyle(FledgeTheme.Palette.skyText)
+                        } else if option != .dawn && !purchases.isPro {
+                            ProBadge()
+                        }
+                    }
+                }
+                .accessibilityAddTraits(option.alternateName == appIcon ? .isSelected : [])
+            }
+        }
+    }
+
+    private var pausedSection: some View {
+        Section {
+            if paused.isEmpty {
+                Text("No paused habits")
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+            }
+            ForEach(paused) { habit in
+                HStack {
+                    Label(habit.name, systemImage: habit.symbol)
+                    Spacer()
+                    Button("Resume") { resume(habit) }
+                        .buttonStyle(.borderless)
+                }
+            }
+        } header: {
+            Text("Paused habits")
+        } footer: {
+            Text("Pausing frees a slot and keeps the habit's history.")
+        }
+    }
+
+    private var dataSection: some View {
+        Section("Your data") {
+            if purchases.isPro, let exportURL {
+                ShareLink(item: exportURL) {
+                    Label("Export history (CSV)", systemImage: "square.and.arrow.up")
+                }
+            } else {
+                Button { showPaywall = true } label: {
+                    HStack {
+                        Label("Export history (CSV)", systemImage: "square.and.arrow.up")
+                        Spacer()
+                        ProBadge()
+                    }
+                }
+            }
+        }
+    }
+
+    private var aboutSection: some View {
+        Section("About") {
+            Link(destination: URL(string: "https://fledgehabits.com/privacy")!) {
+                Label("Privacy policy", systemImage: "hand.raised.fill")
+            }
+            Link(destination: URL(string: "mailto:hello@fledgehabits.com?subject=Fledge%20feedback")!) {
+                Label("Help and feedback", systemImage: "envelope.fill")
+            }
+            LabeledContent("Version", value: appVersion)
+            Label("No account. Your Health data stays on your iPhone.", systemImage: "lock.fill")
+                .foregroundStyle(FledgeTheme.Palette.ink2)
+        }
+    }
+
+    // MARK: Helpers
+
+    private var summaryTime: Binding<Date> {
+        Binding(
+            get: { Calendar.current.date(bySettingHour: summaryMinutes / 60, minute: summaryMinutes % 60, second: 0, of: .now) ?? .now },
+            set: { date in
+                let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+                summaryMinutes = (parts.hour ?? 21) * 60 + (parts.minute ?? 0)
+                FledgeSettings.eveningSummaryMinutes = summaryMinutes
+                Task { await Reminders.reconcile(context: context) }
+            }
+        )
     }
 
     private var notificationLabel: String {
@@ -119,6 +250,34 @@ struct SettingsSheet: View {
         return "\(version) (\(build))"
     }
 
+    private func setIcon(_ option: AppIconOption) {
+        guard option == .dawn || purchases.isPro else {
+            showPaywall = true
+            return
+        }
+        Task {
+            do {
+                try await UIApplication.shared.setAlternateIconName(option.alternateName)
+                appIcon = option.alternateName
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    /// Writes the CSV to a temporary file for the share sheet.
+    private func makeExport() -> URL? {
+        guard let habits = try? context.fetch(FetchDescriptor<Habit>()) else { return nil }
+        let csv = CSVExporter.csv(CSVExporter.rows(from: habits))
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Fledge history.csv")
+        do {
+            try csv.write(to: url, atomically: true, encoding: .utf8)
+            return url
+        } catch {
+            return nil
+        }
+    }
+
     private func resume(_ habit: Habit) {
         do {
             try context.resume(habitID: habit.id)
@@ -127,6 +286,35 @@ struct SettingsSheet: View {
             errorMessage = "Your nest holds three. Let one fly or pause one first."
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+}
+
+/// App icons (Pro except the default). Names match the asset catalog's `AppIcon-Night` set.
+enum AppIconOption: String, CaseIterable, Identifiable {
+    case dawn, night
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .dawn: "Dawn"
+        case .night: "Night"
+        }
+    }
+
+    /// nil = primary icon.
+    var alternateName: String? {
+        switch self {
+        case .dawn: nil
+        case .night: "AppIcon-Night"
+        }
+    }
+
+    var previewImage: String {
+        switch self {
+        case .dawn: "IconPreview-Dawn"
+        case .night: "IconPreview-Night"
         }
     }
 }
