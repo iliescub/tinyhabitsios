@@ -59,7 +59,7 @@
          </CommandLineArgument>
       </CommandLineArguments>
       <StoreKitConfigurationFileReference
-         identifier = "../Configuration/Fledge.storekit">
+         identifier = "../../Configuration/Fledge.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
