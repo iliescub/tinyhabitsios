@@ -403,7 +403,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				FLEDGE_APPSTORE_PROFILE = "TinyHabits AppStore";
 				PRODUCT_BUNDLE_IDENTIFIER = com.smartapps.TinyHabits;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -441,7 +440,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				FLEDGE_APPSTORE_PROFILE = "TinyHabits AppStore";
 				PRODUCT_BUNDLE_IDENTIFIER = com.smartapps.TinyHabits;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -474,7 +472,6 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				FLEDGE_APPSTORE_PROFILE = "FledgeWidgetsExtension AppStore";
 				PRODUCT_BUNDLE_IDENTIFIER = com.smartapps.TinyHabits.Widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -507,7 +504,6 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 0.1;
-				FLEDGE_APPSTORE_PROFILE = "FledgeWidgetsExtension AppStore";
 				PRODUCT_BUNDLE_IDENTIFIER = com.smartapps.TinyHabits.Widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

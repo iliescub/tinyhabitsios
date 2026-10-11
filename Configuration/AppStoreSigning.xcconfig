@@ -1,7 +1,0 @@
-// Manual App Store signing for CLI archives (profiles created via the App Store Connect API).
-// Used only by `xcodebuild archive -xcconfig Configuration/AppStoreSigning.xcconfig`; Xcode keeps automatic signing.
-// Profile names come from the per-target FLEDGE_APPSTORE_PROFILE setting (empty for package targets).
-CODE_SIGN_STYLE = Manual
-CODE_SIGN_IDENTITY = Apple Distribution
-DEVELOPMENT_TEAM = USASBWPY7T
-PROVISIONING_PROFILE_SPECIFIER = $(FLEDGE_APPSTORE_PROFILE)
