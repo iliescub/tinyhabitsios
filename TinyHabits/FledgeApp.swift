@@ -5,29 +5,13 @@ import FledgeUI
 
 @main
 struct FledgeApp: App {
-    /// Never reset the store on failure (CLAUDE.md); show the error instead.
-    private let container = Result {
-        #if DEBUG
-        if DemoData.isEnabled { return try DemoData.makeContainer() }
-        #endif
-        return try SharedStore.makeContainer()
-    }
-
-    init() {
-        // Health observers must be registered at launch so background delivery can wake the app.
-        #if DEBUG
-        if DemoData.isEnabled { return } // keep demo values; don't touch Health
-        #endif
-        if case .success(let container) = container {
-            HealthSync.start(container: container)
-        }
-    }
+    @State private var store = AppStore()
 
     var body: some Scene {
         WindowGroup {
-            switch container {
+            switch store.container {
             case .success(let container):
-                RootView()
+                RootView(onBecameActive: store.reloadIfChangedElsewhere)
                     .modelContainer(container)
                     .tint(FledgeTheme.Palette.skyText)
             case .failure(let error):
@@ -37,8 +21,52 @@ struct FledgeApp: App {
     }
 }
 
+/// Owns the ModelContainer. Widgets and Siri write from other processes; when they did,
+/// the container is reopened on activation so every view shows their changes.
+@MainActor
+@Observable
+final class AppStore {
+    /// Never reset the store on failure (CLAUDE.md); show the error instead.
+    private(set) var container: Result<ModelContainer, Error>
+    private var seenExternalWrite: Date
+
+    init() {
+        container = Self.makeContainer()
+        seenExternalWrite = FledgeSettings.lastExternalWrite ?? .distantPast
+        #if DEBUG
+        if DemoData.isEnabled { return } // keep demo values; don't touch Health
+        #endif
+        // Health observers must be registered at launch so background delivery can wake the app.
+        if case .success(let container) = container {
+            HealthSync.start(container: container)
+        }
+    }
+
+    func reloadIfChangedElsewhere() {
+        #if DEBUG
+        if DemoData.isEnabled { return }
+        #endif
+        guard let last = FledgeSettings.lastExternalWrite, last > seenExternalWrite else { return }
+        seenExternalWrite = last
+        container = Self.makeContainer()
+        if case .success(let container) = container {
+            HealthSync.shared?.use(container: container)
+        }
+    }
+
+    private static func makeContainer() -> Result<ModelContainer, Error> {
+        Result {
+            #if DEBUG
+            if DemoData.isEnabled { return try DemoData.makeContainer() }
+            #endif
+            return try SharedStore.makeContainer()
+        }
+    }
+}
+
 /// Keeps `TodayView` on the current `DayKey`, which changes at the user's day-end hour (3 AM by default).
 struct RootView: View {
+    let onBecameActive: () -> Void
     @State private var today = DayKey.today()
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(FledgeSettings.dayEndHourKey, store: FledgeSettings.defaults) private var dayEndHour = FledgeSettings.defaultDayEndHour
@@ -48,6 +76,7 @@ struct RootView: View {
             .id(today)
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else { return }
+                onBecameActive()
                 refreshDay()
                 Task { await HealthSync.shared?.refresh() }
             }

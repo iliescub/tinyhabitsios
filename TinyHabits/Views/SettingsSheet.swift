@@ -122,7 +122,7 @@ struct SettingsSheet: View {
     private func resume(_ habit: Habit) {
         do {
             try context.resume(habitID: habit.id)
-            HealthSync.shared?.updateObservers()
+            AppRefresh.afterWrite(context: context, structural: true)
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one first."
         } catch {

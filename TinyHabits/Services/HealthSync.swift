@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import WidgetKit
 import HabitCore
 import FledgeHealth
 
@@ -11,7 +12,7 @@ final class HealthSync {
     /// Set at launch by `FledgeApp`.
     static private(set) var shared: HealthSync?
 
-    private let container: ModelContainer
+    private var container: ModelContainer
     private let reader = HealthReader()
     private lazy var observer = HealthObserver(reader: reader)
     private var observedMetrics: Set<HealthMetric> = []
@@ -25,6 +26,12 @@ final class HealthSync {
 
     private init(container: ModelContainer) {
         self.container = container
+    }
+
+    /// Called when the app reopened its store after another process wrote to it.
+    func use(container: ModelContainer) {
+        self.container = container
+        Task { await refresh() }
     }
 
     /// Asks for read access for one source (system sheet only the first time) and reports whether
@@ -76,6 +83,7 @@ final class HealthSync {
             }
         }
         await Reminders.reconcile(context: context)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func trackedHabits() -> [AutoHabitRef] {

@@ -10,16 +10,67 @@
 		F1ED6E0000000000000000A4 /* HabitCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A2 /* HabitCore */; };
 		F1ED6E0000000000000000A5 /* FledgeUI in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A3 /* FledgeUI */; };
 		F1ED6E0000000000000000A7 /* FledgeHealth in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A6 /* FledgeHealth */; };
+		F1ED6E00000000000000B00E /* HabitCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E00000000000000B00C /* HabitCore */; };
+		F1ED6E00000000000000B00F /* FledgeUI in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E00000000000000B00D /* FledgeUI */; };
+		F1ED6E00000000000000B011 /* FledgeWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F1ED6E00000000000000B001 /* FledgeWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F1ED6E00000000000000B012 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 43214C322ECE19FE001C8249 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F1ED6E00000000000000B005;
+			remoteInfo = FledgeWidgetsExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F1ED6E00000000000000B010 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F1ED6E00000000000000B011 /* FledgeWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		43214C3A2ECE19FF001C8249 /* TinyHabits.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TinyHabits.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1ED6E00000000000000B001 /* FledgeWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FledgeWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F1ED6E00000000000000B004 /* Exceptions for "FledgeWidgets" folder in "FledgeWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F1ED6E00000000000000B005 /* FledgeWidgetsExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		43214C3C2ECE19FF001C8249 /* TinyHabits */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TinyHabits;
+			sourceTree = "<group>";
+		};
+		F1ED6E00000000000000B002 /* FledgeWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F1ED6E00000000000000B004 /* Exceptions for "FledgeWidgets" folder in "FledgeWidgetsExtension" target */,
+			);
+			path = FledgeWidgets;
+			sourceTree = "<group>";
+		};
+		F1ED6E00000000000000B003 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -35,6 +86,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1ED6E00000000000000B007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1ED6E00000000000000B00E /* HabitCore in Frameworks */,
+				F1ED6E00000000000000B00F /* FledgeUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -42,6 +102,8 @@
 			isa = PBXGroup;
 			children = (
 				43214C3C2ECE19FF001C8249 /* TinyHabits */,
+				F1ED6E00000000000000B003 /* Shared */,
+				F1ED6E00000000000000B002 /* FledgeWidgets */,
 				43214C3B2ECE19FF001C8249 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -50,6 +112,7 @@
 			isa = PBXGroup;
 			children = (
 				43214C3A2ECE19FF001C8249 /* TinyHabits.app */,
+				F1ED6E00000000000000B001 /* FledgeWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -64,13 +127,16 @@
 				43214C362ECE19FF001C8249 /* Sources */,
 				43214C372ECE19FF001C8249 /* Frameworks */,
 				43214C382ECE19FF001C8249 /* Resources */,
+				F1ED6E00000000000000B010 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F1ED6E00000000000000B013 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				43214C3C2ECE19FF001C8249 /* TinyHabits */,
+				F1ED6E00000000000000B003 /* Shared */,
 			);
 			name = TinyHabits;
 			packageProductDependencies = (
@@ -81,6 +147,31 @@
 			productName = TinyHabits;
 			productReference = 43214C3A2ECE19FF001C8249 /* TinyHabits.app */;
 			productType = "com.apple.product-type.application";
+		};
+		F1ED6E00000000000000B005 /* FledgeWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1ED6E00000000000000B009 /* Build configuration list for PBXNativeTarget "FledgeWidgetsExtension" */;
+			buildPhases = (
+				F1ED6E00000000000000B006 /* Sources */,
+				F1ED6E00000000000000B007 /* Frameworks */,
+				F1ED6E00000000000000B008 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F1ED6E00000000000000B002 /* FledgeWidgets */,
+				F1ED6E00000000000000B003 /* Shared */,
+			);
+			name = FledgeWidgetsExtension;
+			packageProductDependencies = (
+				F1ED6E00000000000000B00C /* HabitCore */,
+				F1ED6E00000000000000B00D /* FledgeUI */,
+			);
+			productName = FledgeWidgetsExtension;
+			productReference = F1ED6E00000000000000B001 /* FledgeWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -94,6 +185,9 @@
 				TargetAttributes = {
 					43214C392ECE19FF001C8249 = {
 						CreatedOnToolsVersion = 26.1.1;
+					};
+					F1ED6E00000000000000B005 = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -115,12 +209,20 @@
 			projectRoot = "";
 			targets = (
 				43214C392ECE19FF001C8249 /* TinyHabits */,
+				F1ED6E00000000000000B005 /* FledgeWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		43214C382ECE19FF001C8249 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1ED6E00000000000000B008 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -137,7 +239,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F1ED6E00000000000000B006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F1ED6E00000000000000B013 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F1ED6E00000000000000B005 /* FledgeWidgetsExtension */;
+			targetProxy = F1ED6E00000000000000B012 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		43214C432ECE1A1F001C8249 /* Debug */ = {
@@ -331,6 +448,68 @@
 			};
 			name = Release;
 		};
+		F1ED6E00000000000000B00A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FledgeWidgets/FledgeWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = USASBWPY7T;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FledgeWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Fledge;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.smartapps.TinyHabits.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F1ED6E00000000000000B00B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = FledgeWidgets/FledgeWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = USASBWPY7T;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FledgeWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Fledge;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.smartapps.TinyHabits.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -348,6 +527,15 @@
 			buildConfigurations = (
 				43214C462ECE1A1F001C8249 /* Debug */,
 				43214C472ECE1A1F001C8249 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F1ED6E00000000000000B009 /* Build configuration list for PBXNativeTarget "FledgeWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1ED6E00000000000000B00A /* Debug */,
+				F1ED6E00000000000000B00B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -376,6 +564,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */;
 			productName = FledgeHealth;
+		};
+		F1ED6E00000000000000B00C /* HabitCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */;
+			productName = HabitCore;
+		};
+		F1ED6E00000000000000B00D /* FledgeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */;
+			productName = FledgeUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

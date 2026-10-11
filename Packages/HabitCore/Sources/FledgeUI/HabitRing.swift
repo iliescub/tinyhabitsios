@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 import HabitCore
 
 /// The progress ring used on cards, the detail screen and widgets (docs/DESIGN.md §6.1).
@@ -37,6 +38,7 @@ public struct HabitRing: View {
                 .trim(from: 0, to: status == .skipped ? 0 : max(0, min(fraction, 1)))
                 .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                .widgetAccentable()
             if status == .done {
                 Circle()
                     .fill(color.opacity(0.15))
@@ -46,6 +48,7 @@ public struct HabitRing: View {
                 .font(.system(size: size * 0.32, weight: .semibold, design: .rounded))
                 .foregroundStyle(color)
                 .symbolRenderingMode(.hierarchical)
+                .widgetAccentable()
                 .contentTransition(.symbolEffect(.replace))
                 .symbolEffect(.bounce, value: status == .done)
         }

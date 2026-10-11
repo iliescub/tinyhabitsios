@@ -139,7 +139,7 @@ struct AddHabitSheet: View {
     private func add(_ draft: HabitDraft) {
         do {
             try context.addHabit(draft: draft)
-            HealthSync.shared?.updateObservers()
+            AppRefresh.afterWrite(context: context, structural: true)
             dismiss()
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one to add another."
@@ -220,9 +220,9 @@ struct EditHabitSheet: View {
         do {
             try context.updateHabit(habitID: habit.id, with: draft)
             let needsNotifications = draft.reminderMinutes != nil
-            Task {
-                if needsNotifications { await Reminders.requestAuthorizationIfNeeded() }
-                HealthSync.shared?.updateObservers()
+            AppRefresh.afterWrite(context: context, structural: true)
+            if needsNotifications {
+                Task { await Reminders.requestAuthorizationIfNeeded() }
             }
             dismiss()
         } catch {

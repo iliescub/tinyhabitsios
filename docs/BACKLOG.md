@@ -6,6 +6,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 ## Start here (status as of 2026-10-11)
 **Decided:** name **Fledge** · positioning: max 3 habits, auto-completed from Apple Health, graduation (Option A) · niche packs (Option B) decided 2027-02-15 · release 2026-12-15.
 **Done:** spec + roadmap (link above, offline copy in `docs/SPEC.md`) · `CLAUDE.md` · this backlog · `Packages/HabitCore` (19 tests passing) · `.gitignore`.
+**M3 status (2026-10-11):** widgets (small/medium/large, 3 Lock Screen), Control Center control, Siri/Shortcuts done and building; 57 package tests pass; visual check is WID-5.
 **M2 status (2026-10-11):** Apple Health auto-completion (8 sources, background delivery) and reminders done in code; 54 package tests pass; device verification is HK-5 (yours, checklist below).
 **M1 status (2026-10-11):** core loop complete — add/edit, check-in, amounts, rest days, detail + heatmap, graduation, Flown, day-end setting. 42 package tests pass. Screens can be opened directly in DEBUG with `-FledgeDemoData -FledgeDemoScreen detail|graduation|add|flown|settings`.
 **M0 status (2026-10-11):** app runs on HabitCore/FledgeUI with the new Today screen; 33 package tests pass; debug launch argument `-FledgeDemoData` shows sample habits from an in-memory store. Remaining in M0: CI-1, ACC-1 (yours). HealthKit code was removed and is rewritten in M2 (old sleep-session logic: `git show a43acee:TinyHabits/Services/HealthKitManager.swift`).
@@ -31,7 +32,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [ ] **DES-8** App Store screenshot templates (6, captions from DESIGN.md §9) (cloud draft, final in M4)
 
 ## M0 Foundations — Oct 12 → Oct 25
-- [ ] **ACC-1** Apple setup: App Group, HealthKit + Background Delivery, app record, name reserved (0.5d)
+- [ ] **ACC-1** Apple setup: App Group `group.com.smartapps.TinyHabits` on both IDs (`com.smartapps.TinyHabits`, `com.smartapps.TinyHabits.Widgets`), HealthKit + Background Delivery on the app, app record, name reserved (0.5d)
 - [x] **CORE-1** ✅ `HabitCore` package: SchemaV1, DayKey, DayEvaluator, StreakCalculator, GraduationEvaluator, HabitWriter, Essentials pack, 19 tests
 - [x] **CORE-2** ✅ HabitCore + FledgeUI linked as local package; Swift 6 language mode; iPhone-only, portrait; display name Fledge; entitlements (App Group, HealthKit background delivery). Deployment target stays 18.6 until DEC-1
 - [x] **CORE-3** ✅ App uses `SharedStore.makeContainer()` (App Group store, error screen instead of reset); old models/persistence deleted; write API = `ModelContext` extension shared with `HabitWriter`
@@ -66,12 +67,14 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
   - [ ] Change "Day ends at" to midnight/5 AM → Today switches day correctly around midnight
 
 ## M3 Widgets and intents — Nov 9 → Nov 22
-- [ ] **INT-1** `HabitEntity` (AppEntity) + query; `CompleteHabitIntent`, `LogProgressIntent`, `SkipTodayIntent`, `HabitStatusIntent` (1.5d)
-- [ ] **INT-2** `AppShortcutsProvider` phrases (0.5d)
-- [ ] **WID-1** Widget extension target, shared store, timeline provider with "updated X min ago" (1d)
-- [ ] **WID-2** Small + medium widgets, interactive buttons for manual habits (1.5d)
-- [ ] **WID-3** Lock Screen: circular (configurable habit), rectangular, inline; StandBy (1d)
-- [ ] **WID-4** Control Center `ControlWidget` "Mark [habit] done" (0.5d)
+- [x] **INT-1** ✅ `HabitEntity` + string query; Complete, Toggle (widgets), LogProgress, SkipToday, HabitStatus (spoken summary), SetHabitDone (control), Select-habit configuration intents — in `Shared/` (app + widget targets); intent writes mark an external write, reconcile reminders, reload widgets/controls
+- [x] **INT-2** ✅ `FledgeShortcuts`: "Mark ‹habit› done in Fledge", "How are my habits in Fledge", "Rest day for ‹habit› in Fledge"; parameters refreshed after structural changes
+- [x] **WID-1** ✅ `FledgeWidgetsExtension` target (bundle `com.smartapps.TinyHabits.Widgets`, App Group), `NestSnapshot` (tested) from the shared store, refresh every 15 min and at day end, "Health updated … ago"
+- [x] **WID-2** ✅ Small (3 rings as a nest + count), medium (3 rows), large/StandBy; tap-to-log rings are interactive (`ToggleHabitIntent`), Health rings open the app; rings are `widgetAccentable`
+- [x] **WID-3** ✅ Lock Screen circular (choose habit), rectangular (3 mini rings + line), inline ("2/3 · Walk 1.8K steps left")
+- [x] **WID-4** ✅ Control Center toggle "Mark ‹habit› done" (choose habit; defaults to first tap-to-log habit)
+
+- [ ] **WID-5** Visual check on a device or simulator (needs taps): add each widget size, Lock Screen widgets, the control; tinted/clear Home Screen; tap a ring in a widget → app shows it done on next open; Siri: "How are my habits in Fledge"
 
 ## M4 Onboarding, paywall, polish — Nov 16 → Nov 29 (feature freeze Nov 29)
 - [ ] **ONB-1** 4-screen onboarding: promise → pick ≤3 → Health → reminders + widget demo (2d)

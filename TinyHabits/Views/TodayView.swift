@@ -222,11 +222,7 @@ struct TodayView: View {
     private func perform(structural: Bool = false, _ action: () throws -> Void) {
         do {
             try action()
-            if structural {
-                HealthSync.shared?.updateObservers()
-            } else {
-                Task { await Reminders.reconcile(context: context) }
-            }
+            AppRefresh.afterWrite(context: context, structural: structural)
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one to add another."
         } catch HabitStoreError.noRestDaysLeft {

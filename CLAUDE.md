@@ -7,20 +7,24 @@ https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 · offline 
 Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026-12-04.
 
 ## Layout
-- `TinyHabits/` — current SwiftUI app (being migrated; see the gap analysis in the spec).
+- `TinyHabits/` — the app target (display name Fledge).
+- `FledgeWidgets/` — widget extension target: widgets, Lock Screen, Control Center control.
+- `Shared/` — compiled into BOTH targets: App Intents + `HabitEntity`, `IntentStore`, `Reminders`. Keep it free of app-only code.
 - `Packages/HabitCore/` — local package with two products:
   - `HabitCore`: SwiftData `SchemaV1`, `DayKey`, `DayEvaluator`, `StreakCalculator`, `GraduationEvaluator`, write API, packs (JSON).
   - `FledgeUI`: `FledgeTheme` tokens, `HabitRing`, `SkyBackground`, `HabitCardModel`, `TodaySummary` (shared with widgets).
   - `FledgeHealth`: `HealthMetric` (source → HealthKit query), `HealthReader` (read-only daily values), `HealthObserver`
     (observer queries + background delivery). Aggregation math lives in HabitCore (`HealthAggregation`).
 - App services: `HealthSync` (started at launch; never in demo mode) and `Reminders` (rebuilds notifications from `ReminderPlan`).
-- Planned targets: `WidgetsExtension` (WidgetKit + ControlWidget), Watch app in 1.1.
+- Planned: Watch app in 1.1.
 
 ## Rules
 - Product: never more than `SlotPolicy.maxActive` (3) active habits; no paid tier unlocks more.
 - All writes go through the HabitCore write API: `ModelContext` extension (`addHabit`, `setDone`, `skip`, `record`, `pause`,
   `resume`, `graduate`, `deleteHabit`) on the main context, or `HabitWriter` (same code) off the main actor.
-  After a write reload widgets/controls and run the reminder reconciler (from M2/M3).
+  In the app, finish every write with `AppRefresh.afterWrite` (widgets, controls, reminders, Siri parameters).
+  Writes from other processes (widgets, Siri) go through `IntentStore.write`, which calls `FledgeSettings.markExternalWrite()`;
+  the app reopens its container on activation when that marker moved (`AppStore.reloadIfChangedElsewhere`).
 - One `DayLog` per habit per `DayKey` ("yyyy-MM-dd", day ends at 3 AM by default). Don't query by `Date` ranges.
 - Manual/widget/intent "done" is sticky; HealthKit values never undo it.
 - Schema must stay CloudKit-compatible: no `@Attribute(.unique)`, defaults on every property, optional relationships.

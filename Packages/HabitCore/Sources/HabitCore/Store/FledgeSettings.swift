@@ -22,6 +22,21 @@ public enum FledgeSettings {
     }
 }
 
+extension FledgeSettings {
+    public static let lastExternalWriteKey = "lastExternalWrite"
+
+    /// Called by widgets, controls and App Intents after they write in their own process,
+    /// so the app knows to reload its store when it next becomes active.
+    public static func markExternalWrite(at date: Date = .now) {
+        defaults.set(date.timeIntervalSince1970, forKey: lastExternalWriteKey)
+    }
+
+    public static var lastExternalWrite: Date? {
+        let seconds = defaults.double(forKey: lastExternalWriteKey)
+        return seconds > 0 ? Date(timeIntervalSince1970: seconds) : nil
+    }
+}
+
 extension DayKey {
     /// "Today" using the user's day-end hour.
     public static func today(now: Date = .now, calendar: Calendar = .current) -> DayKey {
