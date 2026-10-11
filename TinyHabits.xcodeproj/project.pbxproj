@@ -392,6 +392,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Fledge;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Fledge never writes to Apple Health. It only reads the data for habits you choose, and that data stays on your iPhone.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Fledge reads only the Health data for habits you choose, such as steps or mindful minutes, to complete them for you. It stays on your iPhone.";
 								INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -429,6 +430,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Fledge;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Fledge never writes to Apple Health. It only reads the data for habits you choose, and that data stays on your iPhone.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Fledge reads only the Health data for habits you choose, such as steps or mindful minutes, to complete them for you. It stays on your iPhone.";
 								INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
