@@ -24,6 +24,9 @@ struct TinyHabitsApp: App {
 }
 
 struct RootView: View {
+    // MARK: - Constants
+    private static let quoteOverlayDuration: TimeInterval = 2.0
+
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @State private var didResetNotifications = false
     @AppStorage("motivation_dailyQuotes") private var showDailyQuotes: Bool = true
@@ -89,7 +92,7 @@ struct RootView: View {
     
     private func rescheduleRemindersIfNeeded() {
         guard hasCompletedOnboarding else { return }
-        let descriptor = FetchDescriptor<Habit>(predicate: #Predicate { !$0.isArchived })
+        let descriptor = FetchDescriptor<Habit>(predicate: Habit.activeHabitsPredicate)
         let habits = (try? context.fetch(descriptor)) ?? []
         NotificationManager.shared.rescheduleAll(for: habits)
     }
@@ -98,7 +101,7 @@ struct RootView: View {
         guard !quoteOverlayPresented, showDailyQuotes else { return }
         quoteOverlayPresented = true
         showQuoteOverlay = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.quoteOverlayDuration) {
             hideQuoteOverlay()
         }
     }

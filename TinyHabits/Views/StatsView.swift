@@ -6,7 +6,7 @@ struct StatsView: View {
     @AppStorage("accentTheme") private var accentRaw: String = AccentTheme.blue.rawValue
     @AppStorage("profile_name") private var profileName: String = ""
 
-    @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.order, order: .forward)
+    @Query(filter: Habit.activeHabitsPredicate, sort: \Habit.order, order: .forward)
     private var habits: [Habit]
 
     @Query(sort: \HabitEntry.date, order: .reverse)
@@ -16,17 +16,6 @@ struct StatsView: View {
 
     @State private var habitsFingerprint: Int = 0
     @State private var entriesFingerprint: Int = 0
-
-    // Simple fingerprint for detecting entry changes
-    private var entriesChangeDetector: Int {
-        var hasher = Hasher()
-        for entry in entries {
-            hasher.combine(entry.id)
-            hasher.combine(entry.statusRaw)
-            hasher.combine(entry.progressValue)
-        }
-        return hasher.finalize()
-    }
 
     private var accent: Color { AccentTheme(rawValue: accentRaw)?.color ?? .blue }
     private var accentGradient: [Color] {
@@ -83,28 +72,22 @@ struct StatsView: View {
             viewModel.setContext(newContext)
         }
         .onChange(of: habits.count) { _, _ in
-            // Recalculate fingerprint when habit count changes
-            let newFingerprint = computeHabitsFingerprint()
-            if newFingerprint != habitsFingerprint {
-                habitsFingerprint = newFingerprint
-                viewModel.refresh(habits: habits, entries: entries)
-            }
+            refreshIfNeeded()
         }
         .onChange(of: entries.count) { _, _ in
-            // Recalculate fingerprint when entry count changes
-            let newFingerprint = computeEntriesFingerprint()
-            if newFingerprint != entriesFingerprint {
-                entriesFingerprint = newFingerprint
-                viewModel.refresh(habits: habits, entries: entries)
-            }
+            refreshIfNeeded()
         }
-        .onChange(of: entriesChangeDetector) { _, _ in
-            // Detect changes to entry status or progress (not just count)
-            let newFingerprint = computeEntriesFingerprint()
-            if newFingerprint != entriesFingerprint {
-                entriesFingerprint = newFingerprint
-                viewModel.refresh(habits: habits, entries: entries)
-            }
+    }
+
+    // Consolidated refresh logic to avoid duplicate fingerprint computations
+    private func refreshIfNeeded() {
+        let newHabitsFingerprint = computeHabitsFingerprint()
+        let newEntriesFingerprint = computeEntriesFingerprint()
+
+        if newHabitsFingerprint != habitsFingerprint || newEntriesFingerprint != entriesFingerprint {
+            habitsFingerprint = newHabitsFingerprint
+            entriesFingerprint = newEntriesFingerprint
+            viewModel.refresh(habits: habits, entries: entries)
         }
     }
 

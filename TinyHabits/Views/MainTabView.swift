@@ -12,7 +12,7 @@ import SwiftData
 struct MainTabView: View {
     @Environment(\.modelContext) private var context
     @EnvironmentObject private var swipeGuard: SwipeGuard
-    @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.order, order: .forward)
+    @Query(filter: Habit.activeHabitsPredicate, sort: \Habit.order, order: .forward)
     private var habits: [Habit]
     @AppStorage("accentTheme") private var accentRaw: String = AccentTheme.blue.rawValue
 

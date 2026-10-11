@@ -14,7 +14,7 @@ struct OnboardingView: View {
 
     @StateObject private var viewModel = OnboardingViewModel()
     @StateObject private var habitsViewModel = SettingsViewModel()
-    @Query(filter: #Predicate<Habit> { !$0.isArchived }, sort: \Habit.order, order: .forward)
+    @Query(filter: Habit.activeHabitsPredicate, sort: \Habit.order, order: .forward)
     private var habits: [Habit]
 
     @State private var heroAnimate = false

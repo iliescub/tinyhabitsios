@@ -91,7 +91,7 @@ final class SettingsViewModel: ObservableObject {
     private func normalizeOrder() {
         guard let context else { return }
         let descriptor = FetchDescriptor<Habit>(
-            predicate: #Predicate { !$0.isArchived },
+            predicate: Habit.activeHabitsPredicate,
             sortBy: [SortDescriptor(\Habit.order, order: .forward)]
         )
         if let orderedHabits = try? context.fetch(descriptor) {
@@ -106,7 +106,7 @@ final class SettingsViewModel: ObservableObject {
         do {
             try context.save()
         } catch {
-            errorMessage = "Could not save changes. Please try again."
+            errorMessage = "Failed to save: \(error.localizedDescription)"
             print("SettingsViewModel save error: \(error)")
         }
     }

@@ -34,12 +34,6 @@ struct HabitsView: View {
                 }
             }
 
-//            if viewModel.activeHabits(using: habits).count > 3 {
-//                Text("You currently track \(viewModel.activeHabits(using: habits).count) habits. TinyHabits works best with 3—remove one to add another.")
-//                    .font(.caption)
-//                    .foregroundStyle(.secondary)
-//            }
-
             Divider().padding(.vertical, 4)
 
             VStack(alignment: .leading, spacing: 10) {
@@ -74,19 +68,6 @@ struct HabitsView: View {
             }
             .padding()
             .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-
-//            VStack(alignment: .leading, spacing: 8) {
-//                Text("Your habits")
-//                    .font(.subheadline.weight(.semibold))
-//                ForEach(viewModel.activeHabits(using: habits)) { habit in
-//                    HabitRow(habit: habit, onDelete: { viewModel.deleteHabit(habit) })
-//                }
-//                if viewModel.activeHabits(using: habits).isEmpty {
-//                    Text("No habits yet. Add or pick a curated one above.")
-//                        .font(.caption)
-//                        .foregroundStyle(.secondary)
-//                }
-//            }
         }
         .padding()
         .background(DesignTokens.cardBackground())
@@ -232,25 +213,39 @@ struct HabitCard: View {
     let onPrimary: () -> Void
     let onSecondary: (() -> Void)?
 
+    @State private var isPressed = false
+    @State private var hasAppeared = false
+
     private var accent: Color {
         (AccentTheme(rawValue: habit.accentColorKey) ?? .blue).color
     }
 
     var body: some View {
-        VStack(spacing: 14) {
-            HStack(alignment: .center, spacing: 12) {
+        VStack(spacing: DesignTokens.spacingM) {
+            HStack(alignment: .center, spacing: DesignTokens.spacingM) {
+                // Icon with modern design
                 ZStack {
                     Circle()
-                        .fill(accent.opacity(0.15))
-                        .frame(width: 44, height: 44)
+                        .fill(
+                            LinearGradient(
+                                colors: [accent.opacity(0.2), accent.opacity(0.12)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+
                     Image(systemName: habit.iconSystemName)
-                        .font(.headline)
+                        .font(.title3.weight(.medium))
                         .foregroundStyle(accent)
+                        .shadow(color: accent.opacity(0.3), radius: 2, y: 1)
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignTokens.spacingXS) {
                     Text(habit.name)
                         .font(.headline)
+                        .foregroundStyle(.primary)
+
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -258,46 +253,78 @@ struct HabitCard: View {
 
                 Spacer()
 
-                ProgressRing(progress: progress, accent: accent)
-                    .frame(width: 36, height: 36)
+                ProgressRing(progress: progress, accent: accent, lineWidth: 6)
+                    .frame(width: 44, height: 44)
             }
 
-            HStack(spacing: 10) {
-                Button(action: onPrimary) {
+            HStack(spacing: DesignTokens.spacingS) {
+                // Primary action button
+                Button(action: {
+                    withAnimation(DesignTokens.springBouncy) {
+                        onPrimary()
+                    }
+                }) {
                     Label(primaryLabel, systemImage: "checkmark.circle.fill")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(accent.opacity(0.9))
-                        .clipShape(Capsule(style: .continuous))
-                        .shadow(color: accent.opacity(0.25), radius: 8, y: 4)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [accent, accent.adjustingBrightness(by: -0.1)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        )
+                        .shadow(color: accent.opacity(0.35), radius: 8, y: 4)
+                        .shadow(color: accent.opacity(0.2), radius: 2, y: 1)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(BounceButtonStyle())
 
                 if let onSecondary {
-                    Button(action: onSecondary) {
-                        Label("More", systemImage: "ellipsis")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .background(Color(.systemBackground), in: Capsule(style: .continuous))
-                            .overlay(
-                                Capsule(style: .continuous)
-                                    .strokeBorder(Color.secondary.opacity(0.2), lineWidth: 1)
+                    Button(action: {
+                        withAnimation(DesignTokens.spring) {
+                            onSecondary()
+                        }
+                    }) {
+                        Image(systemName: "plus.circle")
+                            .font(.title3.weight(.medium))
+                            .foregroundStyle(accent)
+                            .frame(width: 44, height: 44)
+                            .background(
+                                Circle()
+                                    .fill(accent.opacity(0.1))
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(accent.opacity(0.2), lineWidth: 1.5)
+                                    )
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(BounceButtonStyle())
                 }
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.cornerRadius, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: DesignTokens.shadow, radius: DesignTokens.shadowRadius, y: DesignTokens.shadowY)
-        )
+        .padding(DesignTokens.spacingL)
+        .background(DesignTokens.elevatedCardBackground())
+        .scaleEffect(hasAppeared ? 1.0 : 0.9)
+        .opacity(hasAppeared ? 1.0 : 0)
+        .onAppear {
+            withAnimation(DesignTokens.spring) {
+                hasAppeared = true
+            }
+        }
+    }
+}
+
+// Modern bounce button style
+struct BounceButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(DesignTokens.springBouncy, value: configuration.isPressed)
     }
 }
 

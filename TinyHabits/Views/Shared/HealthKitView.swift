@@ -1,5 +1,5 @@
 //
-//  HeathKitView.swift
+//  HealthKitView.swift
 //  TinyHabits
 //
 //  Created by Bogdan Iliescu on 26.11.2025.
@@ -184,19 +184,19 @@ struct HealthKitView: View {
                 DispatchQueue.main.async {
                     if let value = value {
                         stepCount = value
-                    } else {
+                    } else if healthError == nil {
                         healthError = "Could not read today's steps."
                     }
                 }
             }
         }
-    
+
         private func fetchHeartRate() {
             HealthKitManager.shared.fetchLatestHeartRate { value in
                 DispatchQueue.main.async {
                     if let value = value {
                         heartRate = value
-                    } else {
+                    } else if healthError == nil {
                         healthError = "Could not read heart rate."
                     }
                 }

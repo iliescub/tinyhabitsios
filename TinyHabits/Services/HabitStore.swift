@@ -9,7 +9,7 @@ final class HabitStore: ObservableObject {
 
     func activeHabits(using context: ModelContext) -> [Habit] {
         let descriptor = FetchDescriptor<Habit>(
-            predicate: #Predicate { !$0.isArchived },
+            predicate: Habit.activeHabitsPredicate,
             sortBy: [SortDescriptor(\Habit.order, order: .forward)]
         )
         let fetched = (try? context.fetch(descriptor)) ?? []
@@ -38,15 +38,25 @@ final class HabitStore: ObservableObject {
 
         // Create new entry
         let entry = HabitEntry(date: date, status: .pending, habit: habit, progressValue: 0)
+
+        // Double-check before insert to catch any entries created between first fetch and now
+        // This is extra safety even though @MainActor should serialize access
+        if let existing = try? context.fetch(descriptor).first {
+            return existing
+        }
+
         context.insert(entry)
 
-        // Save immediately to prevent race conditions
+        // Save immediately to persist the entry
         do {
             try context.save()
         } catch {
-            // If save fails (e.g., due to conflict), try to fetch the entry that was created by another call
+            // If save fails (e.g., due to constraint violation or conflict),
+            // fetch again to get the entry that was successfully saved
             print("HabitStore save error: \(error)")
             if let existing = try? context.fetch(descriptor).first {
+                // Remove the failed entry from context to avoid confusion
+                context.delete(entry)
                 return existing
             }
         }

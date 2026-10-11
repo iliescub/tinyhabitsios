@@ -1,12 +1,25 @@
 import Foundation
 import SwiftData
 
-struct HabitReminder: Hashable, Codable {
+struct HabitReminder: Codable {
     var hour: Int
     var minute: Int
 
     var dateComponents: DateComponents {
         DateComponents(hour: hour, minute: minute)
+    }
+}
+
+// Manual Hashable conformance to avoid iOS version compatibility issues
+@available(iOS 17.0, *)
+extension HabitReminder: Hashable {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(hour)
+        hasher.combine(minute)
+    }
+
+    static func == (lhs: HabitReminder, rhs: HabitReminder) -> Bool {
+        lhs.hour == rhs.hour && lhs.minute == rhs.minute
     }
 }
 
@@ -21,7 +34,6 @@ final class Habit {
     var isArchived: Bool
     var createdAt: Date
     @Attribute var reminders: [HabitReminder] = []
-//    var createdAt: Date
     var dailyTarget: Int = 1
 
     @Relationship(deleteRule: .cascade)
@@ -55,6 +67,11 @@ final class Habit {
 }
 
 extension Habit {
+    /// Common predicate for filtering active (non-archived) habits
+    static var activeHabitsPredicate: Predicate<Habit> {
+        #Predicate<Habit> { !$0.isArchived }
+    }
+
     static var curatedTemplates: [Habit] {
         [
             Habit(name: "Drink Water", iconSystemName: "drop.fill", accentColorKey: AccentTheme.blue.rawValue, order: 0, dailyTarget: 2000),

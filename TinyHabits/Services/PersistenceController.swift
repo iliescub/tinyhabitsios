@@ -28,7 +28,16 @@ final class PersistenceController {
             do {
                 container = try ModelContainer(for: schema, configurations: [configuration])
             } catch {
-                fatalError("Failed to initialize ModelContainer after migration/reset: \(error)")
+                // Last resort: create an in-memory container to prevent app crash
+                print("Critical: Failed to initialize persistent container after migration/reset: \(error)")
+                print("Falling back to in-memory storage. Data will not persist between app launches.")
+                let inMemoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
+                do {
+                    container = try ModelContainer(for: schema, configurations: [inMemoryConfig])
+                } catch {
+                    // This should never happen, but if it does, we've done everything we can
+                    fatalError("Failed to create even in-memory container: \(error)")
+                }
             }
         }
     }
@@ -36,7 +45,11 @@ final class PersistenceController {
     private static var storeURL: URL {
         let manager = FileManager.default
         guard let appSupport = manager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
-            fatalError("Unable to locate application support directory")
+            // Fallback to temporary directory if application support is unavailable
+            print("Warning: Application support directory unavailable, using temporary directory")
+            let tempDir = manager.temporaryDirectory.appendingPathComponent("TinyHabits", isDirectory: true)
+            try? manager.createDirectory(at: tempDir, withIntermediateDirectories: true)
+            return tempDir.appendingPathComponent("TinyHabitsModel.sqlite")
         }
         let directory = appSupport.appendingPathComponent("TinyHabits", isDirectory: true)
         try? manager.createDirectory(at: directory, withIntermediateDirectories: true)

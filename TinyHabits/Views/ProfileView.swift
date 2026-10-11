@@ -22,7 +22,6 @@ struct ProfileView: View {
                     photoCard
                     ProfileStatsView(viewModel: viewModel)
                     HealthKitView()
-//                    motivationCard
                 }
                 .padding()
             }
@@ -81,10 +80,6 @@ struct ProfileView: View {
                                 viewModel.name = limited
                             }
                         }
-//                    HStack {
-//                        Text("Age: \(viewModel.age)")
-//                        Slider(value: Binding(get: { Double(viewModel.age) }, set: { viewModel.age = Int($0.rounded()) }), in: 13...100, step: 1)
-//                    }
                 }
             }
             Text("Tap the avatar to update your photo.")
@@ -94,37 +89,4 @@ struct ProfileView: View {
         .padding()
         .background(DesignTokens.cardBackground())
     }
-
-//    private var statsCard: some View {
-//        VStack(alignment: .leading, spacing: 12) {
-//            Text("Body stats")
-//                .font(.headline)
-//            VStack(alignment: .leading, spacing: 10) {
-//                HStack {
-//                    Text("Height: \(viewModel.heightCm) cm")
-//                    Slider(value: Binding(get: { Double(viewModel.heightCm) }, set: { viewModel.heightCm = Int($0.rounded()) }), in: 120...230, step: 1)
-//                }
-//                HStack {
-//                    Text("Weight: \(viewModel.weightKg) kg")
-//                    Slider(value: Binding(get: { Double(viewModel.weightKg) }, set: { viewModel.weightKg = Int($0.rounded()) }), in: 40...200, step: 1)
-//                }
-//            }
-//        }
-//        .padding()
-//        .background(DesignTokens.cardBackground())
-//    }
-
-//    private var motivationCard: some View {
-//        VStack(alignment: .leading, spacing: 12) {
-//            Text("Motivation")
-//                .font(.headline)
-//            Toggle("Daily quote on launch", isOn: $viewModel.showDailyQuotes)
-//            Toggle("Celebration haptics", isOn: $viewModel.enableHaptics)
-//            Text("Keep the vibes strong with small nudges and celebratory feedback.")
-//                .font(.caption)
-//                .foregroundStyle(.secondary)
-//        }
-//        .padding()
-//        .background(DesignTokens.cardBackground())
-//    }
 }

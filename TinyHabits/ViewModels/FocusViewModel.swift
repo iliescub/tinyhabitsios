@@ -107,7 +107,7 @@ final class FocusViewModel: ObservableObject {
         do {
             try context.save()
         } catch {
-            errorMessage = "Could not save changes. Please try again."
+            errorMessage = "Failed to save: \(error.localizedDescription)"
             print("FocusViewModel save error: \(error)")
         }
     }

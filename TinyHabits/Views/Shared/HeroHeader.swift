@@ -7,46 +7,74 @@ struct HeroHeader: View {
     let quote: String?
     let imageName: String
 
+    @State private var isAnimating = false
+
     var body: some View {
         ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            // Background with enhanced gradient
+            RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusXL, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [
-                            accent.adjustingBrightness(by: -0.06),
-                            accent.adjustingBrightness(by: 0.12)
+                            accent.adjustingBrightness(by: -0.08),
+                            accent.adjustingBrightness(by: 0.08),
+                            accent.adjustingBrightness(by: 0.15)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: accent.opacity(0.25), radius: 20, y: 12)
 
-            HStack(spacing: 8) {
-                VStack(alignment: .leading, spacing: 8) {
+            // Subtle overlay pattern
+            RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusXL, style: .continuous)
+                .fill(
+                    RadialGradient(
+                        colors: [.white.opacity(0.1), .clear],
+                        center: .topTrailing,
+                        startRadius: 0,
+                        endRadius: 200
+                    )
+                )
+
+            // Content
+            HStack(spacing: DesignTokens.spacingM) {
+                VStack(alignment: .leading, spacing: DesignTokens.spacingM) {
                     Text(title)
                         .font(.title2.bold())
                         .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.1), radius: 2, y: 1)
+
                     Text(subtitle)
-                        .foregroundStyle(.white.opacity(0.9))
+                        .foregroundStyle(.white.opacity(0.95))
                         .font(.subheadline)
+                        .lineLimit(2)
+
                     if let quote, !quote.isEmpty {
-                        Text("“\(quote)”")
+                        Text("\"\(quote)\"")
                             .font(.subheadline.italic())
                             .foregroundStyle(.white.opacity(0.9))
-                            .padding(.top, 4)
+                            .padding(.top, DesignTokens.spacingXS)
                     }
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, DesignTokens.spacingS)
 
-                Spacer()
+                Spacer(minLength: 0)
 
                 heroImage
-                    .frame(width: 140, height: 140)
+                    .frame(width: 120, height: 120)
+                    .scaleEffect(isAnimating ? 1.0 : 0.95)
+                    .opacity(isAnimating ? 1.0 : 0.8)
             }
-            .padding(20)
+            .padding(DesignTokens.spacingXL)
         }
         .frame(height: 200)
+        .shadow(color: accent.opacity(0.3), radius: DesignTokens.shadowRadiusLarge, y: DesignTokens.shadowYLarge)
+        .shadow(color: accent.opacity(0.15), radius: 30, y: 15)
+        .onAppear {
+            withAnimation(DesignTokens.spring.delay(0.1)) {
+                isAnimating = true
+            }
+        }
     }
 
     @ViewBuilder
@@ -55,14 +83,26 @@ struct HeroHeader: View {
             Image(imageName)
                 .resizable()
                 .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .shadow(color: .black.opacity(0.1), radius: 10, y: 6)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusLarge, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusLarge, style: .continuous)
+                        .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.2), radius: 12, y: 6)
         } else {
-            Image(systemName: "figure.walk")
+            Image(systemName: "sparkles")
                 .resizable()
                 .scaledToFit()
-                .padding(16)
-                .background(.white.opacity(0.15), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .foregroundStyle(.white)
+                .padding(DesignTokens.spacingL)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusLarge, style: .continuous)
+                        .fill(.white.opacity(0.15))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusLarge, style: .continuous)
+                                .strokeBorder(.white.opacity(0.25), lineWidth: 1)
+                        )
+                )
         }
     }
 }
