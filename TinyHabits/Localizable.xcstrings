@@ -1,6 +1,446 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ has used this month's rest days." : {
+
+    },
+    "%@ is done for today." : {
+
+    },
+    "%@ is ready to fly." : {
+
+    },
+    "%lld %@ a week" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld %2$@ a week"
+          }
+        }
+      }
+    },
+    "%lld days · %@ in the last %lld days" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld days · %2$@ in the last %3$lld days"
+          }
+        }
+      }
+    },
+    "%lld of 3 chosen. You can change targets later." : {
+
+    },
+    "%lld rest days left this month" : {
+
+    },
+    "1 rest day left this month" : {
+
+    },
+    "1/3" : {
+
+    },
+    "About" : {
+
+    },
+    "Add" : {
+
+    },
+    "Add ${amount} to ${habit}" : {
+
+    },
+    "Add a habit" : {
+
+    },
+    "Adds an amount, such as minutes or pages, to today's progress." : {
+
+    },
+    "Amount" : {
+
+    },
+    "Anything you do before this time counts for the previous day — handy for late nights." : {
+
+    },
+    "App icon" : {
+
+    },
+    "Apple Health" : {
+
+    },
+    "Bring back to the nest" : {
+
+    },
+    "Can fly from day %lld" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Check in without opening the app" : {
+
+    },
+    "Choose and adjust this habit" : {
+
+    },
+    "Choose Habit" : {
+
+    },
+    "Completes from" : {
+
+    },
+    "Completes from Apple Health" : {
+
+    },
+    "Connect Apple Health" : {
+
+    },
+    "Connected" : {
+
+    },
+    "Couldn't add habit" : {
+
+    },
+    "Couldn't bring it back" : {
+
+    },
+    "Couldn't do that" : {
+
+    },
+    "Couldn't save" : {
+
+    },
+    "Custom habit" : {
+
+    },
+    "Daily goal" : {
+
+    },
+    "Day %lld" : {
+
+    },
+    "Day 0" : {
+
+    },
+    "Day ends at" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete %@?" : {
+
+    },
+    "Delete habit and its history" : {
+
+    },
+    "Details" : {
+
+    },
+    "Done" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edit habit" : {
+
+    },
+    "Evening summary" : {
+
+    },
+    "Every day" : {
+
+    },
+    "Export history (CSV)" : {
+
+    },
+    "Fledge can't open its data" : {
+
+    },
+    "Fledge fills in your habits from Apple Health, and lets them go once they stick." : {
+
+    },
+    "Fledge found no %@ data from the last 7 days. If you don't track it with your iPhone or Apple Watch, tap to log it instead. You can also check access in the Health app." : {
+
+    },
+    "Fledge only reads the data for habits you choose, and it never leaves your iPhone. To change access, open Health › your profile › Apps › Fledge." : {
+
+    },
+    "Fledge Pro" : {
+
+    },
+    "Fledge Pro is active" : {
+
+    },
+    "Flown" : {
+
+    },
+    "Flown habits keep tracking quietly. We'll nudge you only if it slips." : {
+
+    },
+    "Get Fledge Pro" : {
+
+    },
+    "Habit" : {
+
+    },
+    "Habit Status" : {
+
+    },
+    "Health" : {
+
+    },
+    "Help and feedback" : {
+
+    },
+    "How often" : {
+
+    },
+    "Icon and colour" : {
+
+    },
+    "Keep Apple Health" : {
+
+    },
+    "Keep it in the nest for now" : {
+
+    },
+    "Keep it under %lld characters so it fits on widgets." : {
+
+    },
+    "Let it fly" : {
+
+    },
+    "Log amount…" : {
+
+    },
+    "Log Habit Progress" : {
+
+    },
+    "Logged for %@." : {
+
+    },
+    "Manage subscription" : {
+
+    },
+    "Mark ${habit} done" : {
+
+    },
+    "Mark done" : {
+
+    },
+    "Mark Done" : {
+
+    },
+    "Mark Habit Done" : {
+
+    },
+    "Marks a habit done for today in Fledge." : {
+
+    },
+    "Marks today as a rest day for a habit." : {
+
+    },
+    "More" : {
+
+    },
+    "Name" : {
+
+    },
+    "Needs Fledge Pro" : {
+
+    },
+    "No account. Your Health data stays on your iPhone." : {
+
+    },
+    "No paused habits" : {
+
+    },
+    "No recent data in Apple Health" : {
+
+    },
+    "Not now — track them by tapping" : {
+
+    },
+    "Not seeing data? Check Health access" : {
+
+    },
+    "Nothing has flown yet" : {
+
+    },
+    "Notifications" : {
+
+    },
+    "OK" : {
+
+    },
+    "Only if a habit isn't done yet. Change the time per habit later." : {
+
+    },
+    "Open Fledge" : {
+
+    },
+    "Open the Health app" : {
+
+    },
+    "Opens details" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Paused habits" : {
+
+    },
+    "Pausing frees a slot and keeps the habit's history." : {
+
+    },
+    "Pick the habit this control marks done." : {
+
+    },
+    "Pick the habit to show." : {
+
+    },
+    "Pick up to three" : {
+
+    },
+    "Privacy policy" : {
+
+    },
+    "Pro" : {
+
+    },
+    "Pro lets all three habits complete from Apple Health and unlocks every widget, the Lock Screen and Control Center." : {
+
+    },
+    "Reads only what %@ need" : {
+
+    },
+    "Ready to fly" : {
+
+    },
+    "Remind me at 7 PM" : {
+
+    },
+    "Reminder" : {
+
+    },
+    "Reminders" : {
+
+    },
+    "Reminders are sent only when a habit isn't done yet. The evening summary is skipped when all three are done." : {
+
+    },
+    "Rest day" : {
+
+    },
+    "Rest Day" : {
+
+    },
+    "Rest day for %@. See you tomorrow." : {
+
+    },
+    "Rest day for ${habit}" : {
+
+    },
+    "Rest whenever you like, as long as you reach %lld days in the week." : {
+
+    },
+    "Restore purchases" : {
+
+    },
+    "Resume" : {
+
+    },
+    "Save" : {
+
+    },
+    "Sent only if the habit isn't done yet." : {
+
+    },
+    "Set Habit Done" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Some days" : {
+
+    },
+    "Stays on your iPhone. No account." : {
+
+    },
+    "Take a Rest Day" : {
+
+    },
+    "Tap" : {
+
+    },
+    "Tap the ring to log" : {
+
+    },
+    "Tells you how today's habits are going." : {
+
+    },
+    "There's room in the nest." : {
+
+    },
+    "Three habits stay free forever." : {
+
+    },
+    "Three habits.\nDone for you.\nThen they fly." : {
+
+    },
+    "Time" : {
+
+    },
+    "Toggle Habit" : {
+
+    },
+    "Touch and hold your Home Screen, tap Edit › Add Widget, and choose Fledge." : {
+
+    },
+    "Track by tapping instead" : {
+
+    },
+    "Turn on in Settings" : {
+
+    },
+    "Undo done" : {
+
+    },
+    "Undo rest day" : {
+
+    },
+    "Unit" : {
+
+    },
+    "Version" : {
+
+    },
+    "You choose what to share on the next screen" : {
+
+    },
+    "You get %lld rest days a month without breaking your streak." : {
+
+    },
+    "Your data" : {
+
+    },
+    "Your first habit can fly from day %lld." : {
+
+    },
+    "Your habits are safe on this iPhone. Please restart the app or update it.\n\n%@" : {
+
+    }
   },
   "version" : "1.0"
 }
