@@ -3,7 +3,7 @@ import SwiftData
 import HabitCore
 import FledgeUI
 
-/// Today — "the Nest": the only screen. Everything else is a sheet (docs/DESIGN.md §5, §6.1).
+/// Today — "the Nest": the only screen. Everything else is a sheet or a cover (docs/DESIGN.md §5, §6.1).
 struct TodayView: View {
     let day: DayKey
 
@@ -11,7 +11,10 @@ struct TodayView: View {
     @Query private var activeHabits: [Habit]
     @Query private var todayLogs: [DayLog]
     @State private var sheet: TodaySheet?
-    @State private var habitToGraduate: Habit?
+    @State private var detailHabit: Habit?
+    @State private var graduatingHabit: Habit?
+    @State private var amountHabit: Habit?
+    @State private var amountText = ""
     @State private var errorMessage: String?
 
     init(day: DayKey) {
@@ -47,7 +50,7 @@ struct TodayView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 if hasFreeSlot {
-                    AddHabitButton { sheet = .add }
+                    PrimaryActionButton(title: "Add habit", systemImage: "plus") { sheet = .add }
                         .padding(.bottom, FledgeTheme.Space.s)
                 }
             }
@@ -58,17 +61,31 @@ struct TodayView: View {
                 case .settings: SettingsSheet()
                 }
             }
-            .confirmationDialog(
-                habitToGraduate.map { "\($0.name) is ready to fly." } ?? "",
-                isPresented: Binding(get: { habitToGraduate != nil }, set: { if !$0 { habitToGraduate = nil } }),
-                titleVisibility: .visible
-            ) {
-                Button("Let it fly") {
-                    if let habit = habitToGraduate { perform { try context.graduate(habitID: habit.id) } }
+            .sheet(item: $detailHabit) { habit in
+                HabitDetailSheet(habit: habit, day: day) {
+                    Task {
+                        // Let the detail sheet finish dismissing before presenting the cover.
+                        try? await Task.sleep(for: .milliseconds(450))
+                        graduatingHabit = habit
+                    }
                 }
-                Button("Keep it in the nest for now", role: .cancel) {}
-            } message: {
-                Text("Flown habits keep tracking quietly. Its slot opens for a new habit.")
+            }
+            .fullScreenCover(item: $graduatingHabit) { habit in
+                GraduationView(habit: habit, day: day) {
+                    graduatingHabit = nil
+                    perform { try context.graduate(habitID: habit.id) }
+                } onKeep: {
+                    graduatingHabit = nil
+                }
+            }
+            #if DEBUG
+            .task { openDemoScreen() }
+            #endif
+            .alert(amountTitle, isPresented: Binding(get: { amountHabit != nil }, set: { if !$0 { amountHabit = nil } })) {
+                TextField("Amount", text: $amountText)
+                    .keyboardType(.decimalPad)
+                Button("Add") { logAmount() }
+                Button("Cancel", role: .cancel) {}
             }
             .alert("Couldn't do that", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
                 Button("OK", role: .cancel) {}
@@ -102,12 +119,22 @@ struct TodayView: View {
         let isDone = model.progress.status == .done
         return HabitCardView(
             model: model,
-            onToggleDone: { perform { try context.setDone(!isDone, habitID: habit.id, on: day, by: .manual) } },
-            onSkip: { perform { try context.skip(habitID: habit.id, on: day) } },
-            onUndoSkip: { perform { try context.setDone(false, habitID: habit.id, on: day, by: .manual) } },
-            onReadyToFly: { habitToGraduate = habit },
-            onPause: { perform { try context.pause(habitID: habit.id) } },
-            onDelete: { perform { try context.deleteHabit(habitID: habit.id) } }
+            actions: HabitCardActions(
+                open: { detailHabit = habit },
+                toggleDone: { perform { try context.setDone(!isDone, habitID: habit.id, on: day, by: .manual) } },
+                addIncrement: {
+                    perform { try context.addAmount(DayEvaluator.increment(for: habit.target), habitID: habit.id, on: day) }
+                },
+                logAmount: {
+                    amountText = ""
+                    amountHabit = habit
+                },
+                skip: { perform { try context.skip(habitID: habit.id, on: day) } },
+                undoSkip: { perform { try context.setDone(false, habitID: habit.id, on: day, by: .manual) } },
+                readyToFly: { graduatingHabit = habit },
+                pause: { perform { try context.pause(habitID: habit.id) } },
+                delete: { perform { try context.deleteHabit(habitID: habit.id) } }
+            )
         )
     }
 
@@ -121,7 +148,7 @@ struct TodayView: View {
             target: habit.target,
             unit: habit.unit,
             cadence: habit.cadence,
-            startedOn: DayKey(habit.startedAt),
+            startedOn: DayKey(habit.startedAt, dayEndHour: FledgeSettings.dayEndHour),
             today: day,
             todayValue: log?.value ?? 0,
             todayStatus: log?.status ?? .pending,
@@ -142,11 +169,45 @@ struct TodayView: View {
         activeHabits.count < SlotPolicy.maxActive
     }
 
+    // MARK: - Amounts
+
+    private var amountTitle: String {
+        guard let habit = amountHabit else { return "" }
+        return "Log \(habit.unit) for \(habit.name)"
+    }
+
+    private func logAmount() {
+        guard let habit = amountHabit else { return }
+        let normalized = amountText.replacingOccurrences(of: ",", with: ".")
+        guard let amount = Double(normalized), amount > 0 else {
+            errorMessage = "Enter a number greater than zero."
+            return
+        }
+        perform { try context.addAmount(amount, habitID: habit.id, on: day) }
+    }
+
+    #if DEBUG
+    private func openDemoScreen() {
+        guard DemoData.isEnabled, let screen = DemoData.screen else { return }
+        let first = sortedHabits.first
+        switch screen {
+        case "detail": detailHabit = first
+        case "graduation": graduatingHabit = first
+        case "add": sheet = .add
+        case "flown": sheet = .flown
+        case "settings": sheet = .settings
+        default: break
+        }
+    }
+    #endif
+
     private func perform(_ action: () throws -> Void) {
         do {
             try action()
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one to add another."
+        } catch HabitStoreError.noRestDaysLeft {
+            errorMessage = "You've used this month's \(RestDayPolicy.freePassesPerMonth) rest days for this habit. Set it to a few days a week if you need more flexibility."
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -156,26 +217,4 @@ struct TodayView: View {
 enum TodaySheet: String, Identifiable {
     case add, flown, settings
     var id: String { rawValue }
-}
-
-/// Floating primary action; Liquid Glass on iOS 26, prominent bordered before.
-struct AddHabitButton: View {
-    let action: () -> Void
-
-    var body: some View {
-        let button = Button(action: action) {
-            Label("Add habit", systemImage: "plus")
-                .font(.headline)
-                .padding(.horizontal, FledgeTheme.Space.s)
-                .padding(.vertical, FledgeTheme.Space.xs)
-        }
-        .buttonBorderShape(.capsule)
-        .tint(FledgeTheme.Palette.skyText)
-
-        if #available(iOS 26, *) {
-            button.buttonStyle(.glassProminent)
-        } else {
-            button.buttonStyle(.borderedProminent)
-        }
-    }
 }

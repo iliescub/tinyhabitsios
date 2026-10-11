@@ -7,6 +7,8 @@ public struct HabitCardModel: Equatable, Sendable {
     public let symbol: String
     public let colorKey: String
     public let isAuto: Bool
+    public let target: Double
+    public let unit: String
     public let progress: DayProgress
     /// e.g. "4,210 / 6,000 steps", "Done", "Rest day".
     public let valueText: String
@@ -38,6 +40,8 @@ public struct HabitCardModel: Equatable, Sendable {
         self.symbol = symbol
         self.colorKey = colorKey
         self.isAuto = source.isAuto
+        self.target = target
+        self.unit = unit
         let progress = DayEvaluator.evaluate(value: todayValue, target: target, stored: todayStatus, completedBy: todayCompletedBy)
         self.progress = progress
         self.valueText = Self.valueText(progress: progress, target: target, unit: unit, locale: locale)
@@ -55,6 +59,15 @@ public struct HabitCardModel: Equatable, Sendable {
         } else {
             self.flightText = "\(Int((graduation.recentRate * 100).rounded())) % of the last \(rule.windowDays) days"
         }
+    }
+
+    /// Manual habits with an amount (e.g. 10 min) can log partial progress.
+    public var isManualQuantity: Bool { !isAuto && target > 1 }
+
+    /// One "+" step for manual quantity habits, e.g. "+3 min".
+    public var incrementText: String {
+        let step = DayEvaluator.increment(for: target)
+        return "+\(step.formatted(.number.precision(.fractionLength(0...1)))) \(unit)"
     }
 
     static func valueText(progress: DayProgress, target: Double, unit: String, locale: Locale) -> String {

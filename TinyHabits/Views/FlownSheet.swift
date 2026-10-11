@@ -3,12 +3,14 @@ import SwiftData
 import HabitCore
 import FledgeUI
 
-/// The Flown shelf: graduated habits (docs/DESIGN.md §6.5). Bird art and grid layout come with DES-3.
+/// The Flown shelf: graduated habits (docs/DESIGN.md §6.5). Custom bird art replaces the SF Symbol with DES-3.
 struct FlownSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query private var flown: [Habit]
     @State private var errorMessage: String?
+
+    private let columns = [GridItem(.adaptive(minimum: 150), spacing: FledgeTheme.Space.m)]
 
     init() {
         let graduated = HabitState.graduated.rawValue
@@ -22,26 +24,22 @@ struct FlownSheet: View {
                     ContentUnavailableView(
                         "Nothing has flown yet",
                         systemImage: "bird",
-                        description: Text("Your first habit can fly from day 30.")
+                        description: Text("Your first habit can fly from day \(GraduationRule.standard.minDays).")
                     )
                 } else {
-                    List(flown) { habit in
-                        HStack(spacing: FledgeTheme.Space.m) {
-                            Image(systemName: "bird.fill")
-                                .font(.title2)
-                                .foregroundStyle(FledgeTheme.habitColor(habit.colorKey))
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(habit.name).font(.headline)
-                                Text(flewText(habit))
-                                    .font(.subheadline)
-                                    .foregroundStyle(FledgeTheme.Palette.ink2)
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: FledgeTheme.Space.m) {
+                            ForEach(flown) { habit in
+                                FlownTile(habit: habit, flewText: flewText(habit))
+                                    .contextMenu {
+                                        Button("Bring back to the nest", systemImage: "arrow.uturn.backward") { bringBack(habit) }
+                                    }
+                                    .accessibilityAction(named: "Bring back to the nest") { bringBack(habit) }
                             }
                         }
-                        .swipeActions {
-                            Button("Bring back", systemImage: "arrow.uturn.backward") { bringBack(habit) }
-                                .tint(FledgeTheme.Palette.skyText)
-                        }
+                        .padding(FledgeTheme.screenMargin)
                     }
+                    .background(FledgeTheme.Palette.cloud)
                 }
             }
             .navigationTitle("Flown")
@@ -72,5 +70,32 @@ struct FlownSheet: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+}
+
+struct FlownTile: View {
+    let habit: Habit
+    let flewText: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
+            Image(systemName: "bird.fill")
+                .font(.system(size: 36))
+                .foregroundStyle(FledgeTheme.habitColor(habit.colorKey))
+            Text(habit.name)
+                .font(.headline)
+                .foregroundStyle(FledgeTheme.Palette.ink)
+            Text(flewText)
+                .font(.footnote)
+                .foregroundStyle(FledgeTheme.Palette.ink2)
+        }
+        .padding(FledgeTheme.Space.l)
+        .frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
+        .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.tile))
+        .overlay {
+            RoundedRectangle(cornerRadius: FledgeTheme.Radius.tile)
+                .strokeBorder(FledgeTheme.Palette.gold.opacity(0.4), lineWidth: 1)
+        }
+        .accessibilityElement(children: .combine)
     }
 }

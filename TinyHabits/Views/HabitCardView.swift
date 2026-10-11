@@ -2,15 +2,23 @@ import SwiftUI
 import HabitCore
 import FledgeUI
 
+/// What a card can do; supplied by Today.
+struct HabitCardActions {
+    let open: () -> Void
+    let toggleDone: () -> Void
+    let addIncrement: () -> Void
+    let logAmount: () -> Void
+    let skip: () -> Void
+    let undoSkip: () -> Void
+    let readyToFly: () -> Void
+    let pause: () -> Void
+    let delete: () -> Void
+}
+
 /// A habit card in all its states (docs/DESIGN.md §6.1). One accessibility element with custom actions.
 struct HabitCardView: View {
     let model: HabitCardModel
-    let onToggleDone: () -> Void
-    let onSkip: () -> Void
-    let onUndoSkip: () -> Void
-    let onReadyToFly: () -> Void
-    let onPause: () -> Void
-    let onDelete: () -> Void
+    let actions: HabitCardActions
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var confirmDelete = false
@@ -19,16 +27,39 @@ struct HabitCardView: View {
     private var status: EntryStatus { model.progress.status }
 
     var body: some View {
+        styledCard
+            .contextMenu { menuItems }
+            .confirmationDialog("Delete \(model.name)?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Delete habit and its history", role: .destructive) { actions.delete() }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(accessibilityText))
+            .accessibilityHint(Text("Opens details"))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { actions.open() }
+            .accessibilityAction(named: Text(doneActionName)) { actions.toggleDone() }
+            .accessibilityAction(named: Text("Rest day")) { actions.skip() }
+            .accessibilityAction(named: Text("Pause")) { actions.pause() }
+    }
+
+    private var styledCard: some View {
+        cardContent
+            .padding(FledgeTheme.Space.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.card))
+            .contentShape(.rect(cornerRadius: FledgeTheme.Radius.card))
+            .onTapGesture { actions.open() }
+            .overlay { readyOutline }
+            .sensoryFeedback(.success, trigger: status) { _, new in new == .done }
+    }
+
+    private var cardContent: some View {
         let layout = dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: FledgeTheme.Space.m))
             : AnyLayout(HStackLayout(alignment: .center, spacing: FledgeTheme.Space.l))
 
-        layout {
-            Button(action: status == .skipped ? onUndoSkip : onToggleDone) {
-                HabitRing(fraction: model.progress.fraction, status: status, color: color, symbol: status == .done ? "checkmark" : model.symbol)
-            }
-            .buttonStyle(.plain)
-
+        return layout {
+            ringButton
             VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(model.name)
@@ -44,31 +75,33 @@ struct HabitCardView: View {
                 flightRow
             }
         }
-        .padding(FledgeTheme.Space.l)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.card))
-        .overlay {
-            if model.isReadyToFly {
-                RoundedRectangle(cornerRadius: FledgeTheme.Radius.card)
-                    .strokeBorder(FledgeTheme.Palette.gold, lineWidth: 2)
-            }
+    }
+
+    private var ringButton: some View {
+        Button {
+            if status == .skipped { actions.undoSkip() } else { actions.toggleDone() }
+        } label: {
+            HabitRing(fraction: model.progress.fraction, status: status, color: color, symbol: status == .done ? "checkmark" : model.symbol)
         }
-        .sensoryFeedback(.success, trigger: status) { _, new in new == .done }
-        .contextMenu { menuItems }
-        .confirmationDialog("Delete \(model.name)?", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("Delete habit and its history", role: .destructive, action: onDelete)
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var readyOutline: some View {
+        if model.isReadyToFly {
+            RoundedRectangle(cornerRadius: FledgeTheme.Radius.card)
+                .strokeBorder(FledgeTheme.Palette.gold, lineWidth: 2)
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText)
-        .accessibilityAction(named: status == .done ? "Undo done" : "Mark done", onToggleDone)
-        .accessibilityAction(named: "Skip today", onSkip)
-        .accessibilityAction(named: "Pause", onPause)
+    }
+
+    private var doneActionName: String {
+        status == .done ? "Undo done" : "Mark done"
     }
 
     @ViewBuilder
     private var flightRow: some View {
         if model.isReadyToFly {
-            Button(action: onReadyToFly) {
+            Button(action: actions.readyToFly) {
                 Label("Ready to fly", systemImage: "sparkles")
                     .font(.footnote.weight(.semibold))
                     .padding(.horizontal, FledgeTheme.Space.m)
@@ -92,20 +125,25 @@ struct HabitCardView: View {
     @ViewBuilder
     private var menuItems: some View {
         if status == .done {
-            Button("Undo done", systemImage: "arrow.uturn.backward", action: onToggleDone)
+            Button("Undo done", systemImage: "arrow.uturn.backward", action: actions.toggleDone)
         } else {
-            Button("Mark done", systemImage: "checkmark", action: onToggleDone)
+            Button("Mark done", systemImage: "checkmark", action: actions.toggleDone)
+        }
+        if model.isManualQuantity && status != .done {
+            Button(model.incrementText, systemImage: "plus", action: actions.addIncrement)
+            Button("Log amount…", systemImage: "number", action: actions.logAmount)
         }
         if status == .skipped {
-            Button("Undo rest day", systemImage: "arrow.uturn.backward", action: onUndoSkip)
+            Button("Undo rest day", systemImage: "arrow.uturn.backward", action: actions.undoSkip)
         } else if status != .done {
-            Button("Rest day", systemImage: "moon.zzz", action: onSkip)
+            Button("Rest day", systemImage: "moon.zzz", action: actions.skip)
         }
         if model.isReadyToFly {
-            Button("Let it fly", systemImage: "bird", action: onReadyToFly)
+            Button("Let it fly", systemImage: "bird", action: actions.readyToFly)
         }
         Divider()
-        Button("Pause", systemImage: "pause", action: onPause)
+        Button("Details", systemImage: "chart.bar", action: actions.open)
+        Button("Pause", systemImage: "pause", action: actions.pause)
         Button("Delete", systemImage: "trash", role: .destructive) { confirmDelete = true }
     }
 

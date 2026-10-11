@@ -46,6 +46,8 @@ public struct HabitRing: View {
                 .font(.system(size: size * 0.32, weight: .semibold, design: .rounded))
                 .foregroundStyle(color)
                 .symbolRenderingMode(.hierarchical)
+                .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.bounce, value: status == .done)
         }
         .frame(width: size, height: size)
         .animation(.spring(response: 0.5, dampingFraction: 0.85), value: fraction)

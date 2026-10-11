@@ -19,6 +19,9 @@ public enum HabitStoreError: Error, Equatable {
     /// All three slots are taken; graduate or pause a habit first.
     case nestFull
     case habitNotFound
+    case invalidDraft(HabitDraft.Problem)
+    /// The daily habit already used its free rest days this month.
+    case noRestDaysLeft
 }
 
 /// The single write API. The app calls these on its main context; `HabitWriter` runs the same code
@@ -60,10 +63,35 @@ extension ModelContext {
 
     @discardableResult
     public func addHabit(from template: Pack.Template, colorKey: String, packID: String) throws -> Habit {
-        try addHabit(
-            name: template.name, symbol: template.symbol, colorKey: colorKey, source: template.source,
-            target: template.target, unit: template.unit, perWeek: template.perWeek ?? 7, packID: packID
+        try addHabit(draft: HabitDraft(template: template, colorKey: colorKey, packID: packID))
+    }
+
+    /// Validates the draft, then adds it into the lowest free slot.
+    @discardableResult
+    public func addHabit(draft: HabitDraft, startedAt: Date = .now) throws -> Habit {
+        if let problem = draft.problem { throw HabitStoreError.invalidDraft(problem) }
+        let habit = try addHabit(
+            name: draft.trimmedName, symbol: draft.symbol, colorKey: draft.colorKey, source: draft.source,
+            target: draft.target, unit: draft.unit, perWeek: draft.perWeek, packID: draft.packID, startedAt: startedAt
         )
+        habit.reminderMinutes = draft.reminderMinutes
+        try save()
+        return habit
+    }
+
+    /// Applies edited fields. History and graduation progress are kept.
+    public func updateHabit(habitID: UUID, with draft: HabitDraft) throws {
+        if let problem = draft.problem { throw HabitStoreError.invalidDraft(problem) }
+        guard let habit = try habit(id: habitID) else { throw HabitStoreError.habitNotFound }
+        habit.name = draft.trimmedName
+        habit.symbol = draft.symbol
+        habit.colorKey = draft.colorKey
+        habit.source = draft.source
+        habit.target = max(draft.target, 0.0001)
+        habit.unit = draft.unit
+        habit.perWeek = min(max(draft.perWeek, 1), 7)
+        habit.reminderMinutes = draft.reminderMinutes
+        try save()
     }
 
     /// Frees the slot; history is kept.
@@ -123,11 +151,24 @@ extension ModelContext {
         try save()
     }
 
+    /// Marks a rest day. Daily habits get `RestDayPolicy.freePassesPerMonth` per month.
     public func skip(habitID: UUID, on day: DayKey) throws {
+        guard let habit = try habit(id: habitID) else { throw HabitStoreError.habitNotFound }
+        let history = habit.logs?.compactMap(\.snapshot) ?? []
+        if let remaining = RestDayPolicy.remaining(snapshots: history, cadence: habit.cadence, on: day), remaining == 0 {
+            throw HabitStoreError.noRestDaysLeft
+        }
         guard let log = try log(for: habitID, on: day) else { return }
         log.status = .skipped
         log.updatedAt = .now
         try save()
+    }
+
+    /// Adds a manual amount (e.g. +5 min) to today's value.
+    public func addAmount(_ amount: Double, habitID: UUID, on day: DayKey) throws {
+        guard let log = try log(for: habitID, on: day) else { throw HabitStoreError.habitNotFound }
+        if log.status == .skipped { log.status = .pending }
+        try record(value: max(0, log.value + amount), habitID: habitID, on: day, by: .manual)
     }
 
     /// Stores a measured value (HealthKit) or a manual amount, then re-evaluates the day.

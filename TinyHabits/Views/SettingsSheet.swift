@@ -3,12 +3,13 @@ import SwiftData
 import HabitCore
 import FledgeUI
 
-/// Settings (docs/DESIGN.md §6.8). M0 ships paused habits and About; the rest arrives with SET-1.
+/// Settings (docs/DESIGN.md §6.8). Day end, paused habits and About; the rest arrives with SET-1.
 struct SettingsSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query private var paused: [Habit]
     @State private var errorMessage: String?
+    @AppStorage(FledgeSettings.dayEndHourKey, store: FledgeSettings.defaults) private var dayEndHour = FledgeSettings.defaultDayEndHour
 
     init() {
         let pausedState = HabitState.paused.rawValue
@@ -18,6 +19,16 @@ struct SettingsSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    Picker("Day ends at", selection: $dayEndHour) {
+                        ForEach(Array(FledgeSettings.dayEndHourRange), id: \.self) { hour in
+                            Text(hourLabel(hour)).tag(hour)
+                        }
+                    }
+                } footer: {
+                    Text("Anything you do before this time counts for the previous day — handy for late nights.")
+                }
+
                 Section {
                     if paused.isEmpty {
                         Text("No paused habits")
@@ -55,6 +66,11 @@ struct SettingsSheet: View {
                 Text(errorMessage ?? "")
             }
         }
+    }
+
+    private func hourLabel(_ hour: Int) -> String {
+        let date = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: .now) ?? .now
+        return hour == 0 ? "Midnight" : date.formatted(date: .omitted, time: .shortened)
     }
 
     private var appVersion: String {

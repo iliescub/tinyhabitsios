@@ -6,6 +6,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 ## Start here (status as of 2026-10-11)
 **Decided:** name **Fledge** · positioning: max 3 habits, auto-completed from Apple Health, graduation (Option A) · niche packs (Option B) decided 2027-02-15 · release 2026-12-15.
 **Done:** spec + roadmap (link above, offline copy in `docs/SPEC.md`) · `CLAUDE.md` · this backlog · `Packages/HabitCore` (19 tests passing) · `.gitignore`.
+**M1 status (2026-10-11):** core loop complete — add/edit, check-in, amounts, rest days, detail + heatmap, graduation, Flown, day-end setting. 42 package tests pass. Screens can be opened directly in DEBUG with `-FledgeDemoData -FledgeDemoScreen detail|graduation|add|flown|settings`.
 **M0 status (2026-10-11):** app runs on HabitCore/FledgeUI with the new Today screen; 33 package tests pass; debug launch argument `-FledgeDemoData` shows sample habits from an in-memory store. Remaining in M0: CI-1, ACC-1 (yours). HealthKit code was removed and is rewritten in M2 (old sleep-session logic: `git show a43acee:TinyHabits/Services/HealthKitManager.swift`).
 **Design:** brand + full UI concept in `docs/DESIGN.md`, icon in `Design/Icon/` (2026-10-11). HTML mockups: cloud session → `Design/mockups/`.
 **Open decisions:** DEC-1 minimum iOS 26 (recommended in DESIGN.md §4) · prices ($19.99/yr, $39.99 lifetime proposed) · analytics (TelemetryDeck or none) · iPhone-only + English-only assumed.
@@ -23,9 +24,9 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [ ] **DES-2** Build `Fledge.icon` in Icon Composer from the two layers; check all 6 appearances on device (0.5d)
 - [x] **DES-1** ✅ `FledgeTheme` in `FledgeUI` (code-defined light/dark colours, shared with widgets), plus `HabitRing`, `SkyBackground`, `HabitCardModel`/`TodaySummary` (tested); new app icon + accent colour in the asset catalog
 - [ ] **DES-3** Bird vector in 4 poses (sitting, ready, flying, sleeping) as SF-Symbol-style SVG/PDF assets (1d, cloud draft + local polish)
-- [ ] **DES-4** `HabitRing` component (app + widgets, done animation, `widgetAccentable`) (1d, M1)
+- [~] **DES-4** `HabitRing`: ✅ app version with done bounce; `widgetAccentable` comes with WID-2
 - [ ] **DES-5** `SkyHeader` time-of-day gradient with Reduce Transparency fallback (0.25d, M1)
-- [ ] **DES-6** Graduation animation: ring → bird matched geometry + flight, Reduce Motion variant (1d, M1/M4)
+- [~] **DES-6** Graduation animation: ✅ first version (matched geometry ring → SF bird, flight, Reduce Motion); polish with custom bird art after DES-3
 - [ ] **DES-8** App Store screenshot templates (6, captions from DESIGN.md §9) (cloud draft, final in M4)
 
 ## M0 Foundations — Oct 12 → Oct 25
@@ -39,14 +40,14 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [ ] **CI-1** Xcode Cloud or GitHub Actions: build + `swift test` on push (0.5d)
 
 ## M1 Core loop — Oct 26 → Nov 8
-- [ ] **LOOP-1** Today: 3 slot cards (ring, name, value/target, source badge, days-to-graduate); empty slot = "Add habit" (2d)
-- [ ] **LOOP-2** Add/edit habit sheet: template picker from pack, custom habit, target, unit, cadence (N/week), reminder (1.5d)
-- [ ] **LOOP-3** Check-in: tap done/undo, long-press partial amount (`DayEvaluator.increment`), skip today; haptics (1d)
-- [ ] **LOOP-4** Free passes: 2 skips/month on daily cadence (0.5d)
-- [ ] **LOOP-5** Graduation: "ready" state on card, celebration screen, free the slot, Graduates shelf (1.5d)
-- [ ] **LOOP-6** Pause/resume/delete with confirmation; enforce `SlotPolicy` everywhere (0.5d)
-- [ ] **LOOP-7** Habit detail: 12-week heatmap, streak (days/weeks), 30-day rate, graduation countdown — refactor `HabitDetailView`/`StatsView`, no `@Query` over all logs (1.5d)
-- [ ] **LOOP-8** Day-end hour setting wired into `DayKey` (0.5d)
+- [x] **LOOP-1** ✅ Today: 3 slot cards (ring, name, value/target, source badge, flight track / countdown, ready-to-fly), empty slots, tap card → detail
+- [x] **LOOP-2** ✅ Add (templates + custom → configure) and Edit share `HabitEditorView`: name, symbol, colour, unit, target stepper, cadence, reminder time (stored; scheduling is NOTIF-1). `HabitDraft` validation tested
+- [x] **LOOP-3** ✅ Ring tap done/undo; long-press menu: +increment, Log amount…, Rest day; haptics + symbol bounce
+- [x] **LOOP-4** ✅ `RestDayPolicy`: 2 rest days/month for daily habits (enforced in `skip`), unlimited for weekly cadence; shown on detail
+- [x] **LOOP-5** ✅ Ready state (gold), graduation cover (ring → bird, flight, Reduce Motion fade), slot freed, Flown grid with Bring back
+- [x] **LOOP-6** ✅ Pause/resume/delete with confirmation; `SlotPolicy` enforced in the write API
+- [x] **LOOP-7** ✅ Habit detail sheet: hero ring, Fledge progress track (day 30 tick, bird marker), 12-week heatmap (rest days hatched), streak/best/30-day tiles, Edit/Pause/Delete menu. `HeatmapModel`/`HabitDetailStats` tested
+- [x] **LOOP-8** ✅ Settings › Day ends at (midnight–5 AM) in App Group defaults (`FledgeSettings`), `DayKey.today()`; Today switches day live
 
 ## M2 Auto-completion — Nov 2 → Nov 15
 - [ ] **HK-1** Generic `HealthKitSource`: async daily statistics for quantity types (steps, exercise, water, daylight, mindful) (1d)

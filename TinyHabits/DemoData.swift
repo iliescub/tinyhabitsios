@@ -9,6 +9,13 @@ enum DemoData {
 
     static var isEnabled: Bool { ProcessInfo.processInfo.arguments.contains(launchArgument) }
 
+    /// `-FledgeDemoScreen detail|graduation|add|flown|settings` opens that screen on launch (for screenshots).
+    static var screen: String? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-FledgeDemoScreen"), arguments.indices.contains(index + 1) else { return nil }
+        return arguments[index + 1]
+    }
+
     static func makeContainer() throws -> ModelContainer {
         let container = try SharedStore.makeContainer(inMemory: true)
         try seed(ModelContext(container))

@@ -27,10 +27,11 @@ struct FledgeApp: App {
     }
 }
 
-/// Keeps `TodayView` on the current `DayKey`, which only changes at the day-end hour (3 AM by default).
+/// Keeps `TodayView` on the current `DayKey`, which changes at the user's day-end hour (3 AM by default).
 struct RootView: View {
-    @State private var today = DayKey(.now)
+    @State private var today = DayKey.today()
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage(FledgeSettings.dayEndHourKey, store: FledgeSettings.defaults) private var dayEndHour = FledgeSettings.defaultDayEndHour
 
     var body: some View {
         TodayView(day: today)
@@ -38,6 +39,7 @@ struct RootView: View {
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { refreshDay() }
             }
+            .onChange(of: dayEndHour) { _, _ in refreshDay() }
             .task {
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(60))
@@ -47,7 +49,7 @@ struct RootView: View {
     }
 
     private func refreshDay() {
-        let now = DayKey(.now)
+        let now = DayKey.today()
         if now != today { today = now }
     }
 }
