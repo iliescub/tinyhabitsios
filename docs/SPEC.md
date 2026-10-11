@@ -70,6 +70,13 @@ When a feature request conflicts with one of these principles, the principle win
 6. **Private by default.** No account, no analytics SDK that sees health data, and Health data never leaves the device.
 7. **Native and quiet.** Use system fonts, SF Symbols and Apple materials. One accent colour, and no pop-ups at launch.
 
+## Brand and UI concept
+
+Theme **"Leave the nest"**: three habits in a nest that fill up by themselves and fly once they stick. One calm screen (Today) plus sheets,
+native iOS 26 Liquid Glass on the navigation layer only. Icon: a white fledgling whose wing is a checkmark, on a sky-to-dawn gradient
+(`Design/Icon/`). Full concept — research, palette with contrast values, typography, motion, every screen, state and widget,
+accessibility, screenshots — in **`docs/DESIGN.md`**. Platform decision DEC-1: raise the minimum to iOS 26 (recommended).
+
 ## Core loop: 3 slots, check-ins and graduation
 
 The app has three slots. Each holds one active habit, which moves through four states: **active**, **ready to graduate**, **graduated** and **paused**. The Today screen shows the three slots and nothing else.
@@ -276,7 +283,7 @@ The app keeps SwiftUI and SwiftData. All logic moves into a shared local Swift p
 
 | Decision | Choice | Reason |
 | --- | --- | --- |
-| Minimum iOS version | 18.0 | Needed for Control Center controls; covers most active iPhones |
+| Minimum iOS version | 18.0 | Needed for Control Center controls. DEC-1 proposes iOS 26 for native Liquid Glass |
 | Language / concurrency | Swift 6, strict concurrency | Catches data races between HealthKit callbacks and the UI |
 | State | `@Observable` view models | Replaces `ObservableObject` / `@Published` |
 | Persistence | SwiftData with `VersionedSchema` from V1 | Avoids the current "reset the store on migration failure" path |
