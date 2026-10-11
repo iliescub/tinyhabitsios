@@ -6,6 +6,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 ## Start here (status as of 2026-10-11)
 **Decided:** name **Fledge** · positioning: max 3 habits, auto-completed from Apple Health, graduation (Option A) · niche packs (Option B) decided 2027-02-15 · release 2026-12-15.
 **Done:** spec + roadmap (link above, offline copy in `docs/SPEC.md`) · `CLAUDE.md` · this backlog · `Packages/HabitCore` (19 tests passing) · `.gitignore`.
+**M2 status (2026-10-11):** Apple Health auto-completion (8 sources, background delivery) and reminders done in code; 54 package tests pass; device verification is HK-5 (yours, checklist below).
 **M1 status (2026-10-11):** core loop complete — add/edit, check-in, amounts, rest days, detail + heatmap, graduation, Flown, day-end setting. 42 package tests pass. Screens can be opened directly in DEBUG with `-FledgeDemoData -FledgeDemoScreen detail|graduation|add|flown|settings`.
 **M0 status (2026-10-11):** app runs on HabitCore/FledgeUI with the new Today screen; 33 package tests pass; debug launch argument `-FledgeDemoData` shows sample habits from an in-memory store. Remaining in M0: CI-1, ACC-1 (yours). HealthKit code was removed and is rewritten in M2 (old sleep-session logic: `git show a43acee:TinyHabits/Services/HealthKitManager.swift`).
 **Design:** brand + full UI concept in `docs/DESIGN.md`, icon in `Design/Icon/` (2026-10-11). HTML mockups: cloud session → `Design/mockups/`.
@@ -50,12 +51,19 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [x] **LOOP-8** ✅ Settings › Day ends at (midnight–5 AM) in App Group defaults (`FledgeSettings`), `DayKey.today()`; Today switches day live
 
 ## M2 Auto-completion — Nov 2 → Nov 15
-- [ ] **HK-1** Generic `HealthKitSource`: async daily statistics for quantity types (steps, exercise, water, daylight, mindful) (1d)
-- [ ] **HK-2** Special sources: sleep (reuse existing session logic), stand hours (category count), workouts (count/minutes, optional activity type) (1d)
-- [ ] **HK-3** `HealthSyncActor`: foreground refresh on scene active; `HKObserverQuery` + `enableBackgroundDelivery` per used type → `HabitWriter.record` (1.5d)
-- [ ] **HK-4** Authorization flow per habit; "no data" banner after 3 days of zeros by 6 PM; setup offers manual when no samples in last 7 days (1d)
-- [ ] **NOTIF-1** `ReminderReconciler`: rebuild pending notifications from state after every write; skip habits already done; evening summary (1.5d)
-- [ ] **HK-5** Device test matrix: iPhone only, iPhone + Watch, permission denied, day-end edge cases (1d)
+- [x] **HK-1** ✅ `FledgeHealth`: `HealthMetric` mapping (all 8 Essentials sources + protein, distance, flights, workout types) and async `HealthReader` (statistics/sample query descriptors), day windows honour the day-end hour
+- [x] **HK-2** ✅ Sleep (main session of the night, 20-min gap merging, naps ignored), stand hours ("stood" count), mindful minutes, workouts (count or minutes, optional activity) — aggregation pure and tested in HabitCore
+- [x] **HK-3** ✅ `HealthSync` (MainActor, writes via main context so @Query updates): launch, app active, after adding/editing; `HealthObserver` with background delivery started at launch; syncs today + yesterday; graduates keep syncing; unchanged values don't save
+- [x] **HK-4** ✅ Read access requested when adding a Health habit; no samples in 7 days → offer "Track by tapping instead"; card hint "Not seeing data?" (3 days of zeros after 6 PM) opens Health; Settings › Apple Health
+- [x] **NOTIF-1** ✅ `ReminderPlan` (tested) + `Reminders.reconcile`: 7 days ahead, today's skipped when done/resting, "N to go" text, rebuilt after every write/sync/activation; permission asked when a reminder is first set. Evening summary moved to SET-1
+- [ ] **HK-5** Device test matrix (needs a real iPhone; HealthKit permission sheets can't be automated here):
+  - [ ] Add Walk → Health sheet appears once → steps fill the ring within ~1 s of opening the app
+  - [ ] Walk 1,000+ steps with the app closed → ring updated on next open (background delivery ≈ hourly for steps)
+  - [ ] Deny access → card shows "Not seeing data?" after 3 days at 6 PM; Add shows "No recent data" alert
+  - [ ] Sleep habit with Apple Watch → morning value = last night's main session (naps excluded)
+  - [ ] Work out 3×/week habit → only workouts count; weekly streak correct
+  - [ ] Reminder at 20:00 for an undone habit fires; marking done before 20:00 cancels it
+  - [ ] Change "Day ends at" to midnight/5 AM → Today switches day correctly around midnight
 
 ## M3 Widgets and intents — Nov 9 → Nov 22
 - [ ] **INT-1** `HabitEntity` (AppEntity) + query; `CompleteHabitIntent`, `LogProgressIntent`, `SkipTodayIntent`, `HabitStatusIntent` (1.5d)
@@ -69,7 +77,7 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 - [ ] **ONB-1** 4-screen onboarding: promise → pick ≤3 → Health → reminders + widget demo (2d)
 - [ ] **PAY-1** StoreKit 2 products + `.storekit` config; `SubscriptionStoreView` paywall; `ProStatus` cached in App Group for widgets (1.5d)
 - [ ] **PAY-2** Gates: 2nd/3rd auto habit, Pro widgets, Lock Screen, Control, icons, export (0.5d)
-- [ ] **SET-1** Settings: appearance, app icons, day-end hour, reminders, Health status, export CSV, privacy, restore purchases, contact (1d)
+- [ ] **SET-1** Settings: appearance, app icons, ~~day-end hour~~ ✅, ~~Health/notification status~~ ✅, evening summary notification, export CSV, privacy, restore purchases, contact (1d)
 - [ ] **POL-1** Accessibility pass (VoiceOver labels on rings, Dynamic Type), dark mode, localization-ready strings (1d)
 - [ ] **POL-2** App icon, launch screen, celebration animation polish (1d)
 - [ ] **ANA-1** Anonymous analytics (TelemetryDeck or none): install, onboarding step, habit added (source kind only), completion (by), trial, purchase. Never Health values (0.5d)

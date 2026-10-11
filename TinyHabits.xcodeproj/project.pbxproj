@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		F1ED6E0000000000000000A4 /* HabitCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A2 /* HabitCore */; };
 		F1ED6E0000000000000000A5 /* FledgeUI in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A3 /* FledgeUI */; };
+		F1ED6E0000000000000000A7 /* FledgeHealth in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A6 /* FledgeHealth */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 			files = (
 				F1ED6E0000000000000000A4 /* HabitCore in Frameworks */,
 				F1ED6E0000000000000000A5 /* FledgeUI in Frameworks */,
+				F1ED6E0000000000000000A7 /* FledgeHealth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +76,7 @@
 			packageProductDependencies = (
 				F1ED6E0000000000000000A2 /* HabitCore */,
 				F1ED6E0000000000000000A3 /* FledgeUI */,
+				F1ED6E0000000000000000A6 /* FledgeHealth */,
 			);
 			productName = TinyHabits;
 			productReference = 43214C3A2ECE19FF001C8249 /* TinyHabits.app */;
@@ -368,6 +371,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */;
 			productName = FledgeUI;
+		};
+		F1ED6E0000000000000000A6 /* FledgeHealth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F1ED6E0000000000000000A1 /* XCLocalSwiftPackageReference "Packages/HabitCore" */;
+			productName = FledgeHealth;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

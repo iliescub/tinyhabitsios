@@ -10,6 +10,8 @@ struct AddHabitSheet: View {
     @State private var pack: Pack?
     @State private var path: [HabitDraftRoute] = []
     @State private var errorMessage: String?
+    @State private var noDataDraft: HabitDraft?
+    @State private var isPreparing = false
 
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: FledgeTheme.Space.m)]
 
@@ -53,9 +55,30 @@ struct AddHabitSheet: View {
                 }
             }
             .navigationDestination(for: HabitDraftRoute.self) { route in
-                ConfigureHabitView(initialDraft: route.draft) { draft in add(draft) }
+                ConfigureHabitView(initialDraft: route.draft, isBusy: isPreparing) { draft in
+                    Task { await prepareAndAdd(draft) }
+                }
             }
             .task { loadPack() }
+            .alert(
+                "No recent data in Apple Health",
+                isPresented: Binding(get: { noDataDraft != nil }, set: { if !$0 { noDataDraft = nil } })
+            ) {
+                Button("Keep Apple Health") {
+                    if let draft = noDataDraft { add(draft) }
+                }
+                Button("Track by tapping instead") {
+                    if var draft = noDataDraft {
+                        draft.source = .manual
+                        draft.unit = "times"
+                        draft.target = 1
+                        add(draft)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Fledge found no \(noDataDraft?.name ?? "") data from the last 7 days. If you don't track it with your iPhone or Apple Watch, tap to log it instead. You can also check access in the Health app.")
+            }
             .alert("Couldn't add habit", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -94,9 +117,29 @@ struct AddHabitSheet: View {
         }
     }
 
+    /// Health habits: ask for read access first and offer manual tracking when Health has no recent data (HK-4).
+    private func prepareAndAdd(_ draft: HabitDraft) async {
+        if draft.reminderMinutes != nil {
+            await Reminders.requestAuthorizationIfNeeded()
+        }
+        guard draft.source.isAuto, let sync = HealthSync.shared else {
+            add(draft)
+            return
+        }
+        isPreparing = true
+        let result = await sync.prepare(source: draft.source, unit: draft.unit)
+        isPreparing = false
+        if result.metric != nil && !result.hasRecentData {
+            noDataDraft = draft
+        } else {
+            add(draft)
+        }
+    }
+
     private func add(_ draft: HabitDraft) {
         do {
             try context.addHabit(draft: draft)
+            HealthSync.shared?.updateObservers()
             dismiss()
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one to add another."
@@ -117,10 +160,12 @@ struct HabitDraftRoute: Hashable {
 /// Configure step before adding.
 struct ConfigureHabitView: View {
     @State private var draft: HabitDraft
+    let isBusy: Bool
     let onAdd: (HabitDraft) -> Void
 
-    init(initialDraft: HabitDraft, onAdd: @escaping (HabitDraft) -> Void) {
+    init(initialDraft: HabitDraft, isBusy: Bool, onAdd: @escaping (HabitDraft) -> Void) {
         _draft = State(initialValue: initialDraft)
+        self.isBusy = isBusy
         self.onAdd = onAdd
     }
 
@@ -129,8 +174,8 @@ struct ConfigureHabitView: View {
             .navigationTitle(draft.trimmedName.isEmpty ? "New habit" : draft.trimmedName)
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {
-                PrimaryActionButton(title: "Add to nest", systemImage: "plus") { onAdd(draft) }
-                    .disabled(draft.problem != nil)
+                PrimaryActionButton(title: isBusy ? "Connecting to Health…" : "Add to nest", systemImage: "plus") { onAdd(draft) }
+                    .disabled(draft.problem != nil || isBusy)
                     .padding(.bottom, FledgeTheme.Space.s)
             }
     }
@@ -174,6 +219,11 @@ struct EditHabitSheet: View {
     private func save() {
         do {
             try context.updateHabit(habitID: habit.id, with: draft)
+            let needsNotifications = draft.reminderMinutes != nil
+            Task {
+                if needsNotifications { await Reminders.requestAuthorizationIfNeeded() }
+                HealthSync.shared?.updateObservers()
+            }
             dismiss()
         } catch {
             errorMessage = error.localizedDescription

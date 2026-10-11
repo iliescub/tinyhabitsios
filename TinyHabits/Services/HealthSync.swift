@@ -1,0 +1,84 @@
+import Foundation
+import SwiftData
+import HabitCore
+import FledgeHealth
+
+/// Keeps Health-sourced habits up to date (HK-3): on launch, when the app becomes active, and when
+/// HealthKit background delivery wakes the app. Writes go through the HabitCore write API on the main context,
+/// so SwiftUI's @Query sees them immediately.
+@MainActor
+final class HealthSync {
+    /// Set at launch by `FledgeApp`.
+    static private(set) var shared: HealthSync?
+
+    private let container: ModelContainer
+    private let reader = HealthReader()
+    private lazy var observer = HealthObserver(reader: reader)
+    private var observedMetrics: Set<HealthMetric> = []
+    private var isRefreshing = false
+
+    static func start(container: ModelContainer) {
+        let sync = HealthSync(container: container)
+        shared = sync
+        sync.updateObservers()
+    }
+
+    private init(container: ModelContainer) {
+        self.container = container
+    }
+
+    /// Asks for read access for one source (system sheet only the first time) and reports whether
+    /// Health has any recent data for it. Used before adding a "Done for you" habit (HK-4).
+    func prepare(source: HabitSourceID, unit: String) async -> (metric: HealthMetric?, hasRecentData: Bool) {
+        guard HealthReader.isAvailable, let metric = HealthMetric(source: source, unit: unit) else { return (nil, false) }
+        do {
+            try await reader.requestAuthorization(for: [metric])
+        } catch {
+            return (metric, false)
+        }
+        return (metric, await reader.hasRecentSamples(for: metric))
+    }
+
+    /// Re-registers observers when the set of Health habits changes, then refreshes.
+    func updateObservers() {
+        let metrics = Set(trackedHabits().compactMap { HealthMetric(source: $0.source, unit: $0.unit) })
+        if metrics != observedMetrics {
+            observedMetrics = metrics
+            if metrics.isEmpty {
+                observer.stop()
+            } else {
+                Task {
+                    try? await reader.requestAuthorization(for: Array(metrics))
+                    observer.start(metrics: Array(metrics)) { [weak self] in
+                        await self?.refresh()
+                    }
+                }
+            }
+        }
+        Task { await refresh() }
+    }
+
+    /// Reads today's and yesterday's values (late Watch syncs, last night's sleep) and records them.
+    func refresh() async {
+        guard HealthReader.isAvailable, !isRefreshing else { return }
+        isRefreshing = true
+        defer { isRefreshing = false }
+
+        let context = container.mainContext
+        let dayEndHour = FledgeSettings.dayEndHour
+        let today = DayKey.today()
+        for habit in trackedHabits() {
+            guard let metric = HealthMetric(source: habit.source, unit: habit.unit) else { continue }
+            let startedOn = DayKey(habit.startedAt, dayEndHour: dayEndHour)
+            for day in [today.adding(days: -1), today] where day >= startedOn {
+                guard let value = try? await reader.value(for: metric, on: day, dayEndHour: dayEndHour) else { continue }
+                try? context.record(value: value, habitID: habit.id, on: day, by: .auto)
+            }
+        }
+        await Reminders.reconcile(context: context)
+    }
+
+    private func trackedHabits() -> [AutoHabitRef] {
+        (try? container.mainContext.trackedAutoHabits()) ?? []
+    }
+}

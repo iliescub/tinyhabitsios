@@ -13,6 +13,16 @@ struct FledgeApp: App {
         return try SharedStore.makeContainer()
     }
 
+    init() {
+        // Health observers must be registered at launch so background delivery can wake the app.
+        #if DEBUG
+        if DemoData.isEnabled { return } // keep demo values; don't touch Health
+        #endif
+        if case .success(let container) = container {
+            HealthSync.start(container: container)
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             switch container {
@@ -37,7 +47,9 @@ struct RootView: View {
         TodayView(day: today)
             .id(today)
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { refreshDay() }
+                guard phase == .active else { return }
+                refreshDay()
+                Task { await HealthSync.shared?.refresh() }
             }
             .onChange(of: dayEndHour) { _, _ in refreshDay() }
             .task {

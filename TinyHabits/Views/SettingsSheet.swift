@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
 import HabitCore
 import FledgeUI
 
@@ -10,6 +11,8 @@ struct SettingsSheet: View {
     @Query private var paused: [Habit]
     @State private var errorMessage: String?
     @AppStorage(FledgeSettings.dayEndHourKey, store: FledgeSettings.defaults) private var dayEndHour = FledgeSettings.defaultDayEndHour
+    @Environment(\.openURL) private var openURL
+    @State private var notificationStatus: UNAuthorizationStatus = .notDetermined
 
     init() {
         let pausedState = HabitState.paused.rawValue
@@ -27,6 +30,31 @@ struct SettingsSheet: View {
                     }
                 } footer: {
                     Text("Anything you do before this time counts for the previous day — handy for late nights.")
+                }
+
+                Section {
+                    Button {
+                        if let url = URL(string: "x-apple-health://") { openURL(url) }
+                    } label: {
+                        Label("Open the Health app", systemImage: "heart.fill")
+                    }
+                } header: {
+                    Text("Apple Health")
+                } footer: {
+                    Text("Fledge only reads the data for habits you choose, and it never leaves your iPhone. To change access, open Health › your profile › Apps › Fledge.")
+                }
+
+                Section {
+                    LabeledContent("Reminders", value: notificationLabel)
+                    if notificationStatus == .denied {
+                        Button("Turn on in Settings") {
+                            if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
+                        }
+                    }
+                } header: {
+                    Text("Notifications")
+                } footer: {
+                    Text("Reminders are sent only when a habit isn't done yet. Set a time for each habit in its Edit screen.")
                 }
 
                 Section {
@@ -55,6 +83,9 @@ struct SettingsSheet: View {
                 }
             }
             .navigationTitle("Settings")
+            .task {
+                notificationStatus = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -65,6 +96,14 @@ struct SettingsSheet: View {
             } message: {
                 Text(errorMessage ?? "")
             }
+        }
+    }
+
+    private var notificationLabel: String {
+        switch notificationStatus {
+        case .authorized, .provisional, .ephemeral: "On"
+        case .denied: "Off"
+        default: "Not set up"
         }
     }
 
@@ -83,6 +122,7 @@ struct SettingsSheet: View {
     private func resume(_ habit: Habit) {
         do {
             try context.resume(habitID: habit.id)
+            HealthSync.shared?.updateObservers()
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one first."
         } catch {

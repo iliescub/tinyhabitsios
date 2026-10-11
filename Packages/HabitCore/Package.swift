@@ -10,7 +10,8 @@ let package = Package(
     ],
     products: [
         .library(name: "HabitCore", targets: ["HabitCore"]),
-        .library(name: "FledgeUI", targets: ["FledgeUI"])
+        .library(name: "FledgeUI", targets: ["FledgeUI"]),
+        .library(name: "FledgeHealth", targets: ["FledgeHealth"])
     ],
     targets: [
         .target(
@@ -21,6 +22,10 @@ let package = Package(
             name: "FledgeUI",
             dependencies: ["HabitCore"]
         ),
+        .target(
+            name: "FledgeHealth",
+            dependencies: ["HabitCore"]
+        ),
         .testTarget(
             name: "HabitCoreTests",
             dependencies: ["HabitCore"]
@@ -28,6 +33,10 @@ let package = Package(
         .testTarget(
             name: "FledgeUITests",
             dependencies: ["FledgeUI"]
+        ),
+        .testTarget(
+            name: "FledgeHealthTests",
+            dependencies: ["FledgeHealth"]
         )
     ]
 )

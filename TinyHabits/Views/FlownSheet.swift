@@ -65,6 +65,7 @@ struct FlownSheet: View {
     private func bringBack(_ habit: Habit) {
         do {
             try context.resume(habitID: habit.id)
+            HealthSync.shared?.updateObservers()
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one first."
         } catch {

@@ -55,7 +55,7 @@ struct HabitDetailSheet: View {
                     Menu("More", systemImage: "ellipsis") {
                         Button("Edit", systemImage: "pencil") { isEditing = true }
                         Button("Pause", systemImage: "pause") {
-                            perform { try context.pause(habitID: habit.id) }
+                            perform(structural: true) { try context.pause(habitID: habit.id) }
                             dismiss()
                         }
                         Button("Delete", systemImage: "trash", role: .destructive) { confirmDelete = true }
@@ -66,7 +66,7 @@ struct HabitDetailSheet: View {
             .confirmationDialog("Delete \(habit.name)?", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("Delete habit and its history", role: .destructive) {
                     dismiss()
-                    perform { try context.deleteHabit(habitID: habit.id) }
+                    perform(structural: true) { try context.deleteHabit(habitID: habit.id) }
                 }
             }
             .alert("Couldn't do that", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
@@ -152,8 +152,17 @@ struct HabitDetailSheet: View {
         }
     }
 
-    private func perform(_ action: () throws -> Void) {
-        do { try action() } catch { errorMessage = error.localizedDescription }
+    private func perform(structural: Bool = false, _ action: () throws -> Void) {
+        do {
+            try action()
+            if structural {
+                HealthSync.shared?.updateObservers()
+            } else {
+                Task { await Reminders.reconcile(context: context) }
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 }
 

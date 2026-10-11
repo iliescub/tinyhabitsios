@@ -11,6 +11,9 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - `Packages/HabitCore/` — local package with two products:
   - `HabitCore`: SwiftData `SchemaV1`, `DayKey`, `DayEvaluator`, `StreakCalculator`, `GraduationEvaluator`, write API, packs (JSON).
   - `FledgeUI`: `FledgeTheme` tokens, `HabitRing`, `SkyBackground`, `HabitCardModel`, `TodaySummary` (shared with widgets).
+  - `FledgeHealth`: `HealthMetric` (source → HealthKit query), `HealthReader` (read-only daily values), `HealthObserver`
+    (observer queries + background delivery). Aggregation math lives in HabitCore (`HealthAggregation`).
+- App services: `HealthSync` (started at launch; never in demo mode) and `Reminders` (rebuilds notifications from `ReminderPlan`).
 - Planned targets: `WidgetsExtension` (WidgetKit + ControlWidget), Watch app in 1.1.
 
 ## Rules

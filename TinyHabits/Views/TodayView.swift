@@ -73,7 +73,7 @@ struct TodayView: View {
             .fullScreenCover(item: $graduatingHabit) { habit in
                 GraduationView(habit: habit, day: day) {
                     graduatingHabit = nil
-                    perform { try context.graduate(habitID: habit.id) }
+                    perform(structural: true) { try context.graduate(habitID: habit.id) }
                 } onKeep: {
                     graduatingHabit = nil
                 }
@@ -132,9 +132,10 @@ struct TodayView: View {
                 skip: { perform { try context.skip(habitID: habit.id, on: day) } },
                 undoSkip: { perform { try context.setDone(false, habitID: habit.id, on: day, by: .manual) } },
                 readyToFly: { graduatingHabit = habit },
-                pause: { perform { try context.pause(habitID: habit.id) } },
-                delete: { perform { try context.deleteHabit(habitID: habit.id) } }
-            )
+                pause: { perform(structural: true) { try context.pause(habitID: habit.id) } },
+                delete: { perform(structural: true) { try context.deleteHabit(habitID: habit.id) } }
+            ),
+            showsNoDataHint: showsNoDataHint(for: habit, model: model)
         )
     }
 
@@ -154,6 +155,21 @@ struct TodayView: View {
             todayStatus: log?.status ?? .pending,
             todayCompletedBy: log?.completedBy,
             history: habit.logs?.compactMap(\.snapshot) ?? []
+        )
+    }
+
+    private func showsNoDataHint(for habit: Habit, model: HabitCardModel) -> Bool {
+        guard habit.source.isAuto else { return false }
+        let logs = habit.logs ?? []
+        let previous = [day.adding(days: -1), day.adding(days: -2)].map { past in
+            logs.first { $0.dayKey == past.rawValue }?.value ?? 0
+        }
+        let startedOn = DayKey(habit.startedAt, dayEndHour: FledgeSettings.dayEndHour)
+        return NoDataHeuristic.shouldHint(
+            todayValue: model.progress.value,
+            previousValues: previous,
+            daysActive: startedOn.days(to: day) + 1,
+            hour: Calendar.current.component(.hour, from: .now)
         )
     }
 
@@ -201,9 +217,16 @@ struct TodayView: View {
     }
     #endif
 
-    private func perform(_ action: () throws -> Void) {
+    /// Runs a write; then reschedules reminders, and for structural changes (pause, delete, graduate)
+    /// updates which Health types are observed.
+    private func perform(structural: Bool = false, _ action: () throws -> Void) {
         do {
             try action()
+            if structural {
+                HealthSync.shared?.updateObservers()
+            } else {
+                Task { await Reminders.reconcile(context: context) }
+            }
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one to add another."
         } catch HabitStoreError.noRestDaysLeft {

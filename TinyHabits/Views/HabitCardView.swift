@@ -19,6 +19,7 @@ struct HabitCardActions {
 struct HabitCardView: View {
     let model: HabitCardModel
     let actions: HabitCardActions
+    var showsNoDataHint = false
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var confirmDelete = false
@@ -72,7 +73,11 @@ struct HabitCardView: View {
                     .font(.subheadline.monospacedDigit())
                     .fontDesign(.rounded)
                     .foregroundStyle(FledgeTheme.Palette.ink2)
-                flightRow
+                if showsNoDataHint {
+                    NoDataHint()
+                } else {
+                    flightRow
+                }
             }
         }
     }
@@ -150,6 +155,22 @@ struct HabitCardView: View {
     private var accessibilityText: String {
         let source = model.isAuto ? "from Apple Health" : "tap to log"
         return "\(model.name), \(model.valueText), \(source), \(model.flightText)"
+    }
+}
+
+/// Shown when an auto habit has had no Health data for three days (HK-4). Read denial looks the same as no data.
+struct NoDataHint: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        Button {
+            if let url = URL(string: "x-apple-health://") { openURL(url) }
+        } label: {
+            Label("Not seeing data? Check Health access", systemImage: "heart.text.square")
+                .font(.footnote)
+                .foregroundStyle(FledgeTheme.Palette.skyText)
+        }
+        .buttonStyle(.plain)
     }
 }
 

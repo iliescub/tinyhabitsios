@@ -15,6 +15,15 @@ public enum SharedStore {
     }
 }
 
+/// A Sendable reference to a Health-sourced habit for syncing off the main actor.
+public struct AutoHabitRef: Sendable, Equatable {
+    public let id: UUID
+    public let source: HabitSourceID
+    public let unit: String
+    public let target: Double
+    public let startedAt: Date
+}
+
 public enum HabitStoreError: Error, Equatable {
     /// All three slots are taken; graduate or pause a habit first.
     case nestFull
@@ -31,6 +40,16 @@ extension ModelContext {
         let active = HabitState.active.rawValue
         let descriptor = FetchDescriptor<Habit>(predicate: #Predicate { $0.stateRaw == active })
         return try fetch(descriptor).sorted { ($0.slot ?? .max) < ($1.slot ?? .max) }
+    }
+
+    /// Habits whose progress comes from Apple Health and should be synced: active ones and graduates
+    /// (graduated habits keep tracking quietly).
+    public func trackedAutoHabits() throws -> [AutoHabitRef] {
+        let paused = HabitState.paused.rawValue
+        let habits = try fetch(FetchDescriptor<Habit>(predicate: #Predicate { $0.stateRaw != paused }))
+        return habits.filter { $0.source.isAuto }.map {
+            AutoHabitRef(id: $0.id, source: $0.source, unit: $0.unit, target: $0.target, startedAt: $0.startedAt)
+        }
     }
 
     public func habit(id: UUID) throws -> Habit? {
@@ -174,6 +193,10 @@ extension ModelContext {
     /// Stores a measured value (HealthKit) or a manual amount, then re-evaluates the day.
     public func record(value: Double, habitID: UUID, on day: DayKey, by actor: CompletedBy) throws {
         guard let log = try log(for: habitID, on: day), let habit = log.habit else { return }
+        let evaluated = DayEvaluator.evaluate(value: value, target: habit.target, stored: log.status, completedBy: log.completedBy)
+        if log.value == value && evaluated.status == log.status && !log.hasChanges {
+            return // Nothing new (frequent for Health syncs); skip the save.
+        }
         log.value = value
         let result = DayEvaluator.evaluate(value: value, target: habit.target, stored: log.status, completedBy: log.completedBy)
         if result.status != log.status {
