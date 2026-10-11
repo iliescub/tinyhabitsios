@@ -1,0 +1,19 @@
+{
+  "id": "essentials",
+  "name": "Essentials",
+  "tagline": "Three habits. Done for you. Then they fly.",
+  "accent": "blue",
+  "graduation": { "minDays": 30, "threshold": 0.8, "windowDays": 30, "suggestedDays": 66 },
+  "templates": [
+    { "name": "Walk", "symbol": "figure.walk", "source": "hk.stepCount", "target": 6000, "unit": "steps" },
+    { "name": "Move", "symbol": "flame.fill", "source": "hk.appleExerciseTime", "target": 20, "unit": "min" },
+    { "name": "Work out", "symbol": "dumbbell.fill", "source": "hk.workout", "target": 1, "unit": "workout", "perWeek": 3 },
+    { "name": "Stand", "symbol": "figure.stand", "source": "hk.appleStandHour", "target": 10, "unit": "hours" },
+    { "name": "Meditate", "symbol": "brain.head.profile", "source": "hk.mindfulSession", "target": 5, "unit": "min" },
+    { "name": "Sleep", "symbol": "bed.double.fill", "source": "hk.sleepAnalysis", "target": 7, "unit": "h" },
+    { "name": "Drink water", "symbol": "drop.fill", "source": "hk.dietaryWater", "target": 2.0, "unit": "L" },
+    { "name": "Get daylight", "symbol": "sun.max.fill", "source": "hk.timeInDaylight", "target": 20, "unit": "min" },
+    { "name": "Read", "symbol": "book.fill", "source": "manual", "target": 1, "unit": "times" },
+    { "name": "Stretch", "symbol": "figure.cooldown", "source": "manual", "target": 1, "unit": "times" }
+  ]
+}

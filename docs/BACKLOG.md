@@ -1,0 +1,86 @@
+# Relaunch backlog
+
+Spec: https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 (offline copy: `docs/SPEC.md`)
+Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = done.
+
+## Start here (status as of 2026-10-11)
+**Decided:** name **Fledge** · positioning: max 3 habits, auto-completed from Apple Health, graduation (Option A) · niche packs (Option B) decided 2027-02-15 · release 2026-12-15.
+**Done:** spec + roadmap (link above, offline copy in `docs/SPEC.md`) · `CLAUDE.md` · this backlog · `Packages/HabitCore` (19 tests passing) · `.gitignore`.
+**Not done yet:** nothing is committed; HabitCore is not linked into the Xcode project; the app still runs on the old models.
+**Open decisions:** prices ($19.99/yr, $39.99 lifetime proposed) · analytics (TelemetryDeck or none) · iPhone-only + English-only assumed.
+
+**Next session, in order:**
+1. Commit or stash the current changes on `main`, then `git checkout -b relaunch/v1` and commit the relaunch scaffolding.
+2. CORE-2 → CORE-3 → CLEAN-1 → NAV-1 (M0 below). Run the tests after each step.
+3. In parallel (you): ACC-1 and MKT-1 — App Store Connect record for "Fledge", trademark search, domain, App Group + HealthKit capabilities.
+
+## M0 Foundations — Oct 12 → Oct 25
+- [ ] **ACC-1** Apple setup: App Group, HealthKit + Background Delivery, app record, name reserved (0.5d)
+- [x] **CORE-1** ✅ `HabitCore` package: SchemaV1, DayKey, DayEvaluator, StreakCalculator, GraduationEvaluator, HabitWriter, Essentials pack, 19 tests
+- [ ] **CORE-2** Link HabitCore into the app target; deployment target iOS 18.0; Swift 6 language mode (0.5d)
+- [ ] **CORE-3** App uses `SharedStore.makeContainer()`; delete `PersistenceController` reset path, old `Habit`/`HabitEntry`/`HabitProgress` (1d)
+  - The app's own `Habit` type conflicts with `HabitCore.Habit` — remove the old models in the same change.
+- [ ] **CLEAN-1** Remove Profile (`ProfileView`, `ProfileViewModel`, `ProfileImagePicker`, `ProfileStatsView`), quote overlay (`DailyQuoteOverlay`, `MotivationProvider`, `MotivationBanner`), `SwipeGuard` + swipe gesture, `HealthKitView`, Unsplash URLs (0.5d)
+- [ ] **NAV-1** Single Today screen with toolbar buttons for Graduates and Settings (replaces `MainTabView`) (0.5d)
+- [ ] **CI-1** Xcode Cloud or GitHub Actions: build + `swift test` on push (0.5d)
+
+## M1 Core loop — Oct 26 → Nov 8
+- [ ] **LOOP-1** Today: 3 slot cards (ring, name, value/target, source badge, days-to-graduate); empty slot = "Add habit" (2d)
+- [ ] **LOOP-2** Add/edit habit sheet: template picker from pack, custom habit, target, unit, cadence (N/week), reminder (1.5d)
+- [ ] **LOOP-3** Check-in: tap done/undo, long-press partial amount (`DayEvaluator.increment`), skip today; haptics (1d)
+- [ ] **LOOP-4** Free passes: 2 skips/month on daily cadence (0.5d)
+- [ ] **LOOP-5** Graduation: "ready" state on card, celebration screen, free the slot, Graduates shelf (1.5d)
+- [ ] **LOOP-6** Pause/resume/delete with confirmation; enforce `SlotPolicy` everywhere (0.5d)
+- [ ] **LOOP-7** Habit detail: 12-week heatmap, streak (days/weeks), 30-day rate, graduation countdown — refactor `HabitDetailView`/`StatsView`, no `@Query` over all logs (1.5d)
+- [ ] **LOOP-8** Day-end hour setting wired into `DayKey` (0.5d)
+
+## M2 Auto-completion — Nov 2 → Nov 15
+- [ ] **HK-1** Generic `HealthKitSource`: async daily statistics for quantity types (steps, exercise, water, daylight, mindful) (1d)
+- [ ] **HK-2** Special sources: sleep (reuse existing session logic), stand hours (category count), workouts (count/minutes, optional activity type) (1d)
+- [ ] **HK-3** `HealthSyncActor`: foreground refresh on scene active; `HKObserverQuery` + `enableBackgroundDelivery` per used type → `HabitWriter.record` (1.5d)
+- [ ] **HK-4** Authorization flow per habit; "no data" banner after 3 days of zeros by 6 PM; setup offers manual when no samples in last 7 days (1d)
+- [ ] **NOTIF-1** `ReminderReconciler`: rebuild pending notifications from state after every write; skip habits already done; evening summary (1.5d)
+- [ ] **HK-5** Device test matrix: iPhone only, iPhone + Watch, permission denied, day-end edge cases (1d)
+
+## M3 Widgets and intents — Nov 9 → Nov 22
+- [ ] **INT-1** `HabitEntity` (AppEntity) + query; `CompleteHabitIntent`, `LogProgressIntent`, `SkipTodayIntent`, `HabitStatusIntent` (1.5d)
+- [ ] **INT-2** `AppShortcutsProvider` phrases (0.5d)
+- [ ] **WID-1** Widget extension target, shared store, timeline provider with "updated X min ago" (1d)
+- [ ] **WID-2** Small + medium widgets, interactive buttons for manual habits (1.5d)
+- [ ] **WID-3** Lock Screen: circular (configurable habit), rectangular, inline; StandBy (1d)
+- [ ] **WID-4** Control Center `ControlWidget` "Mark [habit] done" (0.5d)
+
+## M4 Onboarding, paywall, polish — Nov 16 → Nov 29 (feature freeze Nov 29)
+- [ ] **ONB-1** 4-screen onboarding: promise → pick ≤3 → Health → reminders + widget demo (2d)
+- [ ] **PAY-1** StoreKit 2 products + `.storekit` config; `SubscriptionStoreView` paywall; `ProStatus` cached in App Group for widgets (1.5d)
+- [ ] **PAY-2** Gates: 2nd/3rd auto habit, Pro widgets, Lock Screen, Control, icons, export (0.5d)
+- [ ] **SET-1** Settings: appearance, app icons, day-end hour, reminders, Health status, export CSV, privacy, restore purchases, contact (1d)
+- [ ] **POL-1** Accessibility pass (VoiceOver labels on rings, Dynamic Type), dark mode, localization-ready strings (1d)
+- [ ] **POL-2** App icon, launch screen, celebration animation polish (1d)
+- [ ] **ANA-1** Anonymous analytics (TelemetryDeck or none): install, onboarding step, habit added (source kind only), completion (by), trial, purchase. Never Health values (0.5d)
+- [ ] **REV-1** `requestReview` after 7th completed day or first graduation (0.25d)
+
+## Beta and release — Nov 23 → Dec 15
+- [ ] **REL-1** Privacy policy page listing HealthKit types; App Privacy nutrition label (0.5d)
+- [ ] **REL-2** Screenshots (Lock Screen → auto ring → graduation → privacy), 15 s preview video, description, keywords (1.5d)
+- [ ] **REL-3** Early review build submitted by Nov 27 (HealthKit wording, paywall) (0.25d)
+- [ ] **REL-4** Public TestFlight Nov 23 for first 100 waitlist users; triage daily (ongoing)
+- [ ] **REL-5** Final submission Dec 4; In-app Event "New Year, 3 Habits" (Dec 26 → Jan 10); New Year offer (0.5d)
+- [ ] **REL-6** Release Dec 15; email waitlist
+
+## Marketing (parallel, ~3 h/week)
+- [ ] **MKT-1** Name decided: **Fledge**. Reserve in App Store Connect, USPTO + EUIPO search, buy fledgehabits.com (or bid on fledge.app), landing page + waitlist by Oct 25
+- [ ] **MKT-2** Build-in-public posts, 2/week from Oct 14
+- [ ] **MKT-3** Creator list (30) + outreach Nov 15 → Dec 10, free lifetime Pro codes
+- [ ] **MKT-4** Apple featuring nomination ~Nov 15
+- [ ] **MKT-5** Press kit Dec 1; Product Hunt Jan 5
+
+## 1.1 — Jan 11 → Feb 7
+- [ ] Watch app + 3-ring complication · iCloud sync (definitions + done/skipped flags only) · Live Activity for timed habits
+
+## Niche decision — Feb 15, 2027
+- [ ] Score candidates (pull, auto share, reach, willingness to pay, competition); ≥18/25 → build the pack JSON and decide in-app pack vs separate target.
+
+## Cut order if behind schedule
+1. WID-4 Control Center → 2. WID-3 inline/circular → 3. Workout + daylight sources → 4. LOOP-4 free passes → 5. Graduates shelf polish.
+Never cut: auto-completion (HK-1/3), WID-2, PAY-1, ONB-1.
