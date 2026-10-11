@@ -54,7 +54,9 @@ final class HealthSync {
             if metrics.isEmpty {
                 observer.stop()
             } else {
-                Task {
+                let reader = reader
+                let observer = observer
+                Task { [weak self] in
                     try? await reader.requestAuthorization(for: Array(metrics))
                     observer.start(metrics: Array(metrics)) { [weak self] in
                         await self?.refresh()
