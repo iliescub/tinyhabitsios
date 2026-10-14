@@ -71,7 +71,11 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
   `swift scripts/asc.swift attach-build <number>` to put it on the 1.0 version.
 - Or in Xcode: Product › Archive › Distribute App › App Store Connect › Upload.
 - In-app purchases (REL-0) were created by `swift scripts/asc.swift iap` (resumable; checks what exists). Each still needs an
-  App Review screenshot of the paywall (from a run in Xcode, which loads `Configuration/Fledge.storekit`).
+  App Review screenshot of the paywall (from a run in Xcode, which loads `Configuration/Fledge.storekit`). First-time products must be
+  submitted together with an app version, or reviewers see a paywall without products.
+- Review checklist: `swift scripts/asc.swift review-status` (read-only), `review-setup` (category, content rights, age rating, free
+  price), `review-contact` (contact + copyright from git-ignored `Configuration/review-contact.json`). `status` also lists review
+  submissions and in-app purchase states. Version 1.0 (2) was submitted 2026-10-14 (release: after approval).
 - Website (privacy, terms, support) lives in `website/` and is published to `https://iliescub.github.io/tinyhabitsios/` by
   `.github/workflows/pages.yml` on push (one-time: repo Settings › Pages › Source: GitHub Actions). App URLs: `AppLinks.swift`.
 - App Store Connect API key: `~/APIkeys/appstoreconnect/AuthKey_YLSMVZ7F79.p8` (issuer ID in the .rtf next to it). Never print files from `~/APIkeys`; reference paths only.

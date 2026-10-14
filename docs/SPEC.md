@@ -433,6 +433,10 @@ Release on December 15 and push hardest from December 26 to January 15, when peo
 
 ### Launch window
 
+> **Status 2026-10-14:** version 1.0 (build 2) is already submitted (Waiting for Review, release "after approval"), seven weeks ahead
+> of the Dec 4 plan below. If it's approved and released early, treat October–December as a soft launch (ratings, ASO history,
+> TestFlight-style feedback) and keep Dec 26 – Jan 15 as the marketing push. In-app purchases still need to be submitted (BACKLOG REL-0).
+
 | Date | Action |
 | --- | --- |
 | Dec 15 | Release to the App Store; email the waitlist |

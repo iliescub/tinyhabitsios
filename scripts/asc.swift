@@ -137,6 +137,18 @@ func status() async throws {
     for loc in items(try await call("GET", "/v1/appInfos/\(id(info))/appInfoLocalizations")) {
         print("app info \(attrs(loc)["locale"] ?? "?"): name=\(attrs(loc)["name"] ?? "–"), subtitle=\(attrs(loc)["subtitle"] ?? "–")")
     }
+    for submission in (try? await all("/v1/reviewSubmissions?filter[app]=\(id(app))&limit=20")) ?? [] {
+        let a = attrs(submission)
+        print("review submission: \(a["state"] ?? "?") (\(a["platform"] ?? "?")), submitted \(a["submittedDate"] ?? "–")")
+    }
+    for group in (try? await all("/v1/apps/\(id(app))/subscriptionGroups")) ?? [] {
+        for sub in (try? await all("/v1/subscriptionGroups/\(id(group))/subscriptions")) ?? [] {
+            print("subscription \(attrs(sub)["productId"] ?? "?"): \(attrs(sub)["state"] ?? "?")")
+        }
+    }
+    for product in (try? await all("/v1/apps/\(id(app))/inAppPurchasesV2?limit=200")) ?? [] {
+        print("in-app purchase \(attrs(product)["productId"] ?? "?"): \(attrs(product)["state"] ?? "?")")
+    }
 }
 
 func metadata(_ file: String) async throws {
@@ -415,7 +427,9 @@ func reviewStatus() async throws {
         print("age rating declaration \(id(data)):")
         for (key, value) in attrs(data).sorted(by: { $0.key < $1.key }) { print("  \(key) = \(value)") }
     }
-    let version = try await editableVersion(appID: id(app))
+    // Read-only: the newest iOS version, editable or not.
+    guard let version = items(try await call("GET", "/v1/apps/\(id(app))/appStoreVersions?filter[platform]=IOS&limit=1")).first else { return }
+    print("version \(attrs(version)["versionString"] ?? "?"): \(attrs(version)["appStoreState"] ?? "?"), release: \(attrs(version)["releaseType"] ?? "–"), earliest: \(attrs(version)["earliestReleaseDate"] ?? "–")")
     print("copyright: \(attrs(version)["copyright"] ?? "–")")
     let detail = try? await call("GET", "/v1/appStoreVersions/\(id(version))/appStoreReviewDetail")
     print("review detail: \((detail?["data"] as? [String: Any]).map { attrs($0).keys.sorted().joined(separator: ", ") } ?? "none")")

@@ -3,28 +3,31 @@
 Spec: https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 (offline copy: `docs/SPEC.md`)
 Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = done.
 
-## Start here (status as of 2026-10-14, evening)
+## Start here (status as of 2026-10-14, checked in App Store Connect via `swift scripts/asc.swift status`)
 
-**App Store Connect:** "Fledge: Habit Tracker" (Apple ID 6821628229), version **1.0 in Prepare for Submission** with build **1.0 (2)**
-attached (uploaded and VALID 2026-10-14, signed with the API key via `scripts/release.sh`). Listing set via `scripts/asc.swift`:
-subtitle, description, keywords, promotional text, support/marketing/privacy URLs, 6 iPhone 6.9" + 6 iPad 13" screenshots.
-In-app purchases created via API (REL-0). Nothing is submitted for review.
+**Version 1.0 (build 2) is submitted: WAITING_FOR_REVIEW** since 2026-10-14 13:30 UTC (submitted by the owner in App Store Connect,
+seven weeks ahead of the planned Dec 4 submission). Release option: **AFTER_APPROVAL** — Fledge goes live as soon as Apple approves it.
+Listing: subtitle, description, keywords, promo text, URLs, 6 iPhone 6.9" + 6 iPad 13" screenshots; category Health & Fitness /
+Productivity; age rating answered; no third-party content; free; copyright "© 2026 HealthyLiving"; App Review contact set.
 
-**Built (branch `relaunch/v1`):** M0–M4, UI/UX redesign (UX-1…UX-19), brand v2 + icon, native iPad (IPAD-1), differentiators HEAD-1,
-GRAD-3, GRAD-4, website (privacy, terms, support) in `website/`. Tests: 108 package tests + `FledgeAppUITests` on iPhone and iPad.
+**Open risks in the submission**
+- **Privacy policy URL returns 404**: the `website/` commits aren't pushed (branch 12+ commits ahead of origin) and GitHub Pages isn't
+  enabled. App Review opens the privacy link (guideline 5.1.1). Fix today: push, then Settings › Pages › Source: GitHub Actions.
+- **In-app purchases were not submitted**: yearly, monthly and lifetime are all MISSING_METADATA (no App Review screenshot), so they
+  aren't part of this review. A first in-app purchase has to be submitted together with an app version; reviewers will see the paywall
+  without products (its offline state). Expect a 2.1 rejection, or approval of an app that can't sell Pro until the products are approved.
+- **Release timing**: with AFTER_APPROVAL the app can be live in late October, before the Dec 15 launch plan (creators, waitlist,
+  New Year offer). Decide: keep it (soft launch, early ratings) or switch to manual release (only possible by removing the version
+  from review, or right after approval while it's Pending Developer Release if set before).
 
 **Next steps, in order**
-1. **Publish the website (you):** `git push`, then GitHub › repo Settings › Pages › Source: **GitHub Actions**. Check
-   `https://iliescub.github.io/tinyhabitsios/privacy/` loads — the app, paywall and listing link there.
-2. **Review checklist:** ✅ set via API on 2026-10-14 (`swift scripts/asc.swift review-setup`): primary category Health & Fitness,
-   secondary Productivity; content rights "no third-party content"; age rating (all none, health or wellness topics: yes); price free.
-   Still needed from you: App Review contact (name, phone, email) and the copyright holder → fill `Configuration/review-contact.json`
-   (git-ignored) and run `swift scripts/asc.swift review-contact`. App Privacy: "Data Not Collected" in App Store Connect (no public API).
-3. **IAP review screenshots:** run from Xcode (loads `Fledge.storekit`), open the paywall, screenshot, and add it to each of the three
-   products (App Store Connect › Monetization). They stay "Missing Metadata" until then.
-4. **TestFlight + device checks (you):** install 1.0 (2); run HK-5, HEAD-2, WID-5, IPAD-2 and the POL-1 VoiceOver pass.
-5. **Decide** DEC-1, prices, ANA-1. Review build by Nov 27, submit Dec 4, release Dec 15.
-6. **Security (you):** rotate the three secrets printed in the 2026-10-11 session (Copernicus key, SSH key `newkeynew`, Voyant signing key).
+1. **Today:** push the repo and enable GitHub Pages; check `https://iliescub.github.io/tinyhabitsios/privacy/` loads.
+2. **Decide on the in-app purchases:** (a) leave the review running and submit the products with 1.0.1, or (b) remove 1.0 from review,
+   add one App Review screenshot per product (paywall from an Xcode run), attach the three products to the version, resubmit.
+   (b) is the safe path for a paid launch.
+3. **Decide the release timing** (see risks).
+4. **Install 1.0 (2) from TestFlight** and run HK-5, HEAD-2, WID-5, IPAD-2 and the POL-1 VoiceOver pass.
+5. **Decide** DEC-1, prices, ANA-1. Security: rotate the three secrets from the 2026-10-11 session.
 
 **Ship the next build:** bump `CURRENT_PROJECT_VERSION` in both targets → `scripts/release.sh` → `swift scripts/asc.swift builds` →
 `swift scripts/asc.swift attach-build <n>`.
@@ -123,16 +126,18 @@ Positioning: **the habit tracker that lets go** (graduation is the one claim no 
 ## Beta and release — Nov 23 → Dec 15
 - [~] **REL-0** ✅ 2026-10-14 via API (`scripts/asc.swift iap`): group "Fledge Pro" with `.pro.yearly` ($19.99, 7-day free trial in all
   175 territories) and `.pro.monthly` ($2.99), non-consumable `.pro.lifetime` ($39.99); en-US names; available in 175 territories.
-  Still to do: one App Review screenshot per product (state is MISSING_METADATA until then); revisit prices after DEC on prices
+  Status 2026-10-14: all three still MISSING_METADATA (no App Review screenshot) and **not included in the 1.0 submission**.
+  Still to do: one App Review screenshot per product, then submit them with a version (see Start here); revisit prices after the price decision
 - [~] **REL-1** ✅ 2026-10-14: privacy policy (lists every HealthKit type), terms (Apple EULA + subscription terms) and support pages in
   `website/`, published by GitHub Pages; URLs set in the app (`AppLinks`) and in App Store Connect (privacy, support, marketing).
-  Still to do: push + enable Pages; App Privacy answers in App Store Connect ("Data Not Collected"; no public API for it)
+  Status 2026-10-14: **not live yet** (privacy URL returns 404) — push + enable Pages. App Privacy answered by the owner at submission
 - [~] **REL-2** ✅ 2026-10-14: description, keywords, promotional text, subtitle and both screenshot sets uploaded via `scripts/asc.swift`
   (order: graduation → Today → head start → Flown → widgets → privacy). Still to do: 15 s preview video; Lock Screen and Siri shots from a device
 - [~] **REL-3** ✅ 0.1 (1) uploaded 2026-10-11; **1.0 (2)** uploaded with the API key, VALID and attached to version 1.0 on 2026-10-14
   (redesign, iPad, differentiators). Still to do: review build by Nov 27
 - [ ] **REL-4** Public TestFlight Nov 23 for first 100 waitlist users; triage daily (ongoing)
-- [ ] **REL-5** Final submission Dec 4; In-app Event "New Year, 3 Habits" (Dec 26 → Jan 10); New Year offer (0.5d)
+- [~] **REL-5** ✅ 1.0 (2) submitted 2026-10-14 (WAITING_FOR_REVIEW, release AFTER_APPROVAL; review requirements set via
+  `asc.swift review-setup` + owner). Still to do: In-app Event "New Year, 3 Habits"; New Year offer. Original plan: final submission Dec 4; In-app Event "New Year, 3 Habits" (Dec 26 → Jan 10); New Year offer (0.5d)
 - [ ] **REL-6** Release Dec 15; email waitlist
 
 ## Marketing (parallel, ~3 h/week)
