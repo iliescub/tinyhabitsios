@@ -4,6 +4,10 @@
 //   swift scripts/asc.swift status                 read-only: app, versions, current subtitle/keywords, screenshot sets
 //   swift scripts/asc.swift metadata [file.json]   subtitle (app info) + description, keywords, promotional text (version)
 //   swift scripts/asc.swift screenshots            replaces the iPhone 6.9" and iPad 13" sets with Design/AppStore/*.png
+//   swift scripts/asc.swift iap                    creates Fledge Pro (subscription group, yearly + monthly, lifetime): names,
+//                                                  prices (all territories, equalized from USA), 7-day free trial, availability
+//   swift scripts/asc.swift builds                 lists builds and their processing state
+//   swift scripts/asc.swift attach-build <number>  attaches a processed build to the editable 1.0 version
 //
 // Key: ~/APIkeys/appstoreconnect/AuthKey_<KEYID>.p8; issuer ID: the UUID inside "App Store Connect Issuer ID.rtf" next to it.
 // Edits go to the iOS version that is still editable (PREPARE_FOR_SUBMISSION and similar); nothing is submitted for review.
@@ -50,6 +54,9 @@ func token() throws -> String {
     let signature = try key.signature(for: Data(signingInput.utf8)).rawRepresentation
     return signingInput + "." + b64(signature)
 }
+
+// Line-buffered output, so progress shows up through a pipe (the watchdog kills silent runs).
+setvbuf(stdout, nil, _IOLBF, 0)
 
 let jwt: String
 do { jwt = try token() } catch { print("error: \(error)"); exit(1) }
@@ -135,16 +142,17 @@ func metadata(_ file: String) async throws {
     let app = try await app()
 
     let info = try await editableAppInfo(appID: id(app))
-    if let subtitle = meta["subtitle"],
-       let loc = items(try await call("GET", "/v1/appInfos/\(id(info))/appInfoLocalizations")).first(where: { attrs($0)["locale"] as? String == locale }) {
-        try await call("PATCH", "/v1/appInfoLocalizations/\(id(loc))", ["data": ["type": "appInfoLocalizations", "id": id(loc), "attributes": ["subtitle": subtitle]]])
-        print("subtitle set: \(subtitle)")
+    if let loc = items(try await call("GET", "/v1/appInfos/\(id(info))/appInfoLocalizations")).first(where: { attrs($0)["locale"] as? String == locale }) {
+        var infoFields: [String: String] = [:]
+        for key in ["subtitle", "privacyPolicyUrl"] { if let value = meta[key] { infoFields[key] = value } }
+        try await call("PATCH", "/v1/appInfoLocalizations/\(id(loc))", ["data": ["type": "appInfoLocalizations", "id": id(loc), "attributes": infoFields]])
+        print("app info \(locale): set \(infoFields.keys.sorted().joined(separator: ", "))")
     }
 
     let version = try await editableVersion(appID: id(app))
     let loc = try await versionLocalization(versionID: id(version), locale: locale)
     var fields: [String: String] = [:]
-    for key in ["description", "keywords", "promotionalText"] { if let value = meta[key] { fields[key] = value } }
+    for key in ["description", "keywords", "promotionalText", "supportUrl", "marketingUrl"] { if let value = meta[key] { fields[key] = value } }
     try await call("PATCH", "/v1/appStoreVersionLocalizations/\(id(loc))", ["data": ["type": "appStoreVersionLocalizations", "id": id(loc), "attributes": fields]])
     print("version \(attrs(version)["versionString"] ?? "?") \(locale): set \(fields.keys.sorted().joined(separator: ", "))")
 }
@@ -206,12 +214,222 @@ func screenshots() async throws {
     try await upload(set: "APP_IPAD_PRO_3GEN_129", files: try pngs(root.appendingPathComponent("iPad")), localizationID: id(loc))
 }
 
+// MARK: - In-app purchases (REL-0)
+
+/// Every page of a list endpoint.
+func all(_ path: String) async throws -> [[String: Any]] {
+    var result: [[String: Any]] = []
+    var next: String? = path
+    while let current = next {
+        let page = try await call("GET", current)
+        result += items(page)
+        next = (page["links"] as? [String: Any])?["next"] as? String
+    }
+    return result
+}
+
+func ref(_ type: String, _ id: String) -> [String: Any] { ["data": ["type": type, "id": id]] }
+
+struct PlanSpec {
+    let productID: String, reference: String, displayName: String, description: String, price: String
+    let period: String?   // subscriptions only: ONE_MONTH, ONE_YEAR
+    let level: Int
+    let freeTrial: Bool
+}
+
+let plans = [
+    PlanSpec(productID: "com.smartapps.TinyHabits.pro.yearly", reference: "Pro Yearly", displayName: "Fledge Pro Yearly",
+             description: "All three habits from Apple Health, every widget.", price: "19.99", period: "ONE_YEAR", level: 1, freeTrial: true),
+    PlanSpec(productID: "com.smartapps.TinyHabits.pro.monthly", reference: "Pro Monthly", displayName: "Fledge Pro Monthly",
+             description: "All three habits from Apple Health, every widget.", price: "2.99", period: "ONE_MONTH", level: 2, freeTrial: false),
+]
+let lifetime = PlanSpec(productID: "com.smartapps.TinyHabits.pro.lifetime", reference: "Pro Lifetime", displayName: "Fledge Pro Lifetime",
+                        description: "Fledge Pro forever. One payment.", price: "39.99", period: nil, level: 0, freeTrial: false)
+
+func iap() async throws {
+    let appID = id(try await app())
+    let territories = try await all("/v1/territories?limit=200").map(id)
+    print("territories: \(territories.count)")
+
+    // Subscription group "Fledge Pro".
+    var group = try await all("/v1/apps/\(appID)/subscriptionGroups").first { attrs($0)["referenceName"] as? String == "Fledge Pro" }
+    if group == nil {
+        group = try await call("POST", "/v1/subscriptionGroups", ["data": [
+            "type": "subscriptionGroups", "attributes": ["referenceName": "Fledge Pro"], "relationships": ["app": ref("apps", appID)],
+        ]])["data"] as? [String: Any]
+        try await call("POST", "/v1/subscriptionGroupLocalizations", ["data": [
+            "type": "subscriptionGroupLocalizations", "attributes": ["name": "Fledge Pro", "locale": "en-US"],
+            "relationships": ["subscriptionGroup": ref("subscriptionGroups", id(group ?? [:]))],
+        ]])
+        print("created subscription group Fledge Pro")
+    } else {
+        print("subscription group Fledge Pro exists")
+    }
+    let groupID = id(group ?? [:])
+
+    // Each step checks what exists, so an interrupted run can simply be started again.
+    let existingSubs = try await all("/v1/subscriptionGroups/\(groupID)/subscriptions")
+    for plan in plans {
+        var subID: String
+        if let existing = existingSubs.first(where: { attrs($0)["productId"] as? String == plan.productID }) {
+            subID = id(existing)
+            print("\(plan.productID) exists (\(attrs(existing)["state"] ?? "?"))")
+        } else {
+            let created = try await call("POST", "/v1/subscriptions", ["data": [
+                "type": "subscriptions",
+                "attributes": ["name": plan.reference, "productId": plan.productID, "subscriptionPeriod": plan.period!,
+                               "groupLevel": plan.level, "familySharable": false],
+                "relationships": ["group": ref("subscriptionGroups", groupID)],
+            ]])
+            subID = id(created["data"] as? [String: Any] ?? [:])
+            print("created \(plan.productID)")
+        }
+
+        if try await all("/v1/subscriptions/\(subID)/subscriptionLocalizations").isEmpty {
+            try await call("POST", "/v1/subscriptionLocalizations", ["data": [
+                "type": "subscriptionLocalizations",
+                "attributes": ["name": plan.displayName, "description": plan.description, "locale": "en-US"],
+                "relationships": ["subscription": ref("subscriptions", subID)],
+            ]])
+            print("  localization added")
+        }
+
+        let hasAvailability = (try? await call("GET", "/v1/subscriptions/\(subID)/subscriptionAvailability")).map { $0["data"] is [String: Any] } ?? false
+        if !hasAvailability {
+            try await call("POST", "/v1/subscriptionAvailabilities", ["data": [
+                "type": "subscriptionAvailabilities", "attributes": ["availableInNewTerritories": true],
+                "relationships": ["subscription": ref("subscriptions", subID),
+                                  "availableTerritories": ["data": territories.map { ["type": "territories", "id": $0] }]],
+            ]])
+            print("  available in \(territories.count) territories")
+        }
+
+        // Price: the USA point at the planned price, then Apple's equalized points for every other territory.
+        let priced = Set(try await all("/v1/subscriptions/\(subID)/prices?include=territory&limit=200").compactMap { price in
+            (((price["relationships"] as? [String: Any])?["territory"] as? [String: Any])?["data"] as? [String: Any]).map(id)
+        })
+        let usPoints = try await all("/v1/subscriptions/\(subID)/pricePoints?filter[territory]=USA&limit=200")
+        guard let usPoint = usPoints.first(where: { attrs($0)["customerPrice"] as? String == plan.price }) else {
+            throw ASCError.setup("no USA price point at \(plan.price) for \(plan.productID)")
+        }
+        var points: [(territory: String, point: String)] = [("USA", id(usPoint))]
+        for equal in try await all("/v1/subscriptionPricePoints/\(id(usPoint))/equalizations?limit=200&include=territory") {
+            if let territory = ((equal["relationships"] as? [String: Any])?["territory"] as? [String: Any])?["data"] as? [String: Any] {
+                points.append((id(territory), id(equal)))
+            }
+        }
+        var added = 0
+        for (territory, point) in points where !priced.contains(territory) {
+            do {
+                try await call("POST", "/v1/subscriptionPrices", ["data": [
+                    "type": "subscriptionPrices", "attributes": ["preserveCurrentPrice": false],
+                    "relationships": ["subscription": ref("subscriptions", subID),
+                                      "subscriptionPricePoint": ref("subscriptionPricePoints", point),
+                                      "territory": ref("territories", territory)],
+                ]])
+                added += 1
+                if added % 25 == 0 { print("  prices: \(added)…") }
+            } catch { print("  price \(territory): \(error)") }
+        }
+        print("  prices: \(priced.count) existed, \(added) added (\(points.count) territories)")
+
+        if plan.freeTrial {
+            let offered = Set(try await all("/v1/subscriptions/\(subID)/introductoryOffers?include=territory&limit=200").compactMap { offer in
+                (((offer["relationships"] as? [String: Any])?["territory"] as? [String: Any])?["data"] as? [String: Any]).map(id)
+            })
+            var trials = 0, failures = 0
+            for territory in territories where !offered.contains(territory) {
+                do {
+                    try await call("POST", "/v1/subscriptionIntroductoryOffers", ["data": [
+                        "type": "subscriptionIntroductoryOffers",
+                        "attributes": ["duration": "ONE_WEEK", "offerMode": "FREE_TRIAL", "numberOfPeriods": 1],
+                        "relationships": ["subscription": ref("subscriptions", subID), "territory": ref("territories", territory)],
+                    ]])
+                    trials += 1
+                    if trials % 25 == 0 { print("  free trials: \(trials)…") }
+                } catch {
+                    failures += 1
+                    if failures <= 2 { print("  free trial \(territory): \(error)") }
+                }
+            }
+            print("  7-day free trial: \(offered.count) existed, \(trials) added, \(failures) failed")
+        }
+    }
+
+    // Lifetime: a non-consumable.
+    let existingIAPs = try await all("/v1/apps/\(appID)/inAppPurchasesV2?limit=200")
+    if existingIAPs.contains(where: { attrs($0)["productId"] as? String == lifetime.productID }) {
+        print("\(lifetime.productID) exists")
+    } else {
+        let created = try await call("POST", "/v2/inAppPurchases", ["data": [
+            "type": "inAppPurchases",
+            "attributes": ["name": lifetime.reference, "productId": lifetime.productID, "inAppPurchaseType": "NON_CONSUMABLE", "familySharable": false],
+            "relationships": ["app": ref("apps", appID)],
+        ]])
+        let iapID = id(created["data"] as? [String: Any] ?? [:])
+        print("created \(lifetime.productID)")
+        try await call("POST", "/v1/inAppPurchaseLocalizations", ["data": [
+            "type": "inAppPurchaseLocalizations",
+            "attributes": ["name": lifetime.displayName, "description": lifetime.description, "locale": "en-US"],
+            "relationships": ["inAppPurchaseV2": ref("inAppPurchases", iapID)],
+        ]])
+        let points = try await all("/v2/inAppPurchases/\(iapID)/pricePoints?filter[territory]=USA&limit=200")
+        guard let point = points.first(where: { attrs($0)["customerPrice"] as? String == lifetime.price }) else {
+            throw ASCError.setup("no USA price point at \(lifetime.price)")
+        }
+        try await call("POST", "/v1/inAppPurchasePriceSchedules", [
+            "data": [
+                "type": "inAppPurchasePriceSchedules",
+                "relationships": ["inAppPurchase": ref("inAppPurchases", iapID), "baseTerritory": ref("territories", "USA"),
+                                  "manualPrices": ["data": [["type": "inAppPurchasePrices", "id": "${base}"]]]],
+            ],
+            "included": [[
+                "type": "inAppPurchasePrices", "id": "${base}", "attributes": ["startDate": NSNull()],
+                "relationships": ["inAppPurchasePricePoint": ref("inAppPurchasePricePoints", id(point))],
+            ]],
+        ])
+        print("  price \(lifetime.price) USD, other territories follow Apple's equalization")
+        try await call("POST", "/v1/inAppPurchaseAvailabilities", ["data": [
+            "type": "inAppPurchaseAvailabilities", "attributes": ["availableInNewTerritories": true],
+            "relationships": ["inAppPurchase": ref("inAppPurchases", iapID),
+                              "availableTerritories": ["data": territories.map { ["type": "territories", "id": $0] }]],
+        ]])
+        print("  available in \(territories.count) territories")
+    }
+}
+
+// MARK: - Builds
+
+func builds() async throws {
+    let appID = id(try await app())
+    for build in try await all("/v1/builds?filter[app]=\(appID)&sort=-uploadedDate&limit=10&include=preReleaseVersion") {
+        let a = attrs(build)
+        print("build \(a["version"] ?? "?"): \(a["processingState"] ?? "?"), uploaded \(a["uploadedDate"] ?? "?")")
+    }
+}
+
+func attachBuild(_ number: String) async throws {
+    let appID = id(try await app())
+    let version = try await editableVersion(appID: appID)
+    guard let build = try await all("/v1/builds?filter[app]=\(appID)&filter[version]=\(number)").first else {
+        throw ASCError.setup("no build \(number) yet")
+    }
+    guard attrs(build)["processingState"] as? String == "VALID" else {
+        throw ASCError.setup("build \(number) is \(attrs(build)["processingState"] ?? "?"); wait until VALID")
+    }
+    try await call("PATCH", "/v1/appStoreVersions/\(id(version))/relationships/build", ref("builds", id(build)))
+    print("build \(number) attached to version \(attrs(version)["versionString"] ?? "?")")
+}
+
 let arguments = CommandLine.arguments.dropFirst()
 do {
     switch arguments.first {
     case "status": try await status()
     case "metadata": try await metadata(arguments.dropFirst().first ?? "Design/AppStore/metadata.en-US.json")
     case "screenshots": try await screenshots()
+    case "iap": try await iap()
+    case "builds": try await builds()
+    case "attach-build": try await attachBuild(arguments.dropFirst().first ?? "")
     default: print("usage: swift scripts/asc.swift status | metadata [file.json] | screenshots")
     }
 } catch {

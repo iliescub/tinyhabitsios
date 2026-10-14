@@ -245,10 +245,10 @@ struct SettingsSheet: View {
 
     private var aboutSection: some View {
         Section("About") {
-            Link(destination: URL(string: "https://fledgehabits.com/privacy")!) {
+            Link(destination: AppLinks.privacy) {
                 rowLabel("Privacy policy", "hand.raised.fill", FledgeTheme.Palette.meadow)
             }
-            Link(destination: URL(string: "mailto:hello@fledgehabits.com?subject=Fledge%20feedback")!) {
+            Link(destination: AppLinks.support) {
                 rowLabel("Help and feedback", "envelope.fill", FledgeTheme.Palette.sky)
             }
             Button {

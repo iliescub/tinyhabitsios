@@ -57,8 +57,8 @@ struct PaywallView: View {
         .subscriptionStoreButtonLabel(.multiline)
         .storeButton(.visible, for: .restorePurchases)
         .storeButton(.visible, for: .policies)
-        .subscriptionStorePolicyDestination(url: URL(string: "https://fledgehabits.com/terms")!, for: .termsOfService)
-        .subscriptionStorePolicyDestination(url: URL(string: "https://fledgehabits.com/privacy")!, for: .privacyPolicy)
+        .subscriptionStorePolicyDestination(url: AppLinks.terms, for: .termsOfService)
+        .subscriptionStorePolicyDestination(url: AppLinks.privacy, for: .privacyPolicy)
         .tint(FledgeTheme.Palette.ink)
         .safeAreaInset(edge: .bottom) {
             lifetime

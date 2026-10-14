@@ -1,0 +1,30 @@
+/* Fledge website: brand tokens from docs/BRAND.md. Light and dark. */
+:root {
+  --paper: #F7F5F2; --card: #FFFFFF; --ink: #1B2240; --ink2: #5B6280; --hair: #E6E2DC;
+  --link: #2563D6; --sky1: #DCE9FF; --sky2: #FFE2CF;
+  --display: ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+  --body: -apple-system, "SF Pro Text", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --paper: #0E1120; --card: #191D33; --ink: #E9ECF8; --ink2: #A3A9C2; --hair: #2A2F4A; --link: #8DB6FF; --sky1: #1B2240; --sky2: #2A2546; color-scheme: dark; }
+}
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 var(--body) }
+header { background: linear-gradient(180deg, var(--sky1), var(--sky2)); padding: 40px 20px 32px }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 20px }
+header .wrap { display: flex; gap: 16px; align-items: center; padding: 0 }
+header img { width: 64px; height: 64px; border-radius: 22.4%; box-shadow: 0 6px 20px rgba(27,34,64,.18) }
+header a { color: inherit; text-decoration: none }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance }
+h1 { font-size: 2rem; margin: 0 }
+h2 { font-size: 1.35rem; margin: 2.2rem 0 .4rem }
+h3 { font-size: 1.05rem; margin: 1.4rem 0 .2rem }
+.sub { color: var(--ink2); margin: 2px 0 0 }
+main { padding: 8px 0 48px }
+a { color: var(--link) }
+p, li { max-width: 66ch }
+.card { background: var(--card); border: 1px solid var(--hair); border-radius: 18px; padding: 16px 20px; margin: 16px 0 }
+nav.links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 20px 0 }
+footer { border-top: 1px solid var(--hair); color: var(--ink2); font-size: .88rem; padding: 20px 0 40px }
+code { font: .9em ui-monospace, Menlo, monospace }
+.updated { color: var(--ink2); font-size: .9rem }

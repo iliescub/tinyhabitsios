@@ -66,9 +66,13 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - App record: "Fledge: Habit Tracker" (Apple ID 6821628229), bundle IDs `com.smartapps.TinyHabits` + `.Widgets`, App Group `group.com.smartapps.TinyHabits`, team `USASBWPY7T`.
 - Signing: **Xcode cloud signing** (automatic). No local distribution certificate — don't create one (it triggers keychain password prompts).
 - Before each upload bump `CURRENT_PROJECT_VERSION` in both targets (app + widget must match).
-- Archive + upload from CLI (Xcode must be signed in to the Apple ID):
-  `scripts/watchdog.sh --timeout 1800 --idle 600 --name archive -- xcodebuild archive -project TinyHabits.xcodeproj -scheme TinyHabits -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/Fledge.xcarchive -allowProvisioningUpdates`
-  `scripts/watchdog.sh --timeout 900 --idle 600 --name export -- xcodebuild -exportArchive -archivePath /tmp/Fledge.xcarchive -exportPath /tmp/fledge-export -exportOptionsPlist Configuration/ExportOptions-AppStore.plist -allowProvisioningUpdates`
+- Archive + upload, signed with the App Store Connect API key (no Xcode account needed): `scripts/release.sh` (run it in the background;
+  `--archive` for archive only). Then `swift scripts/asc.swift builds` until the build is VALID, and
+  `swift scripts/asc.swift attach-build <number>` to put it on the 1.0 version.
 - Or in Xcode: Product › Archive › Distribute App › App Store Connect › Upload.
+- In-app purchases (REL-0) were created by `swift scripts/asc.swift iap` (resumable; checks what exists). Each still needs an
+  App Review screenshot of the paywall (from a run in Xcode, which loads `Configuration/Fledge.storekit`).
+- Website (privacy, terms, support) lives in `website/` and is published to `https://iliescub.github.io/tinyhabitsios/` by
+  `.github/workflows/pages.yml` on push (one-time: repo Settings › Pages › Source: GitHub Actions). App URLs: `AppLinks.swift`.
 - App Store Connect API key: `~/APIkeys/appstoreconnect/AuthKey_YLSMVZ7F79.p8` (issuer ID in the .rtf next to it). Never print files from `~/APIkeys`; reference paths only.
 - Required for validation (already set): privacy manifests (`PrivacyInfo.xcprivacy` in app + widget), `ITSAppUsesNonExemptEncryption = NO`, `NSHealthShareUsageDescription` and `NSHealthUpdateUsageDescription`.

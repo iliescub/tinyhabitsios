@@ -3,31 +3,29 @@
 Spec: https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 (offline copy: `docs/SPEC.md`)
 Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = done.
 
-## Start here (status as of 2026-10-14)
+## Start here (status as of 2026-10-14, evening)
 
-**App Store Connect:** app "Fledge: Habit Tracker" (Apple ID 6821628229). TestFlight build **0.1 (1)** is VALID (uploaded 2026-10-11,
-before the redesign). Version **1.0 is in Prepare for Submission** with metadata set through the API on 2026-10-14
-(`scripts/asc.swift`): subtitle "Habits that stick, then fly", description, keywords, promotional text, and 6 iPhone 6.9" + 6 iPad 13"
-screenshots. Nothing is submitted for review.
+**App Store Connect:** "Fledge: Habit Tracker" (Apple ID 6821628229), version **1.0 in Prepare for Submission** with build **1.0 (2)**
+attached (uploaded and VALID 2026-10-14, signed with the API key via `scripts/release.sh`). Listing set via `scripts/asc.swift`:
+subtitle, description, keywords, promotional text, support/marketing/privacy URLs, 6 iPhone 6.9" + 6 iPad 13" screenshots.
+In-app purchases created via API (REL-0). Nothing is submitted for review.
 
-**Built (branch `relaunch/v1`):** M0–M4, the five-phase UI/UX redesign (UX-1…UX-19), brand v2 "First flight" + icon, native iPad
-(IPAD-1), and the differentiators HEAD-1 (Health head start), GRAD-3 (slip check), GRAD-4 (flight forecast). Positioning: "the habit
-tracker that lets go" (`docs/POSITIONING.md`).
-**Tests:** 108 package tests (Swift Testing) and the UI suite `FledgeAppUITests` (flows on demo data + Xcode accessibility audit),
-run on iPhone 17 and iPad Pro 13" simulators. Commands in `CLAUDE.md`.
-**Open decisions:** DEC-1 minimum iOS 26 · prices (StoreKit config: $2.99/mo, $19.99/yr + 7-day trial, $39.99 lifetime) · ANA-1 analytics.
+**Built (branch `relaunch/v1`):** M0–M4, UI/UX redesign (UX-1…UX-19), brand v2 + icon, native iPad (IPAD-1), differentiators HEAD-1,
+GRAD-3, GRAD-4, website (privacy, terms, support) in `website/`. Tests: 108 package tests + `FledgeAppUITests` on iPhone and iPad.
 
 **Next steps, in order**
-1. **New build (code):** bump `CURRENT_PROJECT_VERSION` in both targets, archive and upload (CLAUDE.md › Release) so TestFlight has the
-   redesign, iPad and the new features. Then attach that build to version 1.0 in App Store Connect.
-2. **Device checks (you):** HK-5, HEAD-2, WID-5, IPAD-2 and the POL-1 VoiceOver pass — the simulator has no Health data, real widgets or
-   notifications, so these can only be confirmed on a device.
-3. **REL-0 (you):** create the in-app purchases (subscription group "Fledge Pro": `.pro.yearly` with a 7-day free trial, `.pro.monthly`;
-   non-consumable `.pro.lifetime`).
-4. **REL-1:** host the privacy policy and terms (`fledgehabits.com/privacy`, `/terms`, used by the paywall and the description);
-   App Privacy answers; support URL (App Store Connect requires it before submitting).
-5. **Decide** DEC-1, prices, ANA-1. Early review build by Nov 27, submit Dec 4, release Dec 15.
+1. **Publish the website (you):** `git push`, then GitHub › repo Settings › Pages › Source: **GitHub Actions**. Check
+   `https://iliescub.github.io/tinyhabitsios/privacy/` loads — the app, paywall and listing link there.
+2. **App Privacy (you, App Store Connect › App Privacy):** "Data Not Collected" (no public API). Age rating questionnaire, price tier
+   for the app (free), and the "Fledge Pro" subscription group display name if App Store Connect asks.
+3. **IAP review screenshots:** run from Xcode (loads `Fledge.storekit`), open the paywall, screenshot, and add it to each of the three
+   products (App Store Connect › Monetization). They stay "Missing Metadata" until then.
+4. **TestFlight + device checks (you):** install 1.0 (2); run HK-5, HEAD-2, WID-5, IPAD-2 and the POL-1 VoiceOver pass.
+5. **Decide** DEC-1, prices, ANA-1. Review build by Nov 27, submit Dec 4, release Dec 15.
 6. **Security (you):** rotate the three secrets printed in the 2026-10-11 session (Copernicus key, SSH key `newkeynew`, Voyant signing key).
+
+**Ship the next build:** bump `CURRENT_PROJECT_VERSION` in both targets → `scripts/release.sh` → `swift scripts/asc.swift builds` →
+`swift scripts/asc.swift attach-build <n>`.
 
 ## UI/UX redesign — Oct 15 → Nov 29 (proposal)
 Plan, diagnosis and tickets UX-1…UX-19: `docs/UI-REDESIGN.md` · mockups: `Design/review/redesign-plan.html`.
@@ -121,17 +119,22 @@ Positioning: **the habit tracker that lets go** (graduation is the one claim no 
 - [x] **REV-1** ✅ Review prompt once: after 7 days with something done, or the first graduation
 
 ## Beta and release — Nov 23 → Dec 15
-- [ ] **REL-0** App Store Connect: create the subscription group "Fledge Pro" with `com.smartapps.TinyHabits.pro.yearly` (7-day free trial) and `.pro.monthly`, and the non-consumable `.pro.lifetime`; prices to match the decision
-- [ ] **REL-1** Privacy policy page listing HealthKit types; App Privacy nutrition label (0.5d)
+- [~] **REL-0** ✅ 2026-10-14 via API (`scripts/asc.swift iap`): group "Fledge Pro" with `.pro.yearly` ($19.99, 7-day free trial in all
+  175 territories) and `.pro.monthly` ($2.99), non-consumable `.pro.lifetime` ($39.99); en-US names; available in 175 territories.
+  Still to do: one App Review screenshot per product (state is MISSING_METADATA until then); revisit prices after DEC on prices
+- [~] **REL-1** ✅ 2026-10-14: privacy policy (lists every HealthKit type), terms (Apple EULA + subscription terms) and support pages in
+  `website/`, published by GitHub Pages; URLs set in the app (`AppLinks`) and in App Store Connect (privacy, support, marketing).
+  Still to do: push + enable Pages; App Privacy answers in App Store Connect ("Data Not Collected"; no public API for it)
 - [~] **REL-2** ✅ 2026-10-14: description, keywords, promotional text, subtitle and both screenshot sets uploaded via `scripts/asc.swift`
   (order: graduation → Today → head start → Flown → widgets → privacy). Still to do: 15 s preview video; Lock Screen and Siri shots from a device
-- [~] **REL-3** ✅ First build 0.1 (1) uploaded and VALID in App Store Connect (2026-10-11; added privacy manifests, export-compliance flag, Health purpose strings). Still to do: review build by Nov 27
+- [~] **REL-3** ✅ 0.1 (1) uploaded 2026-10-11; **1.0 (2)** uploaded with the API key, VALID and attached to version 1.0 on 2026-10-14
+  (redesign, iPad, differentiators). Still to do: review build by Nov 27
 - [ ] **REL-4** Public TestFlight Nov 23 for first 100 waitlist users; triage daily (ongoing)
 - [ ] **REL-5** Final submission Dec 4; In-app Event "New Year, 3 Habits" (Dec 26 → Jan 10); New Year offer (0.5d)
 - [ ] **REL-6** Release Dec 15; email waitlist
 
 ## Marketing (parallel, ~3 h/week)
-- [ ] **MKT-1** Name decided: **Fledge**. Reserve in App Store Connect, USPTO + EUIPO search, buy fledgehabits.com (or bid on fledge.app), landing page + waitlist by Oct 25
+- [ ] **MKT-1** (site live on GitHub Pages from `website/`; custom domain later = change `AppLinks.base` + a CNAME) Name decided: **Fledge**. Reserve in App Store Connect, USPTO + EUIPO search, buy fledgehabits.com (or bid on fledge.app), landing page + waitlist by Oct 25
 - [ ] **MKT-2** Build-in-public posts, 2/week from Oct 14
 - [ ] **MKT-3** Creator list (30) + outreach Nov 15 → Dec 10, free lifetime Pro codes
 - [ ] **MKT-4** Apple featuring nomination ~Nov 15
