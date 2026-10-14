@@ -3,22 +3,18 @@
 Spec: https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 (offline copy: `docs/SPEC.md`)
 Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = done.
 
-## Start here (status as of 2026-10-14, 17:30, checked via `swift scripts/asc.swift status` / `iap-status`)
+## Start here (status as of 2026-10-14 17:45 UTC, checked via `swift scripts/asc.swift status` / `submission-status`)
 
-**Version 1.0 is back in Developer Rejected (editable)**: it was submitted at 13:30 UTC without the in-app purchases and the owner
-withdrew it. Build **1.0 (3)** carries the paywall fix (full headline, wrapping comparison table, plan picker) and is attached.
-**In-app purchases: all three READY_TO_SUBMIT** (localization, prices in 175 territories, App Review screenshot + note).
-Listing, category, age rating, content rights, free price, copyright "© 2026 HealthyLiving" and App Review contact are set.
-Release option is still **AFTER_APPROVAL**.
+**Version 1.0 (build 3) is in review with all in-app purchases: WAITING_FOR_REVIEW** since 2026-10-14 17:44 UTC.
+One submission holds five items: iOS App 1.0, the Fledge Pro subscription group, Pro Yearly, Pro Monthly and Pro Lifetime (all
+WAITING_FOR_REVIEW). Release option: **AFTER_APPROVAL** — Fledge goes live as soon as Apple approves it (weeks before the Dec 15 plan;
+treat Oct–Dec as a soft launch). Website live at https://iliescub.github.io/tinyhabitsios/. Paid Apps Agreement active.
 
-**To resubmit (owner, App Store Connect)**
-1. ✅ Website live (2026-10-14): https://iliescub.github.io/tinyhabitsios/ — privacy/, terms/, support/ return 200; GitHub enabled
-   Pages from the `gh-pages` branch automatically. App links and App Store Connect URLs point there.
-2. On the 1.0 version page, under **In-App Purchases and Subscriptions**, add yearly, monthly and lifetime (first products must go
-   with a version), check build 3 is selected, decide manual vs automatic release, then **Submit for Review**.
-
-**After that:** TestFlight device checks (HK-5, HEAD-2, WID-5, IPAD-2, POL-1 VoiceOver); decisions DEC-1, prices, ANA-1; rotate the
-three secrets from the 2026-10-11 session.
+**Next steps**
+1. Watch for App Review's answer (`swift scripts/asc.swift status`); answer questions in App Store Connect › App Review.
+2. **TestFlight device checks** on 1.0 (3): HK-5, HEAD-2, WID-5, IPAD-2, POL-1 VoiceOver.
+3. Decide DEC-1, prices, ANA-1. Security: rotate the three secrets from the 2026-10-11 session.
+4. Marketing plan (creators, waitlist, New Year offer) for the Dec 26 – Jan 15 push.
 
 **Ship the next build:** bump `CURRENT_PROJECT_VERSION` in both targets → `scripts/release.sh` → `swift scripts/asc.swift builds` →
 `swift scripts/asc.swift attach-build <n>`.
@@ -117,8 +113,7 @@ Positioning: **the habit tracker that lets go** (graduation is the one claim no 
 ## Beta and release — Nov 23 → Dec 15
 - [~] **REL-0** ✅ 2026-10-14 via API (`scripts/asc.swift iap`): group "Fledge Pro" with `.pro.yearly` ($19.99, 7-day free trial in all
   175 territories) and `.pro.monthly` ($2.99), non-consumable `.pro.lifetime` ($39.99); en-US names; available in 175 territories.
-  Status 2026-10-14 17:30: all three **READY_TO_SUBMIT** (App Review screenshot from the UI test + review note via `iap-review`).
-  Still to do: add them to the 1.0 version and submit; revisit prices after the price decision
+  Status 2026-10-14: all three submitted with 1.0 (WAITING_FOR_REVIEW). Still to do: revisit prices after the price decision
 - [~] **REL-1** ✅ 2026-10-14: privacy policy (lists every HealthKit type), terms (Apple EULA + subscription terms) and support pages in
   `website/`, published by GitHub Pages; URLs set in the app (`AppLinks`) and in App Store Connect (privacy, support, marketing).
   Status 2026-10-14: **live** at https://iliescub.github.io/tinyhabitsios/ (served from `gh-pages`, updated by the workflow). App Privacy answered by the owner at submission
@@ -127,8 +122,8 @@ Positioning: **the habit tracker that lets go** (graduation is the one claim no 
 - [~] **REL-3** ✅ 0.1 (1) uploaded 2026-10-11; **1.0 (2)** uploaded with the API key, VALID and attached to version 1.0 on 2026-10-14
   (redesign, iPad, differentiators). Still to do: review build by Nov 27
 - [ ] **REL-4** Public TestFlight Nov 23 for first 100 waitlist users; triage daily (ongoing)
-- [~] **REL-5** 1.0 (2) submitted 2026-10-14 without the in-app purchases and withdrawn the same day; resubmit with build 3 and
-  the three products (review requirements set via `asc.swift review-setup` + owner). Still to do: In-app Event "New Year, 3 Habits"; New Year offer. Original plan: final submission Dec 4; In-app Event "New Year, 3 Habits" (Dec 26 → Jan 10); New Year offer (0.5d)
+- [~] **REL-5** ✅ 1.0 (3) submitted 2026-10-14 17:44 UTC with the subscription group and all three products (after two withdrawn
+  attempts). Still to do: In-app Event "New Year, 3 Habits"; New Year offer. Original plan: final submission Dec 4; In-app Event "New Year, 3 Habits" (Dec 26 → Jan 10); New Year offer (0.5d)
 - [ ] **REL-6** Release Dec 15; email waitlist
 
 ## Marketing (parallel, ~3 h/week)

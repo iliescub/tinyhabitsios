@@ -73,15 +73,17 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - In-app purchases (REL-0) were created by `swift scripts/asc.swift iap` (resumable; checks what exists). App Review screenshot +
   note: the UI test `testPaywallShowsPlansForAppReview` (StoreKitTest loads `Fledge.storekit`) writes `/tmp/fledge-paywall-review.png`,
   then `swift scripts/asc.swift iap-review` uploads it to all three products; `iap-status` checks them (READY_TO_SUBMIT).
-  First-time products must be submitted together with an app version, and **only the website can do that**: the API refuses
+  First-time products must be submitted together with an app version, and **only the website can add them**: the API refuses
   (`FIRST_SUBSCRIPTION_MUST_BE_SUBMITTED_ON_VERSION`, `FIRST_NON_CONSUMABLE_MUST_BE_SUBMITTED_ON_VERSION`). Select them in the
-  version page's "In-App Purchases and Subscriptions" section, then Add for Review. Later products can use `submit-prepare`.
+  current App Store Connect (2026) there's no products section on the version page: click **Add for Review** on the subscription
+  group, on each subscription and on each in-app purchase, all into the same draft; `submit-prepare` can add the version to that draft.
+  Check the draft has every item (App Review › Drafts) before Submit. Needs the Paid Apps Agreement active (Business).
 - App Review notes: `Design/AppStore/review-notes.txt` → `swift scripts/asc.swift review-notes` (contact details untouched).
 - Submissions: `submission-status` (read-only), `submit-prepare` (draft with the version + products), `submit-send`,
   `submit-cancel` (empties a draft; drafts can't be canceled).
 - Review checklist: `swift scripts/asc.swift review-status` (read-only), `review-setup` (category, content rights, age rating, free
   price), `review-contact` (contact + copyright from git-ignored `Configuration/review-contact.json`). `status` also lists review
-  submissions and in-app purchase states. 1.0 (2) was submitted 2026-10-14 without the products, then withdrawn; build 3 has the paywall fix.
+  submissions and in-app purchase states. 1.0 (3) is in review since 2026-10-14 with the group and all three products.
 - Website (privacy, terms, support) lives in `website/`. `.github/workflows/pages.yml` copies it to the `gh-pages` branch on every
   push that changes it; GitHub Pages serves that branch at `https://iliescub.github.io/tinyhabitsios/` (privacy/, terms/, support/).
   Live since 2026-10-14 (Pages enabled on `gh-pages`). Links in the pages are relative; app URLs: `AppLinks.swift`.
