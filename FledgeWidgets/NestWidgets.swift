@@ -16,7 +16,7 @@ struct NestWidget: Widget {
         }
         .configurationDisplayName("Your nest")
         .description("Today's three habits. Tap a ring to mark a tap-to-log habit done.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
     }
 }
 
@@ -34,6 +34,7 @@ struct NestWidgetView: View {
         switch family {
         case .systemSmall: .small
         case .systemLarge: .large
+        case .systemExtraLarge: .extraLarge
         default: .medium
         }
     }

@@ -5,9 +5,18 @@ import FledgeUI
 
 /// Habit detail (docs/DESIGN.md §6.2, v2 in docs/UI-REDESIGN.md UX-7): today's number as the hero, stats above the fold,
 /// the journey to flying, a labelled 12-week heatmap, and "Let it fly" pinned to the bottom when the habit is ready.
+/// On iPad, when the window is wide, the same content is shown as a pane beside the nest (docs/DESIGN.md §12).
 struct HabitDetailSheet: View {
+    enum Style {
+        /// iPhone and narrow windows: a sheet with Done and a More menu in its toolbar.
+        case sheet
+        /// Wide iPad windows: a pane next to the nest, with its own header.
+        case pane
+    }
+
     let habit: Habit
     let day: DayKey
+    var style: Style = .sheet
     let onReadyToFly: () -> Void
 
     @Environment(\.modelContext) private var context
@@ -32,8 +41,7 @@ struct HabitDetailSheet: View {
         )
         let stats = HabitDetailStats(snapshots: history, cadence: habit.cadence, startedOn: startedOn, today: day)
 
-        NavigationStack {
-            ScrollView {
+        let content = ScrollView {
                 VStack(spacing: FledgeTheme.Space.l) {
                     hero(card)
                     statsRow(stats)
@@ -67,33 +75,16 @@ struct HabitDetailSheet: View {
             .safeAreaInset(edge: .bottom) {
                 if card.isReadyToFly {
                     PrimaryActionButton(title: "Let it fly", icon: .fledgeGlyph()) {
-                        dismiss()
+                        close()
                         onReadyToFly()
                     }
                     .padding(.bottom, FledgeTheme.Space.s)
                 }
             }
-            .navigationTitle(habit.name)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Menu("More", systemImage: "ellipsis") {
-                        Button("Edit", systemImage: "pencil") { isEditing = true }
-                        Button("Pause", systemImage: "pause") {
-                            perform(structural: true) { try context.pause(habitID: habit.id) }
-                            dismiss()
-                        }
-                        Button("Delete", systemImage: "trash", role: .destructive) { confirmDelete = true }
-                    }
-                }
-            }
             .sheet(isPresented: $isEditing) { EditHabitSheet(habit: habit) }
             .confirmationDialog("Delete \(habit.name)?", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("Delete habit and its history", role: .destructive) {
-                    dismiss()
+                    close()
                     perform(structural: true) { try context.deleteHabit(habitID: habit.id) }
                 }
             }
@@ -102,7 +93,59 @@ struct HabitDetailSheet: View {
             } message: {
                 Text(errorMessage ?? "")
             }
+
+        switch style {
+        case .sheet:
+            NavigationStack {
+                content
+                    .navigationTitle(habit.name)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { dismiss() }
+                        }
+                        ToolbarItem(placement: .topBarLeading) {
+                            moreMenu
+                        }
+                    }
+            }
+        case .pane:
+            VStack(spacing: 0) {
+                HStack {
+                    Text(habit.name)
+                        .font(.system(.title2, design: .rounded, weight: .heavy))
+                        .foregroundStyle(FledgeTheme.Palette.ink)
+                        .accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    moreMenu
+                        .labelStyle(.iconOnly)
+                        .font(.title3)
+                        .tint(FledgeTheme.Palette.ink)
+                }
+                .padding(.horizontal, FledgeTheme.screenMargin)
+                .padding(.top, FledgeTheme.Space.l)
+                content
+            }
+            .frame(maxWidth: NestLayout.readableWidth)
+            .frame(maxWidth: .infinity)
+            .background(FledgeTheme.Palette.cloud)
         }
+    }
+
+    private var moreMenu: some View {
+        Menu("More", systemImage: "ellipsis.circle") {
+            Button("Edit", systemImage: "pencil") { isEditing = true }
+            Button("Pause", systemImage: "pause") {
+                perform(structural: true) { try context.pause(habitID: habit.id) }
+                close()
+            }
+            Button("Delete", systemImage: "trash", role: .destructive) { confirmDelete = true }
+        }
+    }
+
+    /// Dismisses the sheet; a pane has nothing to dismiss (Today picks another habit when this one leaves).
+    private func close() {
+        if style == .sheet { dismiss() }
     }
 
     // MARK: - Hero

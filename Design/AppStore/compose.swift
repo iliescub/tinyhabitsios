@@ -1,5 +1,6 @@
-// Composes App Store screenshots (6.9", 1320 × 2868): caption on the dawn sky, the app screen below it.
-// Usage: swift Design/AppStore/compose.swift <raw-dir> <out-dir>
+// Composes App Store screenshots: caption on the dawn sky, the app screen below it.
+// iPhone 6.9" = 1320 × 2868; with --ipad, iPad 13" = 2064 × 2752 (docs/DESIGN.md §12).
+// Usage: swift Design/AppStore/compose.swift <raw-dir> <out-dir> [--ipad]
 // <raw-dir> holds full-resolution simulator PNGs named after the screens in `shots` below
 // (scripts/appstore-screenshots.sh captures them). Captions follow docs/DESIGN.md §9.
 
@@ -9,7 +10,9 @@ let args = CommandLine.arguments
 let rawDir = URL(fileURLWithPath: args.count > 1 ? args[1] : "/tmp/fledge-appstore-raw")
 let outDir = URL(fileURLWithPath: args.count > 2 ? args[2] : "Design/AppStore")
 
-let size = CGSize(width: 1320, height: 2868)
+let isPad = args.contains("--ipad")
+let size = isPad ? CGSize(width: 2064, height: 2752) : CGSize(width: 1320, height: 2868)
+let device = isPad ? "iPad" : "iPhone"
 let ink = NSColor(srgbRed: 0x1B / 255.0, green: 0x22 / 255.0, blue: 0x40 / 255.0, alpha: 1)
 let ink2 = NSColor(srgbRed: 0x5B / 255.0, green: 0x62 / 255.0, blue: 0x80 / 255.0, alpha: 1)
 
@@ -17,9 +20,10 @@ let ink2 = NSColor(srgbRed: 0x5B / 255.0, green: 0x62 / 255.0, blue: 0x80 / 255.
 let shots: [(String, String, String)] = [
     ("today", "Three habits.\nDone for you.", "Fledge fills them in from Apple Health."),
     ("detail", "Walk logs itself.", "Steps, sleep, mindful minutes and more, straight from Apple Health."),
+    ("add", "Start with what\nApple Health knows.", "Walk, sleep, mindful minutes and more fill in by themselves."),
     ("graduation", "When a habit sticks,\nit flies.", "Graduate it after 30 strong days and free the slot."),
-    ("onboarding-health", "No account.\nYour data stays put.", "Health data never leaves your iPhone."),
-    ("widgets", "Check in without\nopening the app.", "Widgets for the Home Screen, Lock Screen and StandBy."),
+    ("onboarding-health", "No account.\nYour data stays put.", "Health data never leaves your \(device)."),
+    ("widgets", "Check in without\nopening the app.", isPad ? "Widgets for the Home Screen and the Lock Screen." : "Widgets for the Home Screen, Lock Screen and StandBy."),
     ("flown", "See what stuck.", "Flown habits keep tracking quietly, on their own."),
 ]
 
@@ -36,12 +40,12 @@ func draw(_ text: String, font: NSFont, color: NSColor, in rect: CGRect) {
         .draw(with: rect, options: [.usesLineFragmentOrigin])
 }
 
-for (index, shot) in shots.enumerated() {
+// Each set captures only some of these screens; number the images that are written, 01, 02, …
+var written = 0
+for shot in shots {
     let rawURL = rawDir.appendingPathComponent("\(shot.0).png")
-    guard let screen = NSImage(contentsOf: rawURL) else {
-        print("missing \(rawURL.path), skipped")
-        continue
-    }
+    guard let screen = NSImage(contentsOf: rawURL) else { continue }
+    written += 1
     let image = NSImage(size: size, flipped: true) { _ in
         // Dawn sky, as on Today.
         NSGradient(colors: [
@@ -50,14 +54,17 @@ for (index, shot) in shots.enumerated() {
             NSColor(srgbRed: 0.97, green: 0.96, blue: 0.95, alpha: 1),
         ])?.draw(in: CGRect(origin: .zero, size: size), angle: 90)
 
-        draw(shot.1, font: roundedFont(92, .heavy), color: ink, in: CGRect(x: 90, y: 150, width: 1140, height: 260))
-        draw(shot.2, font: roundedFont(42, .medium), color: ink2, in: CGRect(x: 120, y: 420, width: 1080, height: 120))
+        // iPad: one line of headline (wider canvas), the screen a little lower and much wider.
+        let headline = isPad ? shot.1.replacingOccurrences(of: "\n", with: " ") : shot.1
+        draw(headline, font: roundedFont(isPad ? 104 : 92, .heavy), color: ink, in: CGRect(x: 90, y: 150, width: size.width - 180, height: 260))
+        draw(shot.2, font: roundedFont(isPad ? 48 : 42, .medium), color: ink2, in: CGRect(x: 120, y: isPad ? 300 : 420, width: size.width - 240, height: 120))
 
         // The screen, with the device's corner radius and a soft shadow.
-        let width: CGFloat = 1000
+        let width: CGFloat = isPad ? 1640 : 1000
         let height = width * screen.size.height / screen.size.width
-        let frame = CGRect(x: (size.width - width) / 2, y: 610, width: width, height: height)
-        let path = NSBezierPath(roundedRect: frame, xRadius: 118, yRadius: 118)
+        let frame = CGRect(x: (size.width - width) / 2, y: isPad ? 470 : 610, width: width, height: height)
+        let radius: CGFloat = isPad ? 64 : 118
+        let path = NSBezierPath(roundedRect: frame, xRadius: radius, yRadius: radius)
         NSGraphicsContext.saveGraphicsState()
         let shadow = NSShadow()
         shadow.shadowColor = NSColor.black.withAlphaComponent(0.18)
@@ -85,7 +92,7 @@ for (index, shot) in shots.enumerated() {
     image.draw(in: CGRect(origin: .zero, size: size))
     NSGraphicsContext.restoreGraphicsState()
     _ = png
-    let name = String(format: "%02d-%@.png", index + 1, shot.0)
+    let name = String(format: "%02d-%@.png", written, shot.0)
     try! pixels.representation(using: .png, properties: [:])!.write(to: outDir.appendingPathComponent(name))
     print("wrote \(name)")
 }

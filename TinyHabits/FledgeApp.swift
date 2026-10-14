@@ -131,7 +131,7 @@ struct StoreErrorView: View {
         ContentUnavailableView {
             Label("Fledge can't open its data", systemImage: "externaldrive.badge.exclamationmark")
         } description: {
-            Text("Your habits are safe on this iPhone. Please restart the app or update it.\n\n\(error.localizedDescription)")
+            Text("Your habits are safe on this \(DeviceInfo.name). Please restart the app or update it.\n\n\(error.localizedDescription)")
         }
     }
 }

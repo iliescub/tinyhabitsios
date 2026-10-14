@@ -23,13 +23,23 @@ struct AddHabitSheet: View {
                         if !canAddAuto {
                             ProBanner(usedOn: activeHabits.first { $0.source.isAuto }?.name) { showPaywall = true }
                         }
-                        section(
-                            "Done for you",
-                            subtitle: "Completes itself from Apple Health.",
-                            symbol: "heart.fill",
-                            templates: pack.templates.filter { $0.source.isAuto },
-                            pack: pack
-                        )
+                        if DeviceInfo.isHealthAvailable {
+                            section(
+                                "Done for you",
+                                subtitle: "Completes itself from Apple Health.",
+                                symbol: "heart.fill",
+                                templates: pack.templates.filter { $0.source.isAuto },
+                                pack: pack
+                            )
+                        } else {
+                            section(
+                                "Usually from Apple Health",
+                                subtitle: "Apple Health isn't available on this \(DeviceInfo.name), so these are logged by tapping.",
+                                symbol: "heart.slash",
+                                templates: pack.templates.filter { $0.source.isAuto }.map(\.tapToLog),
+                                pack: pack
+                            )
+                        }
                         section(
                             "Tap to log",
                             subtitle: "One tap from the card, a widget or Siri.",

@@ -165,7 +165,7 @@ struct SettingsSheet: View {
         } header: {
             Text("Apple Health")
         } footer: {
-            Text("Fledge only reads the data for habits you choose, and it never leaves your iPhone. To change access, open Health › your profile › Apps › Fledge.")
+            Text("Fledge only reads the data for habits you choose, and it never leaves your \(DeviceInfo.name). To change access, open Health › your profile › Apps › Fledge.")
         }
     }
 
@@ -252,7 +252,7 @@ struct SettingsSheet: View {
                 rowLabel("Restore purchases", "arrow.clockwise", FledgeTheme.habitColor("slate"))
             }
             LabeledContent("Version", value: appVersion)
-            Label("No account. Your Health data stays on your iPhone.", systemImage: "lock.fill")
+            Label("No account. Your Health data stays on your \(DeviceInfo.name).", systemImage: "lock.fill")
                 .foregroundStyle(FledgeTheme.Palette.ink2)
         }
     }

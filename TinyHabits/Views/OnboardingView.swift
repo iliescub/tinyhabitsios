@@ -39,6 +39,8 @@ struct OnboardingView: View {
                     .id(step)
                 footer
             }
+            // iPad: keep the flow at a readable width, centred on the sky (docs/DESIGN.md §12).
+            .frame(maxWidth: NestLayout.readableWidth)
         }
         .animation(.snappy, value: step)
         .task {
@@ -127,8 +129,13 @@ struct OnboardingView: View {
                         .foregroundStyle(FledgeTheme.Palette.ink2)
                 }
                 if let pack {
-                    pickGroup("Done for you · Apple Health", templates: pack.templates.filter { $0.source.isAuto })
-                    pickGroup("Tap to log", templates: pack.templates.filter { !$0.source.isAuto })
+                    if DeviceInfo.isHealthAvailable {
+                        pickGroup("Done for you · Apple Health", templates: pack.templates.filter { $0.source.isAuto })
+                        pickGroup("Tap to log", templates: pack.templates.filter { !$0.source.isAuto })
+                    } else {
+                        // No Apple Health on this device: every template is logged by tapping.
+                        pickGroup("Tap to log", templates: pack.templates.map(\.tapToLog))
+                    }
                 }
             }
             .padding(.horizontal, FledgeTheme.screenMargin)
@@ -203,7 +210,7 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 0) {
                 promiseRow("eye", FledgeTheme.Palette.sky, "Reads only what your habits need", "Nothing else, and never writes")
                 Divider().padding(.leading, 64)
-                promiseRow("lock.fill", FledgeTheme.Palette.meadow, "Stays on your iPhone", "No account, no cloud copy of Health data")
+                promiseRow("lock.fill", FledgeTheme.Palette.meadow, "Stays on your \(DeviceInfo.name)", "No account, no cloud copy of Health data")
                 Divider().padding(.leading, 64)
                 promiseRow("hand.raised.fill", FledgeTheme.Palette.gold, "You choose", "Pick exactly what to share on the next screen")
             }
@@ -412,7 +419,7 @@ struct OnboardingView: View {
     #endif
 
     private func manual(_ template: Pack.Template) -> Pack.Template {
-        Pack.Template(name: template.name, symbol: template.symbol, source: .manual, target: 1, unit: "times", perWeek: template.perWeek)
+        template.tapToLog
     }
 }
 

@@ -19,6 +19,9 @@ struct TodayView: View {
     @State private var amountHabit: Habit?
     @State private var amountText = ""
     @State private var errorMessage: String?
+    /// iPad split (docs/DESIGN.md §12): the window width and the habit shown in the detail pane.
+    @State private var windowWidth: CGFloat = 0
+    @State private var selectedHabitID: UUID?
     #if DEBUG
     @State private var shareCardHabit: Habit?
     @State private var showsWidgetGallery = false
@@ -38,25 +41,19 @@ struct TodayView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
-                    header
-                    if !activeHabits.isEmpty {
-                        WeekStrip(model: weekModel)
+            Group {
+                if isSplit {
+                    HStack(spacing: 0) {
+                        nest
+                            .frame(width: NestLayout.nestColumnWidth(for: windowWidth))
+                        detailPane
                     }
-                    ForEach(0..<SlotPolicy.maxActive, id: \.self) { slot in
-                        if let habit = habit(inSlot: slot) {
-                            card(for: habit)
-                        } else {
-                            EmptySlotCard { sheet = .add }
-                        }
-                    }
-                    FlownShelfRow(latest: latestFlown, total: flownHabits.count) { sheet = .flown }
-                        .padding(.top, FledgeTheme.Space.s)
+                    .background { selectionShortcuts }
+                } else {
+                    nest
                 }
-                .padding(.horizontal, FledgeTheme.screenMargin)
-                .padding(.bottom, FledgeTheme.Space.xxl)
             }
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { windowWidth = $0 }
             .background(SkyBackground().ignoresSafeArea())
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
@@ -64,12 +61,7 @@ struct TodayView: View {
                         Label { Text("Flown") } icon: { Image.fledgeGlyph(height: 20) }
                     }
                     Button("Settings", systemImage: "gearshape") { sheet = .settings }
-                }
-            }
-            .safeAreaInset(edge: .bottom) {
-                if hasFreeSlot {
-                    PrimaryActionButton(title: "Add habit", systemImage: "plus") { sheet = .add }
-                        .padding(.bottom, FledgeTheme.Space.s)
+                        .keyboardShortcut(",", modifiers: .command)
                 }
             }
             .sheet(item: $sheet) { sheet in
@@ -138,6 +130,85 @@ struct TodayView: View {
         }
     }
 
+    /// The nest: header, week strip, three slots, the Flown preview, and Add floating at the bottom of the column.
+    private var nest: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
+                header
+                if !activeHabits.isEmpty {
+                    WeekStrip(model: weekModel)
+                }
+                ForEach(0..<SlotPolicy.maxActive, id: \.self) { slot in
+                    if let habit = habit(inSlot: slot) {
+                        card(for: habit)
+                    } else {
+                        EmptySlotCard { sheet = .add }
+                    }
+                }
+                FlownShelfRow(latest: latestFlown, total: flownHabits.count) { sheet = .flown }
+                    .padding(.top, FledgeTheme.Space.s)
+            }
+            .padding(.horizontal, FledgeTheme.screenMargin)
+            .padding(.bottom, FledgeTheme.Space.xxl)
+        }
+        .safeAreaInset(edge: .bottom) {
+            if hasFreeSlot {
+                PrimaryActionButton(title: "Add habit", systemImage: "plus") { sheet = .add }
+                    .keyboardShortcut("n", modifiers: .command)
+                    .padding(.bottom, FledgeTheme.Space.s)
+            }
+        }
+    }
+
+    // MARK: - iPad split (docs/DESIGN.md §12)
+
+    private var isSplit: Bool {
+        NestLayout.isSplit(width: windowWidth, isAccessibilitySize: dynamicTypeSize.isAccessibilitySize)
+    }
+
+    /// The habit in the pane: the one picked, else the first in the nest.
+    private var selectedHabit: Habit? {
+        sortedHabits.first { $0.id == selectedHabitID } ?? sortedHabits.first
+    }
+
+    @ViewBuilder
+    private var detailPane: some View {
+        Group {
+            if let habit = selectedHabit {
+                HabitDetailSheet(habit: habit, day: day, style: .pane) { graduatingHabit = habit }
+                    .id(habit.id)
+            } else {
+                ContentUnavailableView {
+                    Label {
+                        Text("Your nest is empty")
+                    } icon: {
+                        FledgeBird(.peeking, style: .glyph)
+                            .foregroundStyle(FledgeTheme.Palette.ink2)
+                            .frame(width: 84)
+                    }
+                } description: {
+                    Text("Add a habit and its journey shows up here.")
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(FledgeTheme.Palette.cloud.ignoresSafeArea())
+        .overlay(alignment: .leading) {
+            Rectangle().fill(FledgeTheme.Palette.hairline).frame(width: 1).ignoresSafeArea()
+        }
+    }
+
+    /// ⌘1–⌘3 pick the habit in that slot.
+    private var selectionShortcuts: some View {
+        ForEach(Array(sortedHabits.prefix(3).enumerated()), id: \.element.id) { index, habit in
+            Button("Show \(habit.name)") { selectedHabitID = habit.id }
+                .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
+                .opacity(0)
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+        }
+    }
+
     // MARK: - Header
 
     /// Eyebrow date, the day's status as the title, the next step as the detail line, and the nest glyph (UX-5).
@@ -198,7 +269,9 @@ struct TodayView: View {
         return HabitCardView(
             model: model,
             actions: HabitCardActions(
-                open: { detailHabit = habit },
+                open: {
+                    if isSplit { selectedHabitID = habit.id } else { detailHabit = habit }
+                },
                 toggleDone: {
                     perform { try context.setDone(!isDone, habitID: habit.id, on: day, by: .manual) }
                     if !isDone { askForReviewAfterAWeek() }
@@ -217,6 +290,7 @@ struct TodayView: View {
                 delete: { perform(structural: true) { try context.deleteHabit(habitID: habit.id) } }
             ),
             showsNoDataHint: showsNoDataHint(for: habit, model: model),
+            isSelected: isSplit && selectedHabit?.id == habit.id,
             lastUpdated: habit.source.isAuto ? todayLogs.first { $0.habit?.id == habit.id }?.updatedAt : nil
         )
     }

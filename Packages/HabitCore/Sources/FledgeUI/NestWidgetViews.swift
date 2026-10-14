@@ -5,7 +5,8 @@ import HabitCore
 /// DEBUG widget gallery. The ring is supplied by the caller so the widget can wrap it in its interactive intent button.
 public struct NestWidgetContent<Ring: View>: View {
     public enum Family: Sendable {
-        case small, medium, large
+        /// `extraLarge` is the iPad-only size: the three habits side by side.
+        case small, medium, large, extraLarge
     }
 
     public let family: Family
@@ -35,6 +36,7 @@ public struct NestWidgetContent<Ring: View>: View {
             case .small: small
             case .medium: medium
             case .large: large
+            case .extraLarge: extraLarge
             }
         }
     }
@@ -94,23 +96,7 @@ public struct NestWidgetContent<Ring: View>: View {
 
     private var large: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(snapshot.day.date().formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
-                        .font(.caption2.weight(.semibold))
-                        .textCase(.uppercase)
-                        .tracking(1)
-                        .foregroundStyle(FledgeTheme.Palette.ink2)
-                    Text(TodaySummary.title(for: cards))
-                        .font(.system(.title2, design: .rounded, weight: .heavy))
-                        .foregroundStyle(FledgeTheme.Palette.ink)
-                }
-                Spacer(minLength: 0)
-                NestGlyph(rings: cards.map {
-                    NestGlyph.Ring(fraction: $0.progress.fraction, status: $0.progress.status, color: FledgeTheme.habitColor($0.colorKey))
-                })
-                .frame(width: 44, height: 44)
-            }
+            header
             ForEach(snapshot.items.prefix(3)) { item in
                 HStack(spacing: 12) {
                     ring(item, 58, 7)
@@ -124,6 +110,54 @@ public struct NestWidgetContent<Ring: View>: View {
             }
             Spacer(minLength: 0)
             footer
+        }
+    }
+
+    // MARK: Extra large (iPad): header, then the three habits as columns
+
+    private var extraLarge: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            header
+            HStack(alignment: .top, spacing: 14) {
+                ForEach(snapshot.items.prefix(3)) { item in
+                    VStack(spacing: 10) {
+                        ring(item, 92, 10)
+                        VStack(spacing: 2) {
+                            Text(item.card.name).font(.headline).foregroundStyle(FledgeTheme.Palette.ink)
+                            WidgetValue(card: item.card, large: true)
+                            Text(item.card.flightText)
+                                .font(.caption2)
+                                .foregroundStyle(FledgeTheme.Palette.ink2)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(FledgeTheme.Palette.ink.opacity(0.04), in: .rect(cornerRadius: 18, style: .continuous))
+                }
+            }
+            Spacer(minLength: 0)
+            footer
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(snapshot.day.date().formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
+                    .font(.caption2.weight(.semibold))
+                    .textCase(.uppercase)
+                    .tracking(1)
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+                Text(TodaySummary.title(for: cards))
+                    .font(.system(.title2, design: .rounded, weight: .heavy))
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+            }
+            Spacer(minLength: 0)
+            NestGlyph(rings: cards.map {
+                NestGlyph.Ring(fraction: $0.progress.fraction, status: $0.progress.status, color: FledgeTheme.habitColor($0.colorKey))
+            })
+            .frame(width: 44, height: 44)
         }
     }
 

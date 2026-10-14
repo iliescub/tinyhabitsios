@@ -271,3 +271,36 @@ enum FledgeTheme {
 ## 11. Mockups
 HTML mockups of every screen and widget are produced in a cloud session from this file into `Design/mockups/`
 (open `Design/mockups/index.html` in a browser). They are the visual reference for implementation; this document wins if they disagree.
+
+## 12. iPad (native, added 2026-10-14)
+
+**Concept: "the same nest, with room to look closer."** iPad keeps the one-screen idea: no tab bar, no sidebar of
+categories (there are only three habits). What the extra width buys is that the *detail opens beside the nest instead of
+over it*, so a check-in and a look at the history are one glance.
+
+| Finding | Consequence |
+| --- | --- |
+| Apple doesn't require iPad support; iPhone-only apps run on iPad in a compatibility window. A native iPad app must ship a 13" screenshot set (2064 × 2752) ([guide](https://studio.adalo.com/blog/ipad-screenshot-sizes)) | Go native (better layout, iPad widgets); `scripts/appstore-screenshots.sh --ipad` makes the 13" set |
+| iPadOS 26 deprecates `UIRequiresFullScreen`; apps must work in any window size ([TN3192](https://developer.apple.com/tutorials/data/documentation/technotes/tn3192-migrating-your-app-from-the-deprecated-uirequiresfullscreen-key.md)) | Layout follows available width, not device: split from 700 pt, iPhone layout below (Slide Over, narrow windows) |
+| HealthKit exists on iPadOS 17+, but `isHealthDataAvailable()` can be false (some devices, managed iPads) ([forum](https://developer.apple.com/forums/thread/732944)) | When Health isn't available, Health templates become tap-to-log with a one-line note; copy says "this iPad", not "your iPhone" |
+| iPad has an extra-large Home Screen widget, Lock Screen widgets and Control Center controls; StandBy is iPhone-only ([WidgetKit strategy](https://developer.apple.com/documentation/widgetkit/developing-a-widgetkit-strategy.md)) | Add `systemExtraLarge`: the three habits side by side; existing Lock Screen and control work unchanged |
+
+**Layout (regular width ≥ 700 pt)**
+
+```
+┌──────────── nest column (360–420 pt) ───────────┬────────── detail pane (rest, content ≤ 680 pt) ──────────┐
+│ WEDNESDAY · 14 OCT                    ◎◎        │  Walk                                         ⋯          │
+│ 1 of 3 done                           ◎         │  ◯ 4,210 / 6,000 steps   ♥ Apple Health · 4 min ago       │
+│ M T W T F S S  (week strip)                     │  [12 days] [21 days] [87%]                                │
+│ ┃ Walk  ← selected (habit-colour edge)          │  Journey to fly ───●────○──────○                          │
+│   Read                                          │  Last 12 weeks ▦▦▦▦▦▦▦▦▦▦▦▦                              │
+│   Meditate                                      │                               [ Let it fly ]             │
+│ Stretch flew on 30 Sep ›                        │                                                          │
+└─────────────────────────────────────────────────┴──────────────────────────────────────────────────────────┘
+```
+- Tapping a card selects it (habit-colour edge); tapping its ring still checks in. The pane shows the same content as the
+  iPhone detail sheet, with Edit / Pause / Delete in its header menu.
+- Add, Flown, Settings and the paywall stay sheets (form sheets on iPad). Onboarding and graduation stay full screen with
+  content capped at 600 pt wide, centred on the sky.
+- Keyboard: ⌘N add a habit (when a slot is free), ⌘, Settings, ⌘1–3 select a habit. Cards get the pointer hover effect.
+- Both orientations; Dynamic Type to AX5 falls back to the single column.

@@ -86,6 +86,10 @@ struct WidgetGallery: View {
                 }
                 tile(.medium, width: 362, height: 170)
                 tile(.large, width: 362, height: 382)
+                if UIDevice.current.userInterfaceIdiom == .pad {
+                    // iPad-only extra large (13" size).
+                    tile(.extraLarge, width: 715, height: 342)
+                }
             }
             .padding(.vertical, 24)
             .frame(maxWidth: .infinity)

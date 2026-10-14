@@ -2,6 +2,7 @@
 # Screenshot harness (UX-4): every demo screen × light/dark × default/AX3 text, plus a contact sheet.
 #
 # Usage: scripts/screenshots.sh [LABEL] [--no-build] [--keep-booted] [--screens "today detail …"] [--sizes "default ax3"]
+#                               [--device "iPad Pro 13-inch (M5)"]
 #   LABEL         output folder name under Design/review/screens/ (default: the short git commit)
 #   --no-build    reuse the last build in /tmp/fledge-dd
 #   --keep-booted leave the simulator running afterwards (default: shut it down)
@@ -26,6 +27,7 @@ while [[ $# -gt 0 ]]; do
         --keep-booted) keep=1; shift ;;
         --screens) screens="$2"; shift 2 ;;
         --sizes) sizes="$2"; shift 2 ;;
+        --device) device="$2"; shift 2 ;;
         -*) echo "unknown option $1" >&2; exit 2 ;;
         *) label="$1"; shift ;;
     esac

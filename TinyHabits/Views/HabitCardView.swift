@@ -20,6 +20,8 @@ struct HabitCardView: View {
     let model: HabitCardModel
     let actions: HabitCardActions
     var showsNoDataHint = false
+    /// Shown in the iPad detail pane right now: a habit-colour edge.
+    var isSelected = false
     /// When Apple Health last updated today's value (auto habits).
     var lastUpdated: Date?
 
@@ -40,6 +42,7 @@ struct HabitCardView: View {
             .accessibilityLabel(Text(accessibilityText))
             .accessibilityHint(Text("Opens details"))
             .accessibilityAddTraits(.isButton)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
             .accessibilityAction { actions.open() }
             .accessibilityAction(named: Text(doneActionName)) { actions.toggleDone() }
             .accessibilityAction(named: Text("Rest day")) { actions.skip() }
@@ -52,8 +55,15 @@ struct HabitCardView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .fledgeCard(tint: status == .done ? color : nil)
             .contentShape(.rect(cornerRadius: FledgeTheme.Radius.card))
+            .hoverEffect(.highlight)
             .onTapGesture { actions.open() }
             .overlay { readyOutline }
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: FledgeTheme.Radius.card, style: .continuous)
+                        .strokeBorder(color, lineWidth: 2.5)
+                }
+            }
             .sensoryFeedback(.success, trigger: status) { _, new in new == .done }
             .onChange(of: status) { old, new in
                 if new == .done && old != .done { bursts += 1 }

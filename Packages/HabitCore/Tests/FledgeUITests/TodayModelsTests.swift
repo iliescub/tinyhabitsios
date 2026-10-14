@@ -212,3 +212,19 @@ struct RecapModelTests {
         #expect(recap.strip[30 - 1 - 4] == .rest)   // day 35 of 40 = 4 days before today
     }
 }
+
+@Suite("NestLayout")
+struct NestLayoutTests {
+    @Test func splitsOnlyWhenWideAndNotAtAccessibilitySizes() {
+        #expect(!NestLayout.isSplit(width: 402, isAccessibilitySize: false))     // iPhone
+        #expect(!NestLayout.isSplit(width: 507, isAccessibilitySize: false))     // iPad narrow window
+        #expect(NestLayout.isSplit(width: 834, isAccessibilitySize: false))      // iPad portrait
+        #expect(!NestLayout.isSplit(width: 1376, isAccessibilitySize: true))     // AX sizes keep one column
+    }
+
+    @Test func nestColumnStaysBetween360And420() {
+        #expect(NestLayout.nestColumnWidth(for: 700) == 360)
+        #expect(NestLayout.nestColumnWidth(for: 920) == 386.4)
+        #expect(NestLayout.nestColumnWidth(for: 1376) == 420)
+    }
+}

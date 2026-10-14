@@ -27,6 +27,12 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 Plan, diagnosis and tickets UX-1…UX-19: `docs/UI-REDESIGN.md` · mockups: `Design/review/redesign-plan.html`.
 - [x] **UX-1…UX-19** ✅ All five phases done 2026-10-14 (commits on `relaunch/v1`). Brand v2 "First flight" + new icon: `docs/BRAND.md`.
   Screens per phase in `Design/review/screens/`; App Store images (6 of 8 planned) in `Design/AppStore/` — feeds **REL-2**.
+- [x] **IPAD-1** ✅ Native iPad (2026-10-14; changes the spec's "no iPad layouts" non-goal): device family iPhone + iPad, all
+  orientations, split Today (nest + detail pane ≥ 700 pt wide), ⌘N / ⌘, / ⌘1–3, hover, readable-width covers, tap-to-log
+  fallback when Apple Health isn't available, device-neutral copy, extra-large widget. Concept: `docs/DESIGN.md` §12.
+  13" App Store set: `Design/AppStore/iPad/` (`scripts/appstore-screenshots.sh --ipad`).
+- [ ] **IPAD-2** On a real iPad: Health permission and data (synced from iPhone), widgets incl. extra large, Lock Screen widget,
+  Control Center control, Stage Manager resizing between split and single column, keyboard shortcuts.
 
 ## Design — Oct 11 → Oct 25 (parallel to M0; mockups run in Claude cloud)
 - [x] **DES-0** ✅ Research, marketing theme "Leave the nest", brand palette (contrast-checked), typography, full screen/widget spec → `docs/DESIGN.md`

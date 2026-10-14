@@ -261,3 +261,22 @@ public struct IconSquare: View {
             .accessibilityHidden(true)
     }
 }
+
+/// iPad layout rule (docs/DESIGN.md §12): the detail opens beside the nest when the window is wide enough.
+/// Driven by the window's width, not the device, so Slide Over and narrow windows get the iPhone layout.
+public enum NestLayout {
+    /// Narrowest window that shows the nest and the detail side by side.
+    public static let splitMinimumWidth: CGFloat = 700
+
+    public static func isSplit(width: CGFloat, isAccessibilitySize: Bool) -> Bool {
+        width >= splitMinimumWidth && !isAccessibilitySize
+    }
+
+    /// Width of the nest column in the split: 42% of the window, between 360 and 420 pt.
+    public static func nestColumnWidth(for width: CGFloat) -> CGFloat {
+        min(420, max(360, width * 0.42))
+    }
+
+    /// Widest the detail and the full-screen covers (onboarding, graduation) get on iPad.
+    public static let readableWidth: CGFloat = 680
+}

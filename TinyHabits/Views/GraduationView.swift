@@ -51,6 +51,7 @@ struct GraduationView: View {
                     Spacer(minLength: FledgeTheme.Space.l)
                     actions(recap: recap)
                 }
+                .frame(maxWidth: NestLayout.readableWidth)
             }
         }
         .sensoryFeedback(.success, trigger: phase) { _, new in new == .flying }
