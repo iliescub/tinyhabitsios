@@ -34,6 +34,16 @@ Plan, diagnosis and tickets UX-1…UX-19: `docs/UI-REDESIGN.md` · mockups: `Des
 - [ ] **IPAD-2** On a real iPad: Health permission and data (synced from iPhone), widgets incl. extra large, Lock Screen widget,
   Control Center control, Stage Manager resizing between split and single column, keyboard shortcuts.
 
+## Differentiation — proposal 2026-10-14 (`docs/POSITIONING.md`)
+Positioning: **the habit tracker that lets go** (graduation is the one claim no competitor makes).
+- [ ] **GRAD-3** (P0, 1d) Slip check for flown Health habits: one nudge when `HoldingRate` < 50% / 14 days; none again until ≥ 80%.
+  The UI already promises it ("We'll nudge you only if it slips") — never cut; drop the copy instead.
+- [ ] **HEAD-1** (P0, 2d) Health head start: last-30-days baseline in setup, suggested goal, "already a habit" check, heatmap pre-filled
+  "before Fledge" (graduation counts from the start date). `BaselineModel` in HabitCore with tests.
+- [ ] **GRAD-4** (P1, 0.5d) Flight forecast on detail ("On track to fly around 12 Nov").
+- [ ] **MKT-6** (0.5d) Messaging: subtitle "Habits that stick, then fly", promo text, screenshot order (graduation first),
+  landing headline, creator brief and featuring pitch around graduation.
+
 ## Design — Oct 11 → Oct 25 (parallel to M0; mockups run in Claude cloud)
 - [x] **DES-0** ✅ Research, marketing theme "Leave the nest", brand palette (contrast-checked), typography, full screen/widget spec → `docs/DESIGN.md`
 - [x] **DES-2a** ✅ Icon concept: fledgling with checkmark wing; SVG + 1024 PNG + dark/tinted + two layers (`Design/Icon/`)

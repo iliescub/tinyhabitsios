@@ -1,0 +1,270 @@
+<title>Fledge 1.0 Positioning Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: a single reading column; the verdict leads, evidence tables follow, the plan closes. Brand tokens from docs/BRAND.md. */
+:root {
+  --paper: #F7F5F2; --card: #FFFFFF; --ink: #1B2240; --ink2: #5B6280; --hair: #E6E2DC;
+  --sky: #4A86FF; --skyText: #2563D6; --dawn: #FF5F45; --gold: #D0830E; --meadow: #2CA874;
+  --heroTop: #DCE9FF; --heroBot: #FFE2CF; --yes: #1E7A54; --no: #B4471F;
+  --shadow: 0 1px 2px rgba(27,34,64,.05), 0 8px 24px rgba(27,34,64,.07);
+  --display: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+  --body: -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0E1120; --card: #191D33; --ink: #E9ECF8; --ink2: #A3A9C2; --hair: #2A2F4A; --skyText: #8DB6FF; --gold: #FFC15E;
+  --heroTop: #1B2240; --heroBot: #2A2546; --yes: #4CCB94; --no: #FF9C7A; --shadow: 0 0 0 1px #2A2F4A; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0E1120; --card: #191D33; --ink: #E9ECF8; --ink2: #A3A9C2; --hair: #2A2F4A; --skyText: #8DB6FF; --gold: #FFC15E;
+  --heroTop: #1B2240; --heroBot: #2A2546; --yes: #4CCB94; --no: #FF9C7A; --shadow: 0 0 0 1px #2A2F4A; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 var(--body) }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 20px }
+h1, h2, h3 { font-family: var(--display); line-height: 1.12; text-wrap: balance; margin: 0 }
+h1 { font-size: clamp(2.1rem, 6vw, 3.2rem); font-weight: 900; letter-spacing: -.015em }
+h2 { font-size: clamp(1.45rem, 3.6vw, 1.9rem); font-weight: 900 }
+h3 { font-size: 1.08rem; font-weight: 800 }
+p { margin: .5rem 0; max-width: 66ch }
+a { color: var(--skyText) }
+.eyebrow { font: 600 .74rem/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--ink2) }
+.muted { color: var(--ink2) }
+section { padding-block: 48px 4px; display: grid; gap: 14px }
+.card { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 20px 22px }
+
+header.hero { background: linear-gradient(180deg, var(--heroTop), var(--heroBot)); padding-block: 56px 44px }
+header.hero .wrap { display: grid; gap: 14px }
+.verdict { display: grid; gap: 10px; margin-top: 8px }
+.verdict div { display: flex; gap: 12px; align-items: baseline }
+.verdict b { font: 900 1.05rem var(--display); min-width: 7.5em }
+.verdict span { color: var(--ink) }
+@media (max-width: 560px) { .verdict div { flex-direction: column; gap: 2px } }
+
+.tbl { overflow-x: auto; margin-top: 4px }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; min-width: 600px }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--hair) }
+th { font: 600 .72rem var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink2) }
+td:first-child { font-weight: 600 }
+.tag { display: inline-block; font: 700 .72rem/1 var(--body); padding: 5px 8px; border-radius: 99px; white-space: nowrap }
+.tag.no { background: color-mix(in srgb, var(--no) 14%, transparent); color: var(--no) }
+.tag.yes { background: color-mix(in srgb, var(--yes) 16%, transparent); color: var(--yes) }
+.tag.mid { background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--ink) }
+
+.thesis { font: 900 clamp(1.5rem, 4.4vw, 2.3rem)/1.15 var(--display); letter-spacing: -.01em; max-width: 22ch }
+.science { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px }
+.science .card { padding: 16px 18px; display: grid; gap: 6px; align-content: start }
+.science b { font: 900 1.6rem/1 var(--display); font-variant-numeric: tabular-nums }
+.science span { font-size: .88rem; color: var(--ink2) }
+@media (max-width: 700px) { .science { grid-template-columns: 1fr } }
+
+.feature { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; align-items: start }
+.feature .pri { font: 800 .78rem/1 var(--body); padding: 6px 9px; border-radius: 8px; background: var(--ink); color: var(--paper); margin-top: 3px }
+.feature .pri.p1 { background: var(--hair); color: var(--ink) }
+.feature h3 { margin-bottom: 2px }
+.feature p { margin: 2px 0; font-size: .95rem }
+.feature ul { margin: 4px 0 0; padding-left: 18px; font-size: .92rem; color: var(--ink2); display: grid; gap: 3px }
+
+.copybox { border-left: 3px solid var(--gold); padding: 4px 0 4px 16px; display: grid; gap: 6px }
+.copybox .big { font: 900 1.25rem/1.25 var(--display) }
+.copybox .sm { font-size: .9rem; color: var(--ink2) }
+.kv { display: grid; grid-template-columns: 170px 1fr; gap: 8px 16px; font-size: .94rem }
+.kv dt { color: var(--ink2); font-weight: 600 }
+.kv dd { margin: 0 }
+@media (max-width: 560px) { .kv { grid-template-columns: 1fr } .kv dd { margin-bottom: 8px } }
+
+.timeline { display: grid; gap: 0; border-left: 2px solid var(--hair); margin-left: 6px }
+.timeline div { position: relative; padding: 0 0 16px 22px }
+.timeline div::before { content: ""; position: absolute; left: -7px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--card); border: 2px solid var(--gold) }
+.timeline b { font-family: var(--display); font-weight: 800; display: block }
+.timeline span { font-size: .93rem; color: var(--ink2) }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 6px }
+.sources { font-size: .84rem; color: var(--ink2) }
+.sources li { margin-bottom: 4px }
+footer { padding-block: 40px 60px; color: var(--ink2); font-size: .84rem }
+:focus-visible { outline: 2px solid var(--skyText); outline-offset: 2px }
+</style>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Fledge 1.0 · roadmap and positioning review · 14 Oct 2026</div>
+    <h1>The habit tracker that lets go</h1>
+    <p style="font-size:1.08rem">I checked the roadmap against what the market already offers. Two of the three things we planned to lead with are already done by others. One isn't, and it has research behind it: <b>graduation</b>. Lead with it, and add only the two small features that make it true and visible on day one.</p>
+    <div class="verdict card">
+      <div><b>Differentiator</b><span>Habits graduate. Fledge is built to make itself unnecessary for each habit, and to let go once a habit sticks.</span></div>
+      <div><b>New features</b><span>Two, about 3 days in total, both before the 29 Nov freeze: a <b>slip check for flown habits</b> (the app already promises it) and a <b>Health head start</b> on day one.</span></div>
+      <div><b>Not adding</b><span>AI coach, social features, app blocking, more slots, an Apple Watch app in 1.0. Each one dilutes the story or misses the date.</span></div>
+      <div><b>Advertising</b><span>Change the App Store subtitle, screenshots and campaign line to lead with graduation. "Done for you" becomes the proof, no longer the headline.</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <div class="eyebrow">1 · What the market already has</div>
+    <h2>Two of our three headline claims aren't unique</h2>
+    <p class="muted">Our spec leads with "3 habits that track themselves". Here is how each part of that compares with apps on the App Store today.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Our claim</th><th>Who already does it</th><th>Unique?</th></tr></thead>
+      <tbody>
+        <tr><td>Completes itself from Apple Health</td><td><b>Streaks</b> (steps, water, mindful minutes, workouts; $5.99 once). <b>Habitify</b> marks habits done from Apple Health (Premium). Smaller apps: Habit Tracker by Tiny Useful Apps, Steps, DayTrace</td><td><span class="tag no">No</span></td></tr>
+        <tr><td>Only three habits</td><td>TrackHabits, Habits (steps.app) and Everyday all cap their free tier at 3, and Habit3 has 3 by design. To most people, a limit of three reads as a paywall</td><td><span class="tag no">No</span></td></tr>
+        <tr><td>No guilt, rest days</td><td>A common claim in 2026 roundups. Streak guilt is a known reason people quit, so many apps now say "no guilt"</td><td><span class="tag mid">Partly</span></td></tr>
+        <tr><td>Private, no account</td><td>Many indie trackers keep data on the device</td><td><span class="tag mid">Partly</span></td></tr>
+        <tr><td><b>Habits graduate and leave the tracker</b></td><td>No app found. Guides recommend graduating a habit off your tracker after about 66 days, but as a manual practice. The nearest app features are archive and vacation modes</td><td><span class="tag yes">Yes</span></td></tr>
+        <tr><td>Starting goal from your own Health history</td><td>No app found. Health apps let you set a goal, then track it</td><td><span class="tag yes">Yes, if built</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted" style="font-size:.88rem">Most comparison sources are 2026 "best habit tracker" roundups. Features and prices change, so check the App Store listings again before quoting them publicly.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">2 · Why graduation is the story</div>
+    <p class="thesis">Most habit apps want you forever. Fledge wants your habits to fly.</p>
+    <p>That line isn't just a slogan; three research findings support it. They also give press and creators something to write about beyond "another habit tracker".</p>
+    <div class="science">
+      <div class="card"><b>66 days</b><span>The average time to automaticity in Lally et al. (UCL), ranging from 18 to an estimated 254 days. One missed day caused only a small, short dip.</span></div>
+      <div class="card"><b>Dependency</b><span>Renfree et al. (CHI 2016): reminders and streaks help people repeat a behaviour but build reliance on the app. People who abandon the app often drop the behaviour too.</span></div>
+      <div class="card"><b>Cues, not pings</b><span>A CHI 2019 paper: relying on reminders supported repetition but held back habit formation. Event-based cues increased automaticity.</span></div>
+    </div>
+    <p>This is why "done for you" belongs <b>under</b> graduation, not beside it. Auto-completion means fewer taps and fewer reminders, so the app stays out of the way while the habit forms. Three slots give each habit room until it can leave. Every feature serves one promise.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">3 · Does 1.0 keep that promise?</div>
+    <h2>Two gaps, and one is a broken promise</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Promise in the app</th><th>Today</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>"Flown habits keep tracking quietly. We'll nudge you only if it slips." (graduation screen and Flown shelf)</td><td>There's no slip check. The Flown shelf shows the holding rate, but nothing sends the nudge</td><td><span class="tag no">Build it or drop the line</span></td></tr>
+        <tr><td>Graduation is the reason to choose Fledge</td><td>A new user sees "30 days until it can fly" and nothing else from graduation for a month</td><td><span class="tag mid">Make day one show it</span></td></tr>
+        <tr><td>"Done for you"</td><td>Works from the day you add a habit</td><td><span class="tag yes">OK</span></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">4 · Recommended scope change</div>
+    <h2>Add two features, about 3 days, before 29 Nov</h2>
+    <div class="card feature">
+      <span class="pri">P0</span>
+      <div>
+        <h3>GRAD-3 · Slip check for flown habits <span class="muted" style="font-weight:500">· 1 day</span></h3>
+        <p>When a flown Health habit falls below 50% over 14 days (<code>HoldingRate.slipping</code>, already built and tested), send one gentle notification: "Walk has slipped a little. Bring it back to the nest for a while?" It opens the Flown shelf.</p>
+        <ul>
+          <li>Once per slip: nothing more until the habit is back above 80%. Never for tap-to-log graduates, which nobody logs any more.</li>
+          <li>Add it to <code>ReminderPlan</code> (HabitCore, tested) and let <code>Reminders.reconcile</code> schedule it.</li>
+          <li>This keeps the safety net the app already advertises. Without it, the line is a false promise, which matters for reviews.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card feature">
+      <span class="pri">P0</span>
+      <div>
+        <h3>HEAD-1 · Health head start <span class="muted" style="font-weight:500">· 2 days</span></h3>
+        <p>When someone adds a Health habit, Fledge reads their last 30 days and shows them in setup: "You've averaged 5,400 steps. 6,000 was met on 12 of the last 30 days." It also suggests a goal just above their baseline, small enough to win.</p>
+        <ul>
+          <li>If the goal was already met on 24 or more of the last 30 days (80%, the graduation bar), say so: "Walk is already a habit for you. Pick a bigger goal, or choose something new." This is the graduation idea showing up on day one, and no competitor we found has it.</li>
+          <li>The heatmap starts filled with those 30 days, marked "before Fledge", so day one isn't an empty grid. Graduation still counts from the start date; the 30-day minimum doesn't change.</li>
+          <li><code>HealthReader.value(for:on:)</code> already reads one day, so this needs a 30-day loop and a pure <code>BaselineModel</code> in HabitCore with tests. Everything is read on the device and nothing is stored beyond the day logs.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card feature">
+      <span class="pri p1">P1</span>
+      <div>
+        <h3>GRAD-4 · Flight forecast <span class="muted" style="font-weight:500">· half a day, only if time allows</span></h3>
+        <p>On the detail screen: "On track to fly around 12 Nov", from the start date plus the 30-day rule and the current rate. A date to look forward to makes the 30 days feel shorter, and it's a good line for creators.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:14px">Considered and left out of 1.0</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Idea</th><th>Why not now</th></tr></thead>
+      <tbody>
+        <tr><td>AI coach or AI habit suggestions</td><td>A crowded claim in 2026, it conflicts with "Private by default" and "Native and quiet", and it adds cost. The head start gives personal advice from the user's own data without AI.</td></tr>
+        <tr><td>Social and accountability partners</td><td>A non-goal in the spec. It needs accounts and a backend, and shared trackers can turn a bad week into public guilt.</td></tr>
+        <tr><td>App blocking until habits are done</td><td>The opposite of "No guilt" and of graduation. It also needs the Family Controls entitlement, which Apple has to approve.</td></tr>
+        <tr><td>More than three habits for Pro</td><td>Principle 1. Three only works with graduation; selling more slots would undo the story.</td></tr>
+        <tr><td>Apple Watch app</td><td>Keep it in 1.1 as planned. Watch Health data already completes habits without one.</td></tr>
+        <tr><td>Android</td><td>A non-goal in the spec. HealthKit and widgets are the product.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">Schedule: the freeze is 29 Nov and today is 14 Oct. The two P0 features fit in the week of 20 Oct, alongside the device tests (HK-5, WID-5, IPAD-2). If they slip, cut GRAD-4 first, then the "before Fledge" heatmap fill. Never cut GRAD-3; drop the promise from the copy instead.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">5 · How we say it</div>
+    <h2>Lead with graduation, prove it with "done for you"</h2>
+    <div class="copybox">
+      <div class="big">Fledge is the habit tracker that lets go.</div>
+      <div class="sm">Positioning: for people who've quit habit apps before, Fledge tracks three habits, fills them in from Apple Health, and graduates each one once it's automatic. Most trackers keep you checking boxes forever.</div>
+    </div>
+    <dl class="kv card">
+      <dt>Tagline</dt><dd><b>Three habits. Done for you. Then they fly.</b> (keep it; it already tells the whole story)</dd>
+      <dt>App Store title</dt><dd>Fledge: Habit Tracker (keep it for the keyword)</dd>
+      <dt>Subtitle (≤ 30)</dt><dd><b>Habits that stick, then fly</b> (27). It replaces "3 habits that track themselves", which describes what Streaks does. Alternative: "The habit app that lets go" (26)</dd>
+      <dt>Promotional text</dt><dd>Most habit apps want you forever. Fledge fills in three habits from Apple Health and lets each one go once it sticks, about 66 days on average.</dd>
+      <dt>Description, line 1</dt><dd>Build three habits, then stop tracking them. Fledge graduates every habit once it's automatic.</dd>
+      <dt>Keywords</dt><dd>habit tracker, apple health, automatic, routine, minimalist, streak, new year, goals, self improvement, 66 days</dd>
+      <dt>Screenshot order</dt><dd>1 graduation ("When a habit sticks, it flies") · 2 Today ("Three habits. Done for you.") · 3 head start ("Starts from your own data") · 4 Flown shelf · 5 widgets · 6 privacy</dd>
+      <dt>New Year line</dt><dd>"This year, fewer habits. Then none to track." In-app Event "New Year, 3 Habits" (26 Dec to 10 Jan).</dd>
+    </dl>
+  </section>
+
+  <section>
+    <div class="eyebrow">6 · Advertising plan</div>
+    <h2>One story for every channel, from now to mid-January</h2>
+    <div class="timeline">
+      <div><b>By 25 Oct · landing page</b><span>Headline "The habit tracker that lets go". A 15-second loop: a ring fills by itself, the bird hops out and flies. Waitlist. A short "Why your habit app should want you to leave" piece citing Lally and Renfree.</span></div>
+      <div><b>Oct–Nov · build in public, twice a week</b><span>Three content pillars: the science of graduation, design (the bird, the share card), and honest numbers. The research angle is more shareable than a feature list.</span></div>
+      <div><b>~15 Nov · Apple featuring nomination</b><span>Angle: a native, private habit app built to make itself unnecessary. Mention accessibility (AX5, VoiceOver), iPad, widgets and Liquid Glass.</span></div>
+      <div><b>15 Nov – 10 Dec · creators</b><span>Brief for 30 creators: show the ring filling from a walk, then the graduation share card. Hook: "the habit app that wants you to need it less". Free lifetime Pro codes.</span></div>
+      <div><b>23 Nov · public TestFlight</b><span>The first 100 waitlist users. Ask them one question: what did you graduate, or what nearly flew?</span></div>
+      <div><b>1 Dec · press kit</b><span>A founder note on why the app retires habits, the research links, the share card, and the 13" and 6.9" screenshot sets.</span></div>
+      <div><b>15 Dec · launch; 26 Dec – 10 Jan · New Year</b><span>The In-app Event and offer. From late January, the first real graduations get shared as #FledgeFlew: the product markets itself once habits start flying.</span></div>
+      <div><b>5 Jan · Product Hunt</b><span>Tagline: "The habit tracker that lets go."</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">7 · Price check</div>
+    <h2>$19.99 a year is on the low side, which is fine for launch</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>App</th><th>Price (third-party trackers, 2026)</th></tr></thead>
+      <tbody>
+        <tr><td>Streaks</td><td>$5.99 one-time</td></tr>
+        <tr><td>Way of Life</td><td>$29.99 a year</td></tr>
+        <tr><td>Atoms (James Clear)</td><td>Reported as $39.99 a year; sources disagree</td></tr>
+        <tr><td>Habitify</td><td>$49.99 a year; lifetime from $59.99</td></tr>
+        <tr><td><b>Fledge (planned)</b></td><td><b>$19.99 a year with a 7-day trial · $2.99 a month · $39.99 lifetime</b></td></tr>
+      </tbody>
+    </table></div>
+    <p>Keep it for the January push, when impulse price matters most. Test $24.99 a year from February, once graduations give the product proof.</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">8 · How we'll know</div>
+    <h2>Measure the differentiator, not just downloads</h2>
+    <ul class="plain">
+      <li><b>Head start reach:</b> the share of new Health habits that show a baseline, and how often people accept the suggested goal.</li>
+      <li><b>Graduations:</b> the first ones can't happen before mid-January. Track the share of 30-day-old habits that are ready to fly.</li>
+      <li><b>Shares of the graduation card</b> per graduation. This is the free growth channel.</li>
+      <li><b>Holding after flight:</b> the share of flown habits still at or above 80% after 30 days. That is the proof for the next campaign.</li>
+      <li>Analytics are still undecided (ANA-1). These measures need anonymous counts only, and never Health values.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="eyebrow">Sources</div>
+    <ul class="sources">
+      <li>Market and features: <a href="https://2sync.com/blog/best-habit-tracker-apps">2sync: 12 best habit tracking apps 2026</a> · <a href="https://applifehub.com/blog/best-habit-tracker-apps">AppLifeHub: 10 best habit trackers 2026</a> · <a href="https://toolfinder.com/best/habit-trackers-ios">Toolfinder</a> · <a href="https://reclaim.ai/blog/habit-tracker-apps">Reclaim: best habit trackers</a> · <a href="https://appgoblin.info/sdks/Habitify%20gathers%20your%20data%20from%20Apple%20Health.%20It%20will%20automatically%20mark%20your%20habit%20as%20done%20when%20you%20reach%20your%20goal">Habitify Apple Health listing</a></li>
+      <li>Three-habit apps: <a href="https://apps.apple.com/app/id6757355894">Habit3</a> · <a href="https://apps.apple.com/us/app/id6470896303">TrackHabits</a> · <a href="https://steps.app/support/habit-tracker/ios/general-information/how-does-habits-work-and-what-does-it-offer">Habits (steps.app)</a></li>
+      <li>Graduation as a practice: <a href="https://www.ehm-tech.com/habit/blog/how-to-track-habits-effectively/">How to track habits effectively</a></li>
+      <li>Research: <a href="https://researchportal.northumbria.ac.uk/en/publications/dont-kick-the-habit-the-role-of-dependency-in-habit-formation-app/">Renfree et al. 2016, "Don't kick the habit"</a> · <a href="https://research.birmingham.ac.uk/files/59352008/ewic_hci18_full_paper38.pdf">HCI 2018 paper on reminders and reliance</a> · <a href="https://research.birmingham.ac.uk/files/71165330/Investigating_the_Impact_IWC_2019_Final.pdf">Investigating the impact of plan reminders (2019)</a> · <a href="https://bps.org.uk/research-digest/how-form-habit">BPS on Lally et al.</a> · <a href="https://inverse.com/health/62104-how-to-stick-to-new-years-resolutions">Inverse on missed days</a></li>
+      <li>Why people quit: <a href="https://habit-streak.com/en/blog/habit-tracking/state-of-habit-tracking-2026">State of habit tracking 2026</a> · <a href="https://togetherwithkai.com/blog/best-habit-tracker-apps">Why most people quit</a> (vendor blogs; figures unverified)</li>
+      <li>Prices: <a href="https://apppricinglab.com/iap/apple/1111447047">Habitify IAPs</a> · <a href="https://apppricinglab.com/iap/apple/393159800">Way of Life IAPs</a> · <a href="https://jotform.com/blog/best-apps-for-habit-tracking">Jotform</a> · <a href="https://learnofchrist.com/resources/atoms">Atoms review</a></li>
+      <li>Indie growth: <a href="https://www.revenuecat.com/blog/growth/sebastian-rohl-habitkit-launched-podcast-2026">RevenueCat on HabitKit</a> · <a href="https://www.indiehackers.com/post/DCOYyF9O14dBnuGkkaQR">Indie Hackers: HabitKit and building in public</a> · <a href="https://sebastianroehl.substack.com/p/2025-the-year-that-changed-everything">HabitKit 2025 review</a></li>
+    </ul>
+  </section>
+</main>
+<footer class="wrap">Fledge 1.0 positioning review · 14 October 2026 · decisions recorded in <code>docs/POSITIONING.md</code></footer>
