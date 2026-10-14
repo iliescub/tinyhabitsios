@@ -92,7 +92,9 @@ meta wrap at AX sizes (checked at AX5). App Store set: `scripts/appstore-screens
 (1320 × 2868). Still needs a device: the Lock Screen and Siri/Control Center shots (DESIGN.md §9, 1 and 6), a VoiceOver
 walk-through (POL-1), and the paywall with live StoreKit products.
 - [x] **UX-17** ✅ Widgets: ring v2, badges, bird in empty/all-done states
-- [x] **UX-18** ✅ Accessibility pass: VoiceOver for new elements, AX5, contrast of the ink CTA, Reduce Motion/Transparency
+- [x] **UX-18** ✅ Accessibility pass (2026-10-14 follow-up: Xcode's accessibility audit now runs in `FledgeAppUITests` on every main
+  screen; it led to solid ink primary buttons, ink app tint, ink2 Form headers, 44 pt hit areas, wrapping value lines and journey labels
+  that grow with Dynamic Type; remaining measurement false positives are listed with reasons in the test): VoiceOver for new elements, AX5, contrast of the ink CTA, Reduce Motion/Transparency
 - [x] **UX-19** ✅ Regenerate App Store screenshots from the harness (feeds REL-2)
 
 Cut order if late: UX-13 → UX-14 sparkline → UX-11 animation polish. Never cut: UX-2, UX-5/6, UX-15.

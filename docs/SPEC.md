@@ -304,7 +304,7 @@ The app keeps SwiftUI and SwiftData. All logic moves into a shared local Swift p
 | Persistence | SwiftData with `VersionedSchema` from V1 | Avoids the current "reset the store on migration failure" path |
 | Shared storage | App Group `group.<bundle-id>` | Lets the widget, controls and intents read and write the same store |
 | CloudKit readiness | No `.unique` attributes, every property defaulted, relationships optional | Lets iCloud sync be switched on in 1.1 without a migration |
-| Tests | Swift Testing for HabitCore; one UI smoke test | The engine is pure and easy to test |
+| Tests | Swift Testing for HabitCore (108 tests); XCUITest suite `FledgeAppUITests` with the accessibility audit, on iPhone and iPad | The engine is pure and easy to test; flows and accessibility are checked end to end |
 | Analytics | TelemetryDeck (anonymous) or none; never sends Health values | Needed for the retention-by-source metric; App Store Connect can't segment by source |
 | Payments | StoreKit 2 | See *Monetization* |
 

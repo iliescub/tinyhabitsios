@@ -100,9 +100,12 @@ dawn, sky, meadow, gold, lilac `#8E7CF0`, teal `#1EA4A9`, rose `#EF6396`, slate 
 - **Recommendation: raise the minimum to iOS 26** (spec said iOS 18). Reasons: native Liquid Glass with no fallback design, one icon pipeline,
   `@Observable` + SwiftData fixes, and by December 2026 iOS 27 is current, so iOS 26+ should cover most active iPhones
   (check Apple's published adoption figures before deciding — decision DEC-1 in the backlog).
-- Glass where: top toolbar buttons (Flown, Settings), the floating **Add habit** button when a slot is free, sheets, menus, the paywall close button.
+- Glass where: top toolbar buttons (Flown, Settings), sheets, menus, the paywall close button.
 - Never glass on: habit cards, rings, heatmap, onboarding body. One `GlassEffectContainer` for the toolbar group.
-- Primary action = `.buttonStyle(.glassProminent)` tinted `skyText`; secondary = `.glass`.
+- **Primary action = solid ink capsule** (`FledgePrimaryButtonStyle`, label 15 : 1), *not* glass prominent: Xcode's accessibility audit
+  measured the glass version's label below AA because the glass lightens the fill (2026-10-14). The app tint is **ink** for the same
+  reason (system toolbar buttons in blue failed); links on light surfaces stay `skyText`, toggles are `meadow`.
+- Form section headers and footers use `ink2` (the system grey measured ≈ 3.3 : 1 on our backgrounds).
 - Respect Reduce Transparency (system handles glass; our gradient header falls back to flat `cloud`).
 
 ---
@@ -163,7 +166,8 @@ Layout top to bottom:
 
 ### 6.2 Habit detail (sheet)
 - Hero: big ring 160 pt + today's value; under it the source line ("Completes from Apple Health · Steps").
-- **Fledge progress**: horizontal track day 0 → 66 with gold tick at 30 ("can fly from day 30"), current position as small bird. Text: "Day 37 · 86 % of the last 30 days".
+- **Journey to fly** (was "Fledge progress"): track with milestones Day 1 (start date) · Day 30 "can fly" (gold) · Day 66 "automatic",
+  the bird riding the line. Text: "Day 37 · 86% of the last 30 days" + status line. Implemented in UX-7 (`JourneyTrack`).
 - **12-week heatmap** (7 rows × 12 columns), cells in habit colour by completion; rest days hatched; today outlined.
 - Stats row (3 tiles): Current streak · Best streak · 30-day rate. Weekly-cadence habits show weeks.
 - **Flight forecast** (GRAD-4) under the journey: a small bird in the habit colour + "On track to fly around 30 Nov." or
@@ -173,8 +177,9 @@ Layout top to bottom:
 
 ### 6.3 Add habit (sheet)
 1. **Pick**: two sections. "Done for you" (Health templates: Walk, Move, Work out, Stand, Meditate, Sleep, Drink water, Daylight) and
-   "Tap to log" (Read, Stretch, Custom). 2-column grid of tiles (symbol + name + "6,000 steps").
-   Pro lock badge on Health tiles when the free auto slot is used.
+   "Tap to log" (Read, Stretch, Your own habit). Compact rows (`TemplateRow`: coloured icon square, name, goal line), one Pro banner
+   instead of a badge per template, "In the nest" for habits already added (UX-9). Without Apple Health (some iPads), Health templates
+   are offered as tap-to-log.
 2. **Configure** (push): name, symbol & colour, target stepper with unit, cadence (Every day / N days a week segmented), reminder toggle + time.
    CTA "Add to nest" (glass prominent). If a Health template: next step is the system Health prompt preceded by a one-line explanation.
 - **Head start** (HEAD-1), Health templates only: a "Your last 30 days" section under the preview — average a day, "N of 30 days at
@@ -195,7 +200,7 @@ Layout top to bottom:
 - **Slip check** (GRAD-3): one notification per slip — "Walk has slipped a little since it flew. Bring it back to the nest for a
   while?" — opens this shelf. Only for Health graduates; never repeated until the habit holds again.
 
-### 6.6 Onboarding (4 screens, paged, progress dots)
+### 6.6 Onboarding (4 screens; segmented progress bar + back button since UX-11; Health step shows the head start after Connect)
 1. **Promise** — animated ring filling by itself → turns into the bird. "Three habits. Done for you. Then they fly." CTA "Start".
 2. **Pick up to 3** — same tiles as Add habit, multi-select with a "2 of 3" counter; targets editable inline.
 3. **Connect Apple Health** — shown only if a Health template is picked. Three bullets: reads only · stays on your iPhone · you choose what. CTA "Connect" → system sheet. "Not now" turns those habits manual.

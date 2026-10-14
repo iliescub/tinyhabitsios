@@ -13,7 +13,8 @@ struct FledgeApp: App {
             case .success(let container):
                 RootView(onBecameActive: store.reloadIfChangedElsewhere)
                     .modelContainer(container)
-                    .tint(FledgeTheme.Palette.skyText)
+                    // Ink, not blue: system toolbar buttons (Done, Cancel) on Liquid Glass failed the contrast audit in blue.
+                    .tint(FledgeTheme.Palette.ink)
             case .failure(let error):
                 StoreErrorView(error: error)
             }

@@ -91,8 +91,10 @@ struct OnboardingView: View {
                         .frame(height: 5)
                 }
             }
+            .frame(minHeight: 44)
             .accessibilityElement()
             .accessibilityLabel(Text("Step \((visibleSteps.firstIndex(of: step) ?? 0) + 1) of \(visibleSteps.count)"))
+            .accessibilityAddTraits(.isStaticText)
 
             Color.clear.frame(width: 36, height: 36)
         }

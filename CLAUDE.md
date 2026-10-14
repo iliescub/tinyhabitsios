@@ -36,6 +36,7 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 ## Design
 - UI concept, palette, components and copy: `docs/DESIGN.md` (source of truth); mockups in `Design/mockups/`; icon in `Design/Icon/`.
 - One screen (Today) + sheets; no tab bar. iPad (≥ 700 pt wide): the detail opens as a pane beside the nest (`NestLayout`, DESIGN.md §12). Liquid Glass only on the navigation layer (toolbar, floating Add, sheets), never on cards.
+- Primary buttons are solid ink (`FledgePrimaryButtonStyle`), not glass; app tint is ink (both from the accessibility audit, DESIGN.md §4).
 - Colours from `FledgeTheme`/asset catalog only; brand colours never for body text (use `ink`, `ink2`, `skyText`).
 - No guilt UI: no red failure states, no points/coins. Every animation has a Reduce Motion variant; Dynamic Type to AX5.
 
@@ -46,6 +47,12 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - Tests (build dir outside Documents, which is iCloud-synced and breaks codesign with xattrs):
   `scripts/watchdog.sh --timeout 600 --idle 180 --name tests -- swift test --package-path Packages/HabitCore --scratch-path /tmp/habitcore-build`
 - App: open `TinyHabits.xcodeproj`, scheme `TinyHabits` (app display name "Fledge").
+- UI tests (`FledgeAppUITests`: main flows on demo data + Xcode accessibility audit with a documented allowlist); run on iPhone and iPad:
+  `scripts/watchdog.sh --timeout 1800 --idle 600 --name ui -- xcodebuild test -project TinyHabits.xcodeproj -scheme TinyHabits -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/fledge-dd -only-testing:FledgeAppUITests`
+  (and `name=iPad Pro 13-inch (M5)`). These runs take ~5 min each; run them in the background, not as a blocking command.
+- App Store Connect listing via API (key in `~/APIkeys/appstoreconnect`, never printed): `swift scripts/asc.swift status|metadata|screenshots`
+  — metadata in `Design/AppStore/metadata.en-US.json`, screenshots from `Design/AppStore/` and `Design/AppStore/iPad/`. Edits the
+  editable 1.0 version only; never submits.
 - CLI build (DerivedData outside Documents): `scripts/watchdog.sh --timeout 900 --idle 300 --name build -- xcodebuild -project TinyHabits.xcodeproj -scheme TinyHabits -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/fledge-dd build`
 - Simulator steps (boot, install, screenshots) also go through the watchdog with `--timeout 180`; shut the simulator down when done (`xcrun simctl shutdown all`).
 - Screenshots of every demo screen × light/dark × default/AX3 + contact sheet: `scripts/screenshots.sh [LABEL] [--no-build]`

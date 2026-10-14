@@ -95,7 +95,7 @@ struct FlownSheet: View {
                 .foregroundStyle(FledgeTheme.Palette.ink)
             Text("They keep tracking quietly. We'll nudge you only if one slips.")
                 .font(.subheadline)
-                .foregroundStyle(FledgeTheme.Palette.ink2)
+                .foregroundStyle(FledgeTheme.Palette.ink)
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)

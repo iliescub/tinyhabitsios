@@ -436,7 +436,8 @@ struct ProBadge: View {
     }
 }
 
-/// Primary call to action: ink (UX-1). Liquid Glass prominent tinted ink on iOS 26, `FledgePrimaryButtonStyle` before.
+/// Primary call to action: a solid ink capsule (UX-1). Not Liquid Glass: the accessibility audit measured the glass
+/// version's label below AA contrast, because the glass lightens the ink fill (UX-18).
 struct PrimaryActionButton: View {
     let title: String
     let icon: Image
@@ -453,22 +454,9 @@ struct PrimaryActionButton: View {
     }
 
     var body: some View {
-        let label = Label { Text(title) } icon: { icon }
-
-        if #available(iOS 26, *) {
-            Button(action: action) {
-                label
-                    .font(.headline)
-                    .foregroundStyle(FledgeTheme.Palette.onInk)
-                    .padding(.horizontal, FledgeTheme.Space.s)
-                    .padding(.vertical, FledgeTheme.Space.xs)
-            }
-            .buttonBorderShape(.capsule)
-            .tint(FledgeTheme.Palette.ink)
-            .buttonStyle(.glassProminent)
-        } else {
-            Button(action: action) { label }
-                .buttonStyle(FledgePrimaryButtonStyle())
+        Button(action: action) {
+            Label { Text(title) } icon: { icon }
         }
+        .buttonStyle(FledgePrimaryButtonStyle())
     }
 }

@@ -39,6 +39,8 @@ struct SettingsSheet: View {
                 dataSection
                 aboutSection
             }
+            // Headers and footers in ink2 (AA); the system grey measured below 4.5 : 1 in the audit.
+            .foregroundStyle(FledgeTheme.Palette.ink, FledgeTheme.Palette.ink2)
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -103,7 +105,9 @@ struct SettingsSheet: View {
     /// A Settings-style row label: a filled icon square, then the title.
     private func rowLabel(_ title: String, _ symbol: String, _ color: Color) -> some View {
         Label {
-            Text(title).foregroundStyle(FledgeTheme.Palette.ink)
+            Text(title)
+                .foregroundStyle(FledgeTheme.Palette.ink)
+                .fixedSize(horizontal: false, vertical: true)
         } icon: {
             IconSquare(symbol: symbol, color: color, size: 28, filled: true)
         }
@@ -138,6 +142,7 @@ struct SettingsSheet: View {
             Toggle(isOn: $summaryOn) {
                 rowLabel("Evening summary", "moon.fill", FledgeTheme.habitColor("slate"))
             }
+            .tint(FledgeTheme.Palette.meadow)
                 .onChange(of: summaryOn) { _, on in
                     FledgeSettings.eveningSummaryMinutes = on ? summaryMinutes : nil
                     Task {

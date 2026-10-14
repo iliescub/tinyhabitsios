@@ -76,8 +76,7 @@ public struct WeekStrip: View {
                     Text(day.label)
                         .font(.caption2.weight(day.isToday ? .bold : .medium))
                         .foregroundStyle(day.isToday ? FledgeTheme.Palette.ink : FledgeTheme.Palette.ink2)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
+                        .fixedSize()
                     HStack(spacing: 3) {
                         ForEach(Array(day.dots.enumerated()), id: \.offset) { _, dot in
                             DotView(dot: dot)
@@ -131,7 +130,9 @@ public struct JourneyTrack: View {
     }
 
     private let trackY: CGFloat = 36
-    private let height: CGFloat = 84
+    /// Room for the two-line milestone labels; grows with Dynamic Type.
+    @ScaledMetric(relativeTo: .caption2) private var labelHeight: CGFloat = 32
+    private var height: CGFloat { trackY + 16 + labelHeight }
 
     public var body: some View {
         GeometryReader { proxy in
@@ -160,7 +161,7 @@ public struct JourneyTrack: View {
                         Text(milestone.subtitle).font(.caption2).foregroundStyle(FledgeTheme.Palette.ink2)
                     }
                     .fixedSize()
-                    .position(x: labelX(milestone.fraction, inset: inset, width: width), y: trackY + 30)
+                    .position(x: labelX(milestone.fraction, inset: inset, width: width), y: trackY + 14 + labelHeight / 2)
                 }
                 FledgeBird(.flying, style: .tinted(color))
                     .frame(width: 28)

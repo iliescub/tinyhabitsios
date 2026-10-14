@@ -98,7 +98,9 @@ struct GraduationView: View {
             PrimaryActionButton(title: "Let it fly", icon: .fledgeGlyph(), action: fly)
                 .disabled(phase == .flying)
             HStack {
-                Button("Keep it in the nest", action: onKeep)
+                Button(action: onKeep) {
+                    Text("Keep it in the nest").frame(minHeight: 44).contentShape(.rect)
+                }
                 Spacer()
                 if let shareImage {
                     ShareLink(
@@ -107,12 +109,15 @@ struct GraduationView: View {
                         message: Text("\(habit.name) flew after \(recap.daysText) days with Fledge."),
                         preview: SharePreview("\(habit.name) is ready to fly", image: shareImage)
                     ) {
-                        Label("Share", systemImage: "square.and.arrow.up")
+                        Label("Share", systemImage: "square.and.arrow.up").frame(minHeight: 44).contentShape(.rect)
                     }
                 }
             }
             .font(.subheadline)
-            .tint(FledgeTheme.Palette.skyText)
+            .frame(minHeight: 44)
+            .contentShape(.rect)
+            // Ink, not blue: blue on the peach end of the sky measured ≈ 4.3 : 1 (UX-18 audit).
+            .tint(FledgeTheme.Palette.ink)
             .disabled(phase == .flying)
             .padding(.horizontal, FledgeTheme.screenMargin + FledgeTheme.Space.s)
         }

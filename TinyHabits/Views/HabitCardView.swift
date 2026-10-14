@@ -163,7 +163,7 @@ struct HabitCardView: View {
                 Text(model.flightText)
                     .font(.footnote)
                     .foregroundStyle(FledgeTheme.Palette.ink2)
-                    .lineLimit(1)
+                    .fixedSize(horizontal: false, vertical: true)
                     .layoutPriority(1)
             }
         }
@@ -206,29 +206,29 @@ struct HabitCardView: View {
 struct ValueLine: View {
     let model: HabitCardModel
     var large = false
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        // At accessibility sizes the goal wraps under the number instead of being cut off.
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0))
-            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: FledgeTheme.Space.xs))
-        layout {
-            Text(model.metricText)
-                .font(metricFont)
-                .foregroundStyle(model.progress.status == .skipped ? FledgeTheme.Palette.ink2 : FledgeTheme.Palette.ink)
-                .contentTransition(.numericText())
-            if let goal = model.goalText {
-                Text(goal)
-                    .font(large ? .body : .subheadline)
-                    .fontDesign(.rounded)
-                    .monospacedDigit()
-                    .foregroundStyle(FledgeTheme.Palette.ink2)
-            }
+        // The goal moves under the number when it doesn't fit beside it (long goals, large text), instead of clipping.
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: FledgeTheme.Space.xs) { parts }
+            VStack(alignment: .leading, spacing: 0) { parts }
         }
-        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
-        .minimumScaleFactor(0.8)
         .animation(.snappy, value: model.metricText)
+    }
+
+    @ViewBuilder
+    private var parts: some View {
+        Text(model.metricText)
+            .font(metricFont)
+            .foregroundStyle(model.progress.status == .skipped ? FledgeTheme.Palette.ink2 : FledgeTheme.Palette.ink)
+            .contentTransition(.numericText())
+        if let goal = model.goalText {
+            Text(goal)
+                .font(large ? .body : .subheadline)
+                .fontDesign(.rounded)
+                .monospacedDigit()
+                .foregroundStyle(FledgeTheme.Palette.ink2)
+        }
     }
 
     private var metricFont: Font {

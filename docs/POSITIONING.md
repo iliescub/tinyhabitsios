@@ -2,6 +2,7 @@
 
 Visual version with the evidence tables: `Design/review/positioning.html` (published as an artifact).
 Status: **accepted 2026-10-14; GRAD-3, HEAD-1 and GRAD-4 implemented the same day** (spec, design and brand docs updated).
+App Store Connect updated via API the same day: subtitle, promotional text, keywords, description and screenshots (`scripts/asc.swift`).
 
 ## Finding
 - **Not unique:** auto-completion from Apple Health (Streaks, Habitify, smaller apps) and a three-habit limit (common free-tier cap:

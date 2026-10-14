@@ -46,6 +46,8 @@ struct HabitEditorView: View {
                         IconSquare(symbol: draft.symbol, color: FledgeTheme.habitColor(draft.colorKey))
                     }
                 }
+                .accessibilityLabel(Text("Icon"))
+                .accessibilityHint(Text("Choose the habit's icon"))
                 .tint(FledgeTheme.Palette.ink)
                 ColorRow(selection: $draft.colorKey)
             } footer: {
@@ -95,6 +97,7 @@ struct HabitEditorView: View {
 
             Section {
                 Toggle("Reminder", isOn: reminderBinding)
+                    .tint(FledgeTheme.Palette.meadow)
                 if draft.reminderMinutes != nil {
                     DatePicker("Time", selection: reminderTimeBinding, displayedComponents: .hourAndMinute)
                 }
@@ -104,6 +107,8 @@ struct HabitEditorView: View {
         }
         .scrollContentBackground(.hidden)
         .background(FledgeTheme.Palette.cloud)
+        // Section headers and footers use the secondary style: ink2 meets AA on cloud; the system grey (≈ 3.3 : 1) doesn't.
+        .foregroundStyle(FledgeTheme.Palette.ink, FledgeTheme.Palette.ink2)
         .sheet(isPresented: $pickingIcon) {
             IconPickerSheet(symbol: $draft.symbol, color: FledgeTheme.habitColor(draft.colorKey))
                 .presentationDetents([.medium, .large])
@@ -227,14 +232,20 @@ struct HeadStartView: View {
                 Button {
                     withAnimation(.snappy) { draft.target = suggested }
                 } label: {
+                    // Own capsule: the system bordered style clipped this label in the accessibility audit.
                     Label(
                         baseline.verdict == .alreadyHabit ? "Aim for \(amount(suggested)) \(draft.unit)" : "Start at \(amount(suggested)) \(draft.unit)",
                         systemImage: baseline.verdict == .alreadyHabit ? "arrow.up.right" : "leaf"
                     )
                     .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                    .padding(.horizontal, FledgeTheme.Space.m)
+                    .padding(.vertical, FledgeTheme.Space.s)
+                    .frame(minHeight: 44)
+                    .background(FledgeTheme.Palette.ink.opacity(0.08), in: .capsule)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
-                .buttonStyle(.bordered)
-                .tint(FledgeTheme.Palette.ink)
+                .buttonStyle(.plain)
             }
         }
         .padding(.vertical, FledgeTheme.Space.xs)
@@ -323,6 +334,7 @@ struct GoalControl: View {
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.35)
         .sensoryFeedback(.selection, trigger: target)
+        .accessibilityLabel(Text(symbol == "plus" ? "Increase goal" : "Decrease goal"))
     }
 }
 

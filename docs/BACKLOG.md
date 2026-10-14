@@ -3,25 +3,31 @@
 Spec: https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 (offline copy: `docs/SPEC.md`)
 Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = done.
 
-## Start here (status as of 2026-10-11, end of session)
+## Start here (status as of 2026-10-14)
 
-**Shipped to TestFlight:** Fledge **0.1 (1)** uploaded to App Store Connect (app "Fledge: Habit Tracker", Apple ID 6821628229) and processed as **VALID**. Not submitted for review.
+**App Store Connect:** app "Fledge: Habit Tracker" (Apple ID 6821628229). TestFlight build **0.1 (1)** is VALID (uploaded 2026-10-11,
+before the redesign). Version **1.0 is in Prepare for Submission** with metadata set through the API on 2026-10-14
+(`scripts/asc.swift`): subtitle "Habits that stick, then fly", description, keywords, promotional text, and 6 iPhone 6.9" + 6 iPad 13"
+screenshots. Nothing is submitted for review.
 
-**Built so far (branch `relaunch/v1`):** M0–M4 in code — core loop, Apple Health auto-completion + reminders, widgets/Lock Screen/Control Center/Siri, onboarding, paywall (StoreKit 2), Pro gates, Settings. 61 package tests pass; app + widget build with no warnings.
-**Design:** `docs/DESIGN.md`, icon in `Design/Icon/`. Spec + roadmap: link above (offline `docs/SPEC.md`).
-**Decided:** name Fledge · Option A positioning · release 2026-12-15 · Control Center + Siri free (changed vs spec).
-**Open decisions:** DEC-1 minimum iOS 26 (recommended) · prices (StoreKit config uses $2.99/mo, $19.99/yr + 7-day trial, $39.99 lifetime) · ANA-1 analytics (TelemetryDeck or none).
+**Built (branch `relaunch/v1`):** M0–M4, the five-phase UI/UX redesign (UX-1…UX-19), brand v2 "First flight" + icon, native iPad
+(IPAD-1), and the differentiators HEAD-1 (Health head start), GRAD-3 (slip check), GRAD-4 (flight forecast). Positioning: "the habit
+tracker that lets go" (`docs/POSITIONING.md`).
+**Tests:** 108 package tests (Swift Testing) and the UI suite `FledgeAppUITests` (flows on demo data + Xcode accessibility audit),
+run on iPhone 17 and iPad Pro 13" simulators. Commands in `CLAUDE.md`.
+**Open decisions:** DEC-1 minimum iOS 26 · prices (StoreKit config: $2.99/mo, $19.99/yr + 7-day trial, $39.99 lifetime) · ANA-1 analytics.
 
 **Next steps, in order**
-1. **TestFlight (you):** App Store Connect › Fledge › TestFlight › add yourself as internal tester (Export Compliance is pre-answered), install 0.1 (1) on your iPhone.
-2. **Device checks (you):** run HK-5 (Health), WID-5 (widgets/control/Siri) and the POL-1 VoiceOver pass from the checklists below; report anything odd.
-3. **REL-0 (you):** create the in-app purchases in App Store Connect (subscription group "Fledge Pro": `com.smartapps.TinyHabits.pro.yearly` with 7-day free trial, `.pro.monthly`; non-consumable `.pro.lifetime`).
-4. **Decide** DEC-1, prices, ANA-1.
-5. **Next coding session:** fix device findings → POL-2 polish (Icon Composer `.icon`, launch screen, feather burst) → REL-1 privacy policy page → REL-2 screenshots (use `-FledgeDemoScreen`) → early review build by Nov 27 → submit Dec 4.
-6. **Cloud sessions** (launch content, mockups) never pushed — install the Claude GitHub App on the repo and resume them, or redo locally.
-7. **Security (you):** rotate the three secrets that were printed during this session (Copernicus key, SSH key `newkeynew`, Voyant signing key).
-
-**How to ship the next build:** bump `CURRENT_PROJECT_VERSION` (build number) in both targets, then see `CLAUDE.md` › Release.
+1. **New build (code):** bump `CURRENT_PROJECT_VERSION` in both targets, archive and upload (CLAUDE.md › Release) so TestFlight has the
+   redesign, iPad and the new features. Then attach that build to version 1.0 in App Store Connect.
+2. **Device checks (you):** HK-5, HEAD-2, WID-5, IPAD-2 and the POL-1 VoiceOver pass — the simulator has no Health data, real widgets or
+   notifications, so these can only be confirmed on a device.
+3. **REL-0 (you):** create the in-app purchases (subscription group "Fledge Pro": `.pro.yearly` with a 7-day free trial, `.pro.monthly`;
+   non-consumable `.pro.lifetime`).
+4. **REL-1:** host the privacy policy and terms (`fledgehabits.com/privacy`, `/terms`, used by the paywall and the description);
+   App Privacy answers; support URL (App Store Connect requires it before submitting).
+5. **Decide** DEC-1, prices, ANA-1. Early review build by Nov 27, submit Dec 4, release Dec 15.
+6. **Security (you):** rotate the three secrets printed in the 2026-10-11 session (Copernicus key, SSH key `newkeynew`, Voyant signing key).
 
 ## UI/UX redesign — Oct 15 → Nov 29 (proposal)
 Plan, diagnosis and tickets UX-1…UX-19: `docs/UI-REDESIGN.md` · mockups: `Design/review/redesign-plan.html`.
@@ -43,7 +49,7 @@ Positioning: **the habit tracker that lets go** (graduation is the one claim no 
 - [x] **HEAD-1** ✅ (P0, 2d) Health head start: last-30-days baseline in setup, suggested goal, "already a habit" check, heatmap pre-filled
   "before Fledge" (graduation counts from the start date). `BaselineModel` in HabitCore with tests.
 - [x] **GRAD-4** ✅ (P1, 0.5d) Flight forecast on detail ("On track to fly around 12 Nov").
-- [~] **MKT-6** (0.5d) ✅ Docs, captions and screenshot order updated. Still to do in App Store Connect / landing page: subtitle, promo text, keywords. Messaging: subtitle "Habits that stick, then fly", promo text, screenshot order (graduation first),
+- [~] **MKT-6** (0.5d) ✅ Docs, captions, screenshot order, and App Store Connect (subtitle, promo text, keywords, description) done 2026-10-14. Still to do: landing page. Messaging: subtitle "Habits that stick, then fly", promo text, screenshot order (graduation first),
   landing headline, creator brief and featuring pitch around graduation.
 
 ## Design — Oct 11 → Oct 25 (parallel to M0; mockups run in Claude cloud)
@@ -67,7 +73,7 @@ Positioning: **the habit tracker that lets go** (graduation is the one claim no 
   - The app's own `Habit` type conflicts with `HabitCore.Habit` — remove the old models in the same change.
 - [x] **CLEAN-1** ✅ Removed Profile (`ProfileView`, `ProfileViewModel`, `ProfileImagePicker`, `ProfileStatsView`), quote overlay (`DailyQuoteOverlay`, `MotivationProvider`, `MotivationBanner`), `SwipeGuard` + swipe gesture, `HealthKitView`, Unsplash URLs (0.5d)
 - [x] **NAV-1** ✅ Single Today screen (sky header, 3 slot cards, glass toolbar → Flown/Settings sheets, floating Add) replacing `MainTabView`; basic Add (template grid), Flown and Settings (paused habits) sheets
-- [ ] **CI-1** Xcode Cloud or GitHub Actions: build + `swift test` on push (0.5d)
+- [ ] **CI-1** Xcode Cloud or GitHub Actions: build + `swift test` + `FledgeAppUITests` on push (0.5d)
 
 ## M1 Core loop — Oct 26 → Nov 8
 - [x] **LOOP-1** ✅ Today: 3 slot cards (ring, name, value/target, source badge, flight track / countdown, ready-to-fly), empty slots, tap card → detail
@@ -117,7 +123,8 @@ Positioning: **the habit tracker that lets go** (graduation is the one claim no 
 ## Beta and release — Nov 23 → Dec 15
 - [ ] **REL-0** App Store Connect: create the subscription group "Fledge Pro" with `com.smartapps.TinyHabits.pro.yearly` (7-day free trial) and `.pro.monthly`, and the non-consumable `.pro.lifetime`; prices to match the decision
 - [ ] **REL-1** Privacy policy page listing HealthKit types; App Privacy nutrition label (0.5d)
-- [ ] **REL-2** Screenshots (Lock Screen → auto ring → graduation → privacy), 15 s preview video, description, keywords (1.5d)
+- [~] **REL-2** ✅ 2026-10-14: description, keywords, promotional text, subtitle and both screenshot sets uploaded via `scripts/asc.swift`
+  (order: graduation → Today → head start → Flown → widgets → privacy). Still to do: 15 s preview video; Lock Screen and Siri shots from a device
 - [~] **REL-3** ✅ First build 0.1 (1) uploaded and VALID in App Store Connect (2026-10-11; added privacy manifests, export-compliance flag, Health purpose strings). Still to do: review build by Nov 27
 - [ ] **REL-4** Public TestFlight Nov 23 for first 100 waitlist users; triage daily (ongoing)
 - [ ] **REL-5** Final submission Dec 4; In-app Event "New Year, 3 Habits" (Dec 26 → Jan 10); New Year offer (0.5d)

@@ -305,7 +305,8 @@ struct HeatmapView: View {
                                 Text(label)
                                     .font(.caption2)
                                     .foregroundStyle(FledgeTheme.Palette.ink2)
-                                    .frame(width: labelWidth, height: cell)
+                                    .fixedSize()
+                                    .frame(minWidth: labelWidth, minHeight: cell)
                             }
                         }
                         ForEach(Array(model.weeks.enumerated()), id: \.offset) { _, week in
