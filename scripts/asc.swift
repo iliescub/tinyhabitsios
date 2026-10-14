@@ -663,8 +663,9 @@ func submitPrepare() async throws {
         submission = created["data"] as? [String: Any] ?? [:]
         print("draft submission \(id(submission)) created")
     }
-    let itemsNow = items(try await call("GET", "/v1/reviewSubmissions/\(id(submission))/items?limit=50"))
-    if itemsNow.isEmpty {
+    let itemsNow = items(try await call("GET", "/v1/reviewSubmissions/\(id(submission))/items?limit=50&include=appStoreVersion"))
+    let hasVersion = itemsNow.contains { (($0["relationships"] as? [String: Any])?["appStoreVersion"] as? [String: Any])?["data"] is [String: Any] }
+    if !hasVersion {
         try await call("POST", "/v1/reviewSubmissionItems", ["data": ["type": "reviewSubmissionItems", "relationships": [
             "reviewSubmission": ref("reviewSubmissions", id(submission)), "appStoreVersion": ref("appStoreVersions", id(version))]]])
         print("added version \(attrs(version)["versionString"] ?? "?")")
