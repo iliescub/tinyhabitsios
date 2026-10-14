@@ -34,6 +34,16 @@ enum DemoData {
         )
         try context.graduate(habitID: stretch.id, on: calendar.date(byAdding: .day, value: -14, to: .now) ?? .now)
 
+        // A Health graduate that keeps tracking, for the Flown shelf's holding trend.
+        let water = try context.addHabit(
+            name: "Drink water", symbol: "drop.fill", colorKey: "teal", source: .water, target: 2, unit: "L",
+            startedAt: calendar.date(byAdding: .day, value: -75, to: .now) ?? .now
+        )
+        try context.graduate(habitID: water.id, on: calendar.date(byAdding: .day, value: -20, to: .now) ?? .now)
+        for offset in 1...20 where offset % 6 != 0 && offset != 2 {
+            try context.setDone(true, habitID: water.id, on: today.adding(days: -offset), by: .auto)
+        }
+
         // Walk: auto, 40 days in, strong history → ready to fly; partly done today.
         let walk = try context.addHabit(
             name: "Walk", symbol: "figure.walk", colorKey: "dawn", source: .steps, target: 6_000, unit: "steps",

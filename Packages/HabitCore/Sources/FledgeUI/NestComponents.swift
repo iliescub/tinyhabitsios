@@ -240,20 +240,24 @@ public struct FeatherBurst: View {
 public struct IconSquare: View {
     public let symbol: String
     public let color: Color
-    @ScaledMetric(relativeTo: .body) private var side: CGFloat = 34
+    /// Solid colour with a white symbol (Settings rows) instead of a soft tint.
+    public let filled: Bool
+    @ScaledMetric private var side: CGFloat
 
-    public init(symbol: String, color: Color) {
+    public init(symbol: String, color: Color, size: CGFloat = 34, filled: Bool = false) {
         self.symbol = symbol
         self.color = color
+        self.filled = filled
+        _side = ScaledMetric(wrappedValue: size, relativeTo: .body)
     }
 
     public var body: some View {
         Image(systemName: symbol)
-            .font(.system(size: side * 0.48, weight: .semibold))
-            .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(color)
+            .font(.system(size: side * 0.5, weight: .semibold))
+            .symbolRenderingMode(filled ? .monochrome : .hierarchical)
+            .foregroundStyle(filled ? Color.white : color)
             .frame(width: side, height: side)
-            .background(color.opacity(0.15), in: .rect(cornerRadius: side * 0.28, style: .continuous))
+            .background(filled ? color : color.opacity(0.15), in: .rect(cornerRadius: side * 0.26, style: .continuous))
             .accessibilityHidden(true)
     }
 }

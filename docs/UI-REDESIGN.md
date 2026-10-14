@@ -70,12 +70,18 @@ DEBUG: `-FledgeDemoScreen configure` and `onboarding-pick|-health|-reminders`. S
 - [x] **UX-10** ✅ Configure: live card preview, large goal control, compact icon/colour sheet
 - [x] **UX-11** ✅ Onboarding: three-ring promise animation, progress bar + back, sticky "2 of 3" bar, real widget preview
 
-### Phase 4: rewards and money (Nov 13–22, 3d)
-- [ ] **UX-12** Graduation: bird hops out of the ring, flight path, recap card (days, rate, best, 30-day strip)
-- [ ] **UX-13** Share card: `ImageRenderer` 1080×1920 + `ShareLink`
-- [ ] **UX-14** Flown: totals header, fledgling rows, 14-day holding sparkline (`HoldingRate` in HabitCore, tested), empty state
-- [ ] **UX-15** Paywall: personalised headline, free-vs-Pro table, trial timeline, loading skeleton
-- [ ] **UX-16** Settings: Pro card, icon squares, Restore moved into About
+### Phase 4: rewards and money (Nov 13–22, 3d) — ✅ done 2026-10-14
+Notes: `HoldingRate` (HabitCore, tested) = met days (done or rest) in the 14 days before today, only since graduation;
+tap-to-log graduates show "On its own" (nothing logs them). `RecapModel` feeds the recap card and `ShareRecapCard`
+(360×640 pt @3x = 1080×1920, fixed light colours). Paywall loads products itself (10 s limit) and shows a skeleton or an
+offline state with Retry; the trial timeline appears only when the yearly plan has a free trial this Apple ID can use, and
+it promises no reminder (the app doesn't send one). Settings: Pro card, filled icon squares, Restore moved into About.
+DEBUG: `-FledgeDemoScreen sharecard`; demo data has a Health graduate (Drink water). Screens: `Design/review/screens/phase4/`.
+- [x] **UX-12** ✅ Graduation: bird hops out of the ring, flight path, recap card (days, rate, best, 30-day strip)
+- [x] **UX-13** ✅ Share card: `ImageRenderer` 1080×1920 + `ShareLink`
+- [x] **UX-14** ✅ Flown: totals header, fledgling rows, 14-day holding sparkline (`HoldingRate` in HabitCore, tested), empty state
+- [x] **UX-15** ✅ Paywall: personalised headline, free-vs-Pro table, trial timeline, loading skeleton
+- [x] **UX-16** ✅ Settings: Pro card, icon squares, Restore moved into About
 
 ### Phase 5: surfaces and QA (Nov 23–29, 1.5d)
 - [ ] **UX-17** Widgets: ring v2, badges, bird in empty/all-done states

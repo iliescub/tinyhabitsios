@@ -14,7 +14,7 @@ cd "$(dirname "$0")/.."
 label=""
 build=1
 keep=0
-screens="today detail add configure flown settings paywall onboarding onboarding-pick onboarding-health onboarding-reminders graduation"
+screens="today detail add configure flown settings paywall onboarding onboarding-pick onboarding-health onboarding-reminders graduation sharecard"
 sizes="default ax3"
 device="iPhone 17"
 bundle="com.smartapps.TinyHabits"

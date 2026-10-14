@@ -19,6 +19,9 @@ struct TodayView: View {
     @State private var amountHabit: Habit?
     @State private var amountText = ""
     @State private var errorMessage: String?
+    #if DEBUG
+    @State private var shareCardHabit: Habit?
+    #endif
     @Environment(\.requestReview) private var requestReview
     @AppStorage("reviewRequested") private var reviewRequested = false
 
@@ -85,6 +88,22 @@ struct TodayView: View {
                     }
                 }
             }
+            #if DEBUG
+            .sheet(item: $shareCardHabit) { habit in
+                // `-FledgeDemoScreen sharecard`: the graduation share image, for review and App Store assets.
+                let startedOn = DayKey(habit.startedAt, dayEndHour: FledgeSettings.dayEndHour)
+                let snapshots = habit.logs?.compactMap(\.snapshot) ?? []
+                let stats = HabitDetailStats(snapshots: snapshots, cadence: habit.cadence, startedOn: startedOn, today: day)
+                ShareRecapCard(
+                    name: habit.name, color: FledgeTheme.habitColor(habit.colorKey),
+                    recap: RecapModel(
+                        stats: stats, snapshots: snapshots, startedOn: startedOn, today: day,
+                        target: habit.target, unit: habit.unit, perWeek: habit.perWeek
+                    )
+                )
+                .presentationDetents([.large])
+            }
+            #endif
             .fullScreenCover(item: $graduatingHabit) { habit in
                 GraduationView(habit: habit, day: day) {
                     graduatingHabit = nil
@@ -288,6 +307,7 @@ struct TodayView: View {
         case "flown": sheet = .flown
         case "settings": sheet = .settings
         case "paywall": sheet = .paywall
+        case "sharecard": shareCardHabit = first
         default: break
         }
     }

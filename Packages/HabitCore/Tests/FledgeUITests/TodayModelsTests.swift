@@ -189,3 +189,26 @@ struct TemplateStyleTests {
         #expect(TemplateStyle.targetText(for: read) == "Once a day")
     }
 }
+
+@Suite("RecapModel")
+struct RecapModelTests {
+    @Test func recapNumbersAndStrip() {
+        let start = key("2026-11-01")
+        let today = start.adding(days: 39, calendar: utc)
+        let snapshots = (0..<40).map { offset in
+            DaySnapshot(day: start.adding(days: offset, calendar: utc), status: offset == 35 ? .skipped : .done)
+        }
+        let stats = HabitDetailStats(snapshots: snapshots, cadence: .daily, startedOn: start, today: today, calendar: utc)
+        let recap = RecapModel(
+            stats: stats, snapshots: snapshots, startedOn: start, today: today,
+            target: 6_000, unit: "steps", perWeek: 7, locale: Locale(identifier: "en_GB"), calendar: utc
+        )
+        #expect(recap.daysText == "40")
+        #expect(recap.rateText == "100%")
+        #expect(recap.bestUnit == "days")
+        #expect(recap.footnote == "Started 1 Nov · 6,000 steps a day")
+        #expect(recap.strip.count == 30)
+        #expect(recap.strip.last == .done)
+        #expect(recap.strip[30 - 1 - 4] == .rest)   // day 35 of 40 = 4 days before today
+    }
+}

@@ -61,40 +61,62 @@ struct SettingsSheet: View {
 
     // MARK: Sections
 
+    /// Pro as a card on the sky, not a row like the others (UX-16).
     private var proSection: some View {
         Section {
-            if purchases.isPro {
-                Label("Fledge Pro is active", systemImage: "checkmark.seal.fill")
-                    .foregroundStyle(FledgeTheme.Palette.ink)
-                Button("Manage subscription") { showManageSubscription = true }
-            } else {
-                Button {
-                    showPaywall = true
-                } label: {
-                    Label {
-                        Text("Get Fledge Pro")
-                    } icon: {
-                        Image.fledgeGlyph(height: 20).foregroundStyle(FledgeTheme.Palette.skyText)
+            Button {
+                if purchases.isPro { showManageSubscription = true } else { showPaywall = true }
+            } label: {
+                HStack(spacing: FledgeTheme.Space.l) {
+                    FledgeBird(.flying)
+                        .frame(width: 54)
+                        .shadow(color: FledgeTheme.Palette.ink.opacity(0.15), radius: 6, y: 3)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(purchases.isPro ? "Fledge Pro is on" : "Fledge Pro")
+                            .font(.system(.title3, design: .rounded, weight: .heavy))
+                            .foregroundStyle(FledgeTheme.Palette.ink)
+                        Text(purchases.isPro
+                             ? "Thank you. Manage your plan here."
+                             : "All three habits from Apple Health, every widget and the Lock Screen.")
+                            .font(.footnote)
+                            .foregroundStyle(FledgeTheme.Palette.ink2)
+                            .multilineTextAlignment(.leading)
                     }
-                    .font(.headline)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(FledgeTheme.Palette.ink2.opacity(0.6))
                 }
+                .padding(.vertical, FledgeTheme.Space.s)
             }
-            Button("Restore purchases") {
-                Task { await purchases.restore() }
-            }
-        } footer: {
-            if !purchases.isPro {
-                Text("Pro lets all three habits complete from Apple Health and unlocks every widget, the Lock Screen and Control Center.")
-            }
+            .listRowBackground(
+                LinearGradient(
+                    colors: [FledgeTheme.Palette.sky.opacity(0.28), FledgeTheme.Palette.dawn.opacity(0.14)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing
+                )
+                .background(FledgeTheme.Palette.card)
+            )
+            .accessibilityHint(purchases.isPro ? "Manage your subscription" : "Opens Fledge Pro")
+        }
+    }
+
+    /// A Settings-style row label: a filled icon square, then the title.
+    private func rowLabel(_ title: String, _ symbol: String, _ color: Color) -> some View {
+        Label {
+            Text(title).foregroundStyle(FledgeTheme.Palette.ink)
+        } icon: {
+            IconSquare(symbol: symbol, color: color, size: 28, filled: true)
         }
     }
 
     private var daySection: some View {
         Section {
-            Picker("Day ends at", selection: $dayEndHour) {
+            Picker(selection: $dayEndHour) {
                 ForEach(Array(FledgeSettings.dayEndHourRange), id: \.self) { hour in
                     Text(hourLabel(hour)).tag(hour)
                 }
+            } label: {
+                rowLabel("Day ends at", "moon.stars.fill", FledgeTheme.habitColor("lilac"))
             }
         } footer: {
             Text("Anything you do before this time counts for the previous day — handy for late nights.")
@@ -103,13 +125,19 @@ struct SettingsSheet: View {
 
     private var notificationsSection: some View {
         Section {
-            LabeledContent("Reminders", value: notificationLabel)
+            LabeledContent {
+                Text(notificationLabel)
+            } label: {
+                rowLabel("Reminders", "bell.fill", FledgeTheme.Palette.dawn)
+            }
             if notificationStatus == .denied {
                 Button("Turn on in Settings") {
                     if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
                 }
             }
-            Toggle("Evening summary", isOn: $summaryOn)
+            Toggle(isOn: $summaryOn) {
+                rowLabel("Evening summary", "moon.fill", FledgeTheme.habitColor("slate"))
+            }
                 .onChange(of: summaryOn) { _, on in
                     FledgeSettings.eveningSummaryMinutes = on ? summaryMinutes : nil
                     Task {
@@ -132,7 +160,7 @@ struct SettingsSheet: View {
             Button {
                 if let url = URL(string: "x-apple-health://") { openURL(url) }
             } label: {
-                Label("Open the Health app", systemImage: "heart.fill")
+                rowLabel("Open the Health app", "heart.fill", FledgeTheme.habitColor("rose"))
             }
         } header: {
             Text("Apple Health")
@@ -175,7 +203,11 @@ struct SettingsSheet: View {
             }
             ForEach(paused) { habit in
                 HStack {
-                    Label(habit.name, systemImage: habit.symbol)
+                    Label {
+                        Text(habit.name).foregroundStyle(FledgeTheme.Palette.ink)
+                    } icon: {
+                        IconSquare(symbol: habit.symbol, color: FledgeTheme.habitColor(habit.colorKey), size: 28)
+                    }
                     Spacer()
                     Button("Resume") { resume(habit) }
                         .buttonStyle(.borderless)
@@ -192,12 +224,12 @@ struct SettingsSheet: View {
         Section("Your data") {
             if purchases.isPro, let exportURL {
                 ShareLink(item: exportURL) {
-                    Label("Export history (CSV)", systemImage: "square.and.arrow.up")
+                    rowLabel("Export history (CSV)", "square.and.arrow.up", FledgeTheme.habitColor("teal"))
                 }
             } else {
                 Button { showPaywall = true } label: {
                     HStack {
-                        Label("Export history (CSV)", systemImage: "square.and.arrow.up")
+                        rowLabel("Export history (CSV)", "square.and.arrow.up", FledgeTheme.habitColor("teal"))
                         Spacer()
                         ProBadge()
                     }
@@ -209,10 +241,15 @@ struct SettingsSheet: View {
     private var aboutSection: some View {
         Section("About") {
             Link(destination: URL(string: "https://fledgehabits.com/privacy")!) {
-                Label("Privacy policy", systemImage: "hand.raised.fill")
+                rowLabel("Privacy policy", "hand.raised.fill", FledgeTheme.Palette.meadow)
             }
             Link(destination: URL(string: "mailto:hello@fledgehabits.com?subject=Fledge%20feedback")!) {
-                Label("Help and feedback", systemImage: "envelope.fill")
+                rowLabel("Help and feedback", "envelope.fill", FledgeTheme.Palette.sky)
+            }
+            Button {
+                Task { await purchases.restore() }
+            } label: {
+                rowLabel("Restore purchases", "arrow.clockwise", FledgeTheme.habitColor("slate"))
             }
             LabeledContent("Version", value: appVersion)
             Label("No account. Your Health data stays on your iPhone.", systemImage: "lock.fill")
