@@ -70,12 +70,13 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
   `--archive` for archive only). Then `swift scripts/asc.swift builds` until the build is VALID, and
   `swift scripts/asc.swift attach-build <number>` to put it on the 1.0 version.
 - Or in Xcode: Product › Archive › Distribute App › App Store Connect › Upload.
-- In-app purchases (REL-0) were created by `swift scripts/asc.swift iap` (resumable; checks what exists). Each still needs an
-  App Review screenshot of the paywall (from a run in Xcode, which loads `Configuration/Fledge.storekit`). First-time products must be
-  submitted together with an app version, or reviewers see a paywall without products.
+- In-app purchases (REL-0) were created by `swift scripts/asc.swift iap` (resumable; checks what exists). App Review screenshot +
+  note: the UI test `testPaywallShowsPlansForAppReview` (StoreKitTest loads `Fledge.storekit`) writes `/tmp/fledge-paywall-review.png`,
+  then `swift scripts/asc.swift iap-review` uploads it to all three products; `iap-status` checks them (READY_TO_SUBMIT).
+  First-time products must be submitted together with an app version (add them on the version page before Submit for Review).
 - Review checklist: `swift scripts/asc.swift review-status` (read-only), `review-setup` (category, content rights, age rating, free
   price), `review-contact` (contact + copyright from git-ignored `Configuration/review-contact.json`). `status` also lists review
-  submissions and in-app purchase states. Version 1.0 (2) was submitted 2026-10-14 (release: after approval).
+  submissions and in-app purchase states. 1.0 (2) was submitted 2026-10-14 without the products, then withdrawn; build 3 has the paywall fix.
 - Website (privacy, terms, support) lives in `website/` and is published to `https://iliescub.github.io/tinyhabitsios/` by
   `.github/workflows/pages.yml` on push (one-time: repo Settings › Pages › Source: GitHub Actions). App URLs: `AppLinks.swift`.
 - App Store Connect API key: `~/APIkeys/appstoreconnect/AuthKey_YLSMVZ7F79.p8` (issuer ID in the .rtf next to it). Never print files from `~/APIkeys`; reference paths only.

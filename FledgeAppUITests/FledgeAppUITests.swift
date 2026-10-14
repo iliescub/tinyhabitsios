@@ -1,4 +1,5 @@
 import XCTest
+import StoreKitTest
 
 /// End-to-end checks of the main flows on demo data (`-FledgeDemoData`: an in-memory store, real data untouched),
 /// plus Xcode's accessibility audit on every main screen. Run on iPhone and iPad (see CLAUDE.md › Commands).
@@ -124,6 +125,28 @@ final class FledgeAppUITests: XCTestCase {
         XCTAssertTrue(element(app, labelContains: "Let all three fill in").exists)
         close.tap()
         XCTAssertTrue(element(app, labelContains: "done").waitForExistence(timeout: 10), "Today didn't open after onboarding")
+    }
+
+    // MARK: - App Review screenshot of the paywall (REL-0)
+
+    /// Loads `Fledge.storekit` with StoreKitTest so the paywall shows the real plans and prices, then saves a screenshot
+    /// (attachment "paywall-review") for the App Review screenshot of each in-app purchase.
+    func testPaywallShowsPlansForAppReview() throws {
+        let session = try SKTestSession(configurationFileNamed: "Fledge")
+        session.disableDialogs = true
+        session.clearTransactions()
+        let app = launch("paywall")
+        XCTAssertTrue(element(app, labelContains: "Let all three fill in").waitForExistence(timeout: 15))
+        XCTAssertTrue(element(app, labelContains: "19.99").waitForExistence(timeout: 20), "yearly plan didn't load")
+        XCTAssertTrue(element(app, labelContains: "2.99").exists, "monthly plan is missing")
+        sleep(2)
+        let screenshot = XCUIScreen.main.screenshot()
+        // On the simulator the runner can write to the Mac's /tmp, so the release scripts can pick the file up directly.
+        try? screenshot.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/fledge-paywall-review.png"))
+        let attachment = XCTAttachment(screenshot: screenshot)
+        attachment.name = "paywall-review"
+        attachment.lifetime = .keepAlways
+        add(attachment)
     }
 
     // MARK: - iPad

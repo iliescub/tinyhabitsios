@@ -8,7 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		1F6BA21E2EFECA99050B34C7 /* FledgeAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2ACCDFBD09991B9D9102BEE /* FledgeAppUITests.swift */; };
+		36C9FA6091A0A876D6E0EEA4 /* StoreKitTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A7FE388D9CA00667FB2BD83 /* StoreKitTest.framework */; };
 		8FB1B14BD59E0C01BAB6D216 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 69B65F4191549B17B61325AE /* Foundation.framework */; };
+		93451ECD46E10DB59E2064CB /* Fledge.storekit in Resources */ = {isa = PBXBuildFile; fileRef = D37A668EE8082EB3D50AB66F /* Fledge.storekit */; };
 		F1ED6E0000000000000000A4 /* HabitCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A2 /* HabitCore */; };
 		F1ED6E0000000000000000A5 /* FledgeUI in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A3 /* FledgeUI */; };
 		F1ED6E0000000000000000A7 /* FledgeHealth in Frameworks */ = {isa = PBXBuildFile; productRef = F1ED6E0000000000000000A6 /* FledgeHealth */; };
@@ -52,7 +54,9 @@
 		176280580A7FA722A8CAE87A /* FledgeAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FledgeAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		43214C3A2ECE19FF001C8249 /* TinyHabits.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TinyHabits.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		69B65F4191549B17B61325AE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		9A7FE388D9CA00667FB2BD83 /* StoreKitTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKitTest.framework; path = System/Library/Frameworks/StoreKitTest.framework; sourceTree = SDKROOT; };
 		B2ACCDFBD09991B9D9102BEE /* FledgeAppUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FledgeAppUITests.swift; sourceTree = "<group>"; };
+		D37A668EE8082EB3D50AB66F /* Fledge.storekit */ = {isa = PBXFileReference; includeInIndex = 1; name = Fledge.storekit; path = ../Configuration/Fledge.storekit; sourceTree = "<group>"; };
 		F1ED6E00000000000000B001 /* FledgeWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FledgeWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -97,6 +101,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8FB1B14BD59E0C01BAB6D216 /* Foundation.framework in Frameworks */,
+				36C9FA6091A0A876D6E0EEA4 /* StoreKitTest.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,6 +153,7 @@
 			isa = PBXGroup;
 			children = (
 				FC24C18116B4FAB95DE6EDC2 /* iOS */,
+				9A7FE388D9CA00667FB2BD83 /* StoreKitTest.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -156,6 +162,7 @@
 			isa = PBXGroup;
 			children = (
 				B2ACCDFBD09991B9D9102BEE /* FledgeAppUITests.swift */,
+				D37A668EE8082EB3D50AB66F /* Fledge.storekit */,
 			);
 			name = FledgeAppUITests;
 			path = FledgeAppUITests;
@@ -297,6 +304,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93451ECD46E10DB59E2064CB /* Fledge.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -478,7 +486,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = TinyHabits/TinyHabits.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = USASBWPY7T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -517,7 +525,7 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = TinyHabits/TinyHabits.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = USASBWPY7T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -588,7 +596,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = FledgeWidgets/FledgeWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = USASBWPY7T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -620,7 +628,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = FledgeWidgets/FledgeWidgets.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = USASBWPY7T;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

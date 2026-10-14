@@ -53,7 +53,8 @@ struct PaywallView: View {
         SubscriptionStoreView(productIDs: [ProStatus.productIDs.yearly, ProStatus.productIDs.monthly]) {
             marketing
         }
-        .subscriptionStoreControlStyle(.prominentPicker)
+        // Lists both plans (yearly with its trial, monthly) above the button; .prominentPicker showed only the yearly offer.
+        .subscriptionStoreControlStyle(.picker)
         .subscriptionStoreButtonLabel(.multiline)
         .storeButton(.visible, for: .restorePurchases)
         .storeButton(.visible, for: .policies)
@@ -96,6 +97,7 @@ struct PaywallView: View {
                     .font(.system(.title, design: .rounded, weight: .heavy))
                     .foregroundStyle(FledgeTheme.Palette.ink)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let personal {
                     Text(personal)
                         .font(.subheadline)
@@ -241,6 +243,7 @@ private struct ComparisonTable: View {
                     Text(row.0)
                         .font(.subheadline)
                         .foregroundStyle(FledgeTheme.Palette.ink)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(row.1)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(FledgeTheme.Palette.ink2)
@@ -289,6 +292,7 @@ private struct TrialTimeline: View {
             Text(what)
                 .font(.subheadline)
                 .foregroundStyle(FledgeTheme.Palette.ink2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
     }

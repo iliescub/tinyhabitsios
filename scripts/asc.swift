@@ -9,6 +9,9 @@
 //   swift scripts/asc.swift review-status          read-only: category, age rating, content rights, price, contact, copyright
 //   swift scripts/asc.swift review-setup           sets categories, content rights, age rating answers and the free price
 //   swift scripts/asc.swift review-contact [file]  App Review contact + copyright from a git-ignored JSON file
+//   swift scripts/asc.swift iap-status             read-only: each product's state, localizations, prices, review screenshot, note
+//   swift scripts/asc.swift iap-review [png]       App Review screenshot + review note on all three products
+//                                                  (png from the UI test testPaywallShowsPlansForAppReview)
 //   swift scripts/asc.swift builds                 lists builds and their processing state
 //   swift scripts/asc.swift attach-build <number>  attaches a processed build to the editable 1.0 version
 //
@@ -505,6 +508,96 @@ func reviewContact(_ file: String) async throws {
     print("App Review contact set (no demo account needed)")
 }
 
+// MARK: - In-app purchase review details
+
+/// Uploads one file through App Store Connect's reserve → upload operations → commit flow.
+func uploadAsset(type: String, relationship: String, relatedType: String, relatedID: String, file: URL) async throws {
+    let data = try Data(contentsOf: file)
+    let reserved = try await call("POST", "/v1/\(type)", ["data": [
+        "type": type, "attributes": ["fileName": file.lastPathComponent, "fileSize": data.count],
+        "relationships": [relationship: ref(relatedType, relatedID)],
+    ]])
+    guard let asset = reserved["data"] as? [String: Any],
+          let operations = attrs(asset)["uploadOperations"] as? [[String: Any]] else { throw ASCError.setup("no upload operations for \(type)") }
+    for operation in operations {
+        guard let url = (operation["url"] as? String).flatMap(URL.init(string:)),
+              let offset = operation["offset"] as? Int, let length = operation["length"] as? Int else { continue }
+        var request = URLRequest(url: url)
+        request.httpMethod = operation["method"] as? String ?? "PUT"
+        for header in operation["requestHeaders"] as? [[String: String]] ?? [] {
+            if let name = header["name"], let value = header["value"] { request.setValue(value, forHTTPHeaderField: name) }
+        }
+        let (_, response) = try await URLSession.shared.upload(for: request, from: data.subdata(in: offset..<(offset + length)))
+        let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(code) else { throw ASCError.http(code, "upload of \(file.lastPathComponent)") }
+    }
+    let checksum = Insecure.MD5.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    try await call("PATCH", "/v1/\(type)/\(id(asset))", ["data": [
+        "type": type, "id": id(asset), "attributes": ["uploaded": true, "sourceFileChecksum": checksum],
+    ]])
+}
+
+let reviewNote = """
+Fledge Pro unlocks Apple Health auto-completion for all three habits (free includes one), every widget size, Lock Screen widgets, \
+app icons and CSV export. Open the paywall from Settings › Fledge Pro, from the banner in Add a habit when a second Health habit is \
+chosen, or at the end of onboarding. No account or login is needed.
+"""
+
+func related(_ path: String) async -> [String: Any]? {
+    ((try? await call("GET", path))?["data"]) as? [String: Any]
+}
+
+func iapStatus() async throws {
+    let appID = id(try await app())
+    for group in try await all("/v1/apps/\(appID)/subscriptionGroups") {
+        let names = try await all("/v1/subscriptionGroups/\(id(group))/subscriptionGroupLocalizations").map { "\(attrs($0)["locale"] ?? "?"): \(attrs($0)["name"] ?? "?")" }
+        print("group \(attrs(group)["referenceName"] ?? "?") – display names: \(names.isEmpty ? "NONE" : names.joined(separator: ", "))")
+        for sub in try await all("/v1/subscriptionGroups/\(id(group))/subscriptions") {
+            let locs = try await all("/v1/subscriptions/\(id(sub))/subscriptionLocalizations").count
+            let prices = try await all("/v1/subscriptions/\(id(sub))/prices?limit=200").count
+            let shot = await related("/v1/subscriptions/\(id(sub))/appStoreReviewScreenshot")
+            let shotState = (shot.flatMap { attrs($0)["assetDeliveryState"] as? [String: Any] })?["state"] ?? (shot == nil ? "none" : "?")
+            let note = (attrs(sub)["reviewNote"] as? String)?.isEmpty == false ? "yes" : "no"
+            print("  \(attrs(sub)["productId"] ?? "?"): \(attrs(sub)["state"] ?? "?"), localizations \(locs), prices \(prices), review screenshot \(shotState), note \(note)")
+        }
+    }
+    for product in try await all("/v1/apps/\(appID)/inAppPurchasesV2?limit=200") {
+        let locs = try await all("/v2/inAppPurchases/\(id(product))/inAppPurchaseLocalizations").count
+        let schedule = await related("/v2/inAppPurchases/\(id(product))/iapPriceSchedule")
+        let shot = await related("/v2/inAppPurchases/\(id(product))/appStoreReviewScreenshot")
+        let shotState = (shot.flatMap { attrs($0)["assetDeliveryState"] as? [String: Any] })?["state"] ?? (shot == nil ? "none" : "?")
+        let note = (attrs(product)["reviewNote"] as? String)?.isEmpty == false ? "yes" : "no"
+        print("  \(attrs(product)["productId"] ?? "?"): \(attrs(product)["state"] ?? "?"), localizations \(locs), price schedule \(schedule == nil ? "none" : "yes"), review screenshot \(shotState), note \(note)")
+    }
+}
+
+/// Adds the App Review screenshot (replacing an existing one) and the review note to every Fledge Pro product.
+func iapReview(_ file: String) async throws {
+    let url = URL(fileURLWithPath: file)
+    guard FileManager.default.fileExists(atPath: url.path) else { throw ASCError.setup("no screenshot at \(file)") }
+    let appID = id(try await app())
+    for group in try await all("/v1/apps/\(appID)/subscriptionGroups") {
+        for sub in try await all("/v1/subscriptionGroups/\(id(group))/subscriptions") {
+            if let old = await related("/v1/subscriptions/\(id(sub))/appStoreReviewScreenshot") {
+                try await call("DELETE", "/v1/subscriptionAppStoreReviewScreenshots/\(id(old))")
+            }
+            try await uploadAsset(type: "subscriptionAppStoreReviewScreenshots", relationship: "subscription",
+                                  relatedType: "subscriptions", relatedID: id(sub), file: url)
+            try await call("PATCH", "/v1/subscriptions/\(id(sub))", ["data": ["type": "subscriptions", "id": id(sub), "attributes": ["reviewNote": reviewNote]]])
+            print("\(attrs(sub)["productId"] ?? "?"): review screenshot + note")
+        }
+    }
+    for product in try await all("/v1/apps/\(appID)/inAppPurchasesV2?limit=200") {
+        if let old = await related("/v2/inAppPurchases/\(id(product))/appStoreReviewScreenshot") {
+            try await call("DELETE", "/v1/inAppPurchaseAppStoreReviewScreenshots/\(id(old))")
+        }
+        try await uploadAsset(type: "inAppPurchaseAppStoreReviewScreenshots", relationship: "inAppPurchaseV2",
+                              relatedType: "inAppPurchases", relatedID: id(product), file: url)
+        try await call("PATCH", "/v2/inAppPurchases/\(id(product))", ["data": ["type": "inAppPurchases", "id": id(product), "attributes": ["reviewNote": reviewNote]]])
+        print("\(attrs(product)["productId"] ?? "?"): review screenshot + note")
+    }
+}
+
 // MARK: - Builds
 
 func builds() async throws {
@@ -536,6 +629,8 @@ do {
     case "screenshots": try await screenshots()
     case "iap": try await iap()
     case "builds": try await builds()
+    case "iap-status": try await iapStatus()
+    case "iap-review": try await iapReview(arguments.dropFirst().first ?? "/tmp/fledge-paywall-review.png")
     case "review-status": try await reviewStatus()
     case "review-setup": try await reviewSetup()
     case "review-contact": try await reviewContact(arguments.dropFirst().first ?? "Configuration/review-contact.json")
