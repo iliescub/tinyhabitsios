@@ -12,6 +12,11 @@
 //   swift scripts/asc.swift iap-status             read-only: each product's state, localizations, prices, review screenshot, note
 //   swift scripts/asc.swift iap-review [png]       App Review screenshot + review note on all three products
 //                                                  (png from the UI test testPaywallShowsPlansForAppReview)
+//   swift scripts/asc.swift review-notes [txt]     App Review notes only (Design/AppStore/review-notes.txt)
+//   swift scripts/asc.swift submission-status      read-only: open review submissions, their items, subscription states
+//   swift scripts/asc.swift submit-prepare         draft submission with the version (+ products that aren't first-time)
+//   swift scripts/asc.swift submit-send            sends the draft to App Review
+//   swift scripts/asc.swift submit-cancel          empties a draft (drafts can't be canceled)
 //   swift scripts/asc.swift builds                 lists builds and their processing state
 //   swift scripts/asc.swift attach-build <number>  attaches a processed build to the editable 1.0 version
 //
