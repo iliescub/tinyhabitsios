@@ -510,6 +510,17 @@ func reviewContact(_ file: String) async throws {
     print("App Review contact set (no demo account needed)")
 }
 
+/// Sets only the App Review notes (contact details untouched) from Design/AppStore/review-notes.txt.
+func reviewNotes(_ file: String) async throws {
+    let notes = try String(contentsOfFile: file, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+    guard notes.count <= 4000 else { throw ASCError.setup("notes are \(notes.count) characters; the limit is 4000") }
+    let version = try await editableVersion(appID: id(try await app()))
+    guard let detail = await related("/v1/appStoreVersions/\(id(version))/appStoreReviewDetail") else { throw ASCError.setup("no App Review details yet") }
+    try await call("PATCH", "/v1/appStoreReviewDetails/\(id(detail))", ["data": ["type": "appStoreReviewDetails", "id": id(detail), "attributes": ["notes": notes]]])
+    let saved = await related("/v1/appStoreVersions/\(id(version))/appStoreReviewDetail")
+    print("App Review notes set: \((saved.flatMap { attrs($0)["notes"] as? String } ?? "").count) characters")
+}
+
 // MARK: - In-app purchase review details
 
 /// Uploads one file through App Store Connect's reserve → upload operations → commit flow.
@@ -717,6 +728,7 @@ do {
     case "iap": try await iap()
     case "builds": try await builds()
     case "iap-status": try await iapStatus()
+    case "review-notes": try await reviewNotes(arguments.dropFirst().first ?? "Design/AppStore/review-notes.txt")
     case "submission-status": try await submissionStatus()
     case "submit-prepare": try await submitPrepare()
     case "submit-send": try await submitSend()

@@ -1,0 +1,18 @@
+Thank you for reviewing Fledge.
+
+NO ACCOUNT: Fledge has no sign-in, server or analytics. All data stays on the device.
+
+WHAT IT DOES: the user keeps up to 3 habits at a time. A habit can "fly" (graduate and leave the list) once it has stuck: from day 30, when it was met on at least 80% of the last 30 days.
+
+APPLE HEALTH (READ-ONLY): Health access is requested only when a Health-based habit is added (e.g. Walk = steps, Sleep, Water, Mindful minutes). Fledge only reads daily totals to tick the habit automatically and never writes to Health. Health data is never sent anywhere or stored in iCloud. Without Health data (or if access is denied) habits can be ticked by hand, so every feature works on a review device.
+
+HOW TO TEST:
+1. Complete onboarding: pick up to 3 habits (choose at least one manual habit such as Read or Meditate).
+2. On Today, tap a habit's ring to mark it done; long-press the card for Rest day, Pause or Delete.
+3. Tap a habit for its detail screen (journey to fly, heatmap, forecast).
+4. Widgets: add a Fledge widget from the Home Screen; widgets can tick manual habits.
+
+IN-APP PURCHASES (Fledge Pro): Free includes 1 Apple Health habit. Pro unlocks Health auto-completion for all 3 habits, every widget size, Lock Screen widgets, alternate app icons and CSV export. It never unlocks more than 3 habits.
+- Open the paywall: Settings (gear icon on Today) > Fledge Pro, or add a second Health habit, or at the end of onboarding.
+- Products: Pro Yearly (7-day free trial), Pro Monthly, Pro Lifetime (one-time). Restore: Settings > Restore purchases, and on the paywall.
+- Terms: https://iliescub.github.io/tinyhabitsios/terms/  Privacy: https://iliescub.github.io/tinyhabitsios/privacy/

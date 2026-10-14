@@ -76,6 +76,7 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
   First-time products must be submitted together with an app version, and **only the website can do that**: the API refuses
   (`FIRST_SUBSCRIPTION_MUST_BE_SUBMITTED_ON_VERSION`, `FIRST_NON_CONSUMABLE_MUST_BE_SUBMITTED_ON_VERSION`). Select them in the
   version page's "In-App Purchases and Subscriptions" section, then Add for Review. Later products can use `submit-prepare`.
+- App Review notes: `Design/AppStore/review-notes.txt` → `swift scripts/asc.swift review-notes` (contact details untouched).
 - Submissions: `submission-status` (read-only), `submit-prepare` (draft with the version + products), `submit-send`,
   `submit-cancel` (empties a draft; drafts can't be canceled).
 - Review checklist: `swift scripts/asc.swift review-status` (read-only), `review-setup` (category, content rights, age rating, free
