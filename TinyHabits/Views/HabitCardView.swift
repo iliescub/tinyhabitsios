@@ -20,9 +20,12 @@ struct HabitCardView: View {
     let model: HabitCardModel
     let actions: HabitCardActions
     var showsNoDataHint = false
+    /// When Apple Health last updated today's value (auto habits).
+    var lastUpdated: Date?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var confirmDelete = false
+    @State private var bursts = 0
 
     private var color: Color { FledgeTheme.habitColor(model.colorKey) }
     private var status: EntryStatus { model.progress.status }
@@ -47,11 +50,14 @@ struct HabitCardView: View {
         cardContent
             .padding(FledgeTheme.Space.l)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .fledgeCard()
+            .fledgeCard(tint: status == .done ? color : nil)
             .contentShape(.rect(cornerRadius: FledgeTheme.Radius.card))
             .onTapGesture { actions.open() }
             .overlay { readyOutline }
             .sensoryFeedback(.success, trigger: status) { _, new in new == .done }
+            .onChange(of: status) { old, new in
+                if new == .done && old != .done { bursts += 1 }
+            }
     }
 
     private var cardContent: some View {
@@ -62,17 +68,14 @@ struct HabitCardView: View {
         return layout {
             ringButton
             VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .firstTextBaseline, spacing: FledgeTheme.Space.s) {
                     Text(model.name)
                         .font(.headline)
                         .foregroundStyle(FledgeTheme.Palette.ink)
-                    Spacer(minLength: FledgeTheme.Space.s)
-                    SourceBadge(isAuto: model.isAuto)
+                    Spacer(minLength: 0)
+                    sourceMeta
                 }
-                Text(model.valueText)
-                    .font(.subheadline.monospacedDigit())
-                    .fontDesign(.rounded)
-                    .foregroundStyle(FledgeTheme.Palette.ink2)
+                ValueLine(model: model)
                 if showsNoDataHint {
                     NoDataHint()
                 } else {
@@ -87,15 +90,37 @@ struct HabitCardView: View {
             if status == .skipped { actions.undoSkip() } else { actions.toggleDone() }
         } label: {
             HabitRing(fraction: model.progress.fraction, status: status, color: color, symbol: model.symbol)
+                .overlay { FeatherBurst(trigger: bursts, color: color) }
         }
         .buttonStyle(.plain)
+    }
+
+    /// Where the value comes from: "♥ 4 min ago" for Apple Health, a tap hint for manual habits still to do.
+    /// Nothing on rest days: the log's timestamp is then the skip, not a Health update.
+    @ViewBuilder
+    private var sourceMeta: some View {
+        if model.isAuto && status != .skipped {
+            Label {
+                Text(HabitCardModel.freshness(lastUpdated: lastUpdated, now: .now) ?? "Apple Health")
+            } icon: {
+                Image(systemName: "heart.fill").foregroundStyle(FledgeTheme.Palette.sky)
+            }
+            .font(FledgeTheme.Typeface.meta)
+            .foregroundStyle(FledgeTheme.Palette.ink2)
+            .lineLimit(1)
+        } else if status == .pending {
+            Text("Tap the ring")
+                .font(FledgeTheme.Typeface.meta)
+                .foregroundStyle(FledgeTheme.Palette.ink2)
+                .lineLimit(1)
+        }
     }
 
     @ViewBuilder
     private var readyOutline: some View {
         if model.isReadyToFly {
-            RoundedRectangle(cornerRadius: FledgeTheme.Radius.card)
-                .strokeBorder(FledgeTheme.Palette.gold, lineWidth: 2)
+            RoundedRectangle(cornerRadius: FledgeTheme.Radius.card, style: .continuous)
+                .strokeBorder(FledgeTheme.Palette.gold, lineWidth: 1.5)
         }
     }
 
@@ -107,11 +132,11 @@ struct HabitCardView: View {
     private var flightRow: some View {
         if model.isReadyToFly {
             Button(action: actions.readyToFly) {
-                Label("Ready to fly", systemImage: "sparkles")
+                Label { Text("Ready to fly") } icon: { Image.fledgeGlyph(height: 13) }
                     .font(.footnote.weight(.semibold))
                     .padding(.horizontal, FledgeTheme.Space.m)
-                    .padding(.vertical, FledgeTheme.Space.xs)
-                    .background(FledgeTheme.Palette.gold.opacity(0.15), in: .capsule)
+                    .padding(.vertical, 6)
+                    .background(FledgeTheme.Palette.gold.opacity(0.18), in: .capsule)
                     .foregroundStyle(FledgeTheme.Palette.ink)
             }
             .buttonStyle(.plain)
@@ -157,6 +182,40 @@ struct HabitCardView: View {
     private var accessibilityText: String {
         let source = model.isAuto ? "from Apple Health" : "tap to log"
         return "\(model.name), \(model.valueText), \(source), \(model.flightText)"
+    }
+}
+
+/// "4,210 / 6,000 steps" with the number large; words ("Done", "Rest day") a step smaller.
+struct ValueLine: View {
+    let model: HabitCardModel
+    var large = false
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: FledgeTheme.Space.xs) {
+            Text(model.metricText)
+                .font(metricFont)
+                .foregroundStyle(model.progress.status == .skipped ? FledgeTheme.Palette.ink2 : FledgeTheme.Palette.ink)
+                .contentTransition(.numericText())
+            if let goal = model.goalText {
+                Text(goal)
+                    .font(large ? .body : .subheadline)
+                    .fontDesign(.rounded)
+                    .monospacedDigit()
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .animation(.snappy, value: model.metricText)
+    }
+
+    private var metricFont: Font {
+        if large {
+            return .system(.largeTitle, design: .rounded, weight: .heavy).monospacedDigit()
+        }
+        return model.goalText == nil
+            ? .system(.title3, design: .rounded, weight: .bold)
+            : FledgeTheme.Typeface.metric
     }
 }
 

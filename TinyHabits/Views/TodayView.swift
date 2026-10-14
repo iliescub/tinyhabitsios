@@ -11,6 +11,8 @@ struct TodayView: View {
     @Environment(\.modelContext) private var context
     @Query private var activeHabits: [Habit]
     @Query private var todayLogs: [DayLog]
+    @Query private var flownHabits: [Habit]
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var sheet: TodaySheet?
     @State private var detailHabit: Habit?
     @State private var graduatingHabit: Habit?
@@ -26,6 +28,8 @@ struct TodayView: View {
         _activeHabits = Query(filter: #Predicate<Habit> { $0.stateRaw == active })
         let key = day.rawValue
         _todayLogs = Query(filter: #Predicate<DayLog> { $0.dayKey == key })
+        let graduated = HabitState.graduated.rawValue
+        _flownHabits = Query(filter: #Predicate<Habit> { $0.stateRaw == graduated })
     }
 
     var body: some View {
@@ -33,6 +37,9 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
                     header
+                    if !activeHabits.isEmpty {
+                        WeekStrip(model: weekModel)
+                    }
                     ForEach(0..<SlotPolicy.maxActive, id: \.self) { slot in
                         if let habit = habit(inSlot: slot) {
                             card(for: habit)
@@ -40,6 +47,8 @@ struct TodayView: View {
                             EmptySlotCard { sheet = .add }
                         }
                     }
+                    FlownShelfRow(latest: latestFlown, total: flownHabits.count) { sheet = .flown }
+                        .padding(.top, FledgeTheme.Space.s)
                 }
                 .padding(.horizontal, FledgeTheme.screenMargin)
                 .padding(.bottom, FledgeTheme.Space.xxl)
@@ -86,7 +95,11 @@ struct TodayView: View {
                 }
             }
             #if DEBUG
-            .task { openDemoScreen() }
+            .task {
+                // A sheet presented during the very first appearance is sometimes dropped; wait for the screen to settle.
+                try? await Task.sleep(for: .milliseconds(700))
+                openDemoScreen()
+            }
             #endif
             .alert(amountTitle, isPresented: Binding(get: { amountHabit != nil }, set: { if !$0 { amountHabit = nil } })) {
                 TextField("Amount", text: $amountText)
@@ -104,19 +117,54 @@ struct TodayView: View {
 
     // MARK: - Header
 
+    /// Eyebrow date, the day's status as the title, the next step as the detail line, and the nest glyph (UX-5).
     private var header: some View {
-        VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
-            Text(day.date().formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                .font(.largeTitle.bold())
-                .fontDesign(.rounded)
-                .foregroundStyle(FledgeTheme.Palette.ink)
-            Text(TodaySummary.text(for: sortedHabits.map(model(for:))))
-                .font(.subheadline)
-                .foregroundStyle(FledgeTheme.Palette.ink2)
+        let cards = sortedHabits.map(model(for:))
+        return HStack(alignment: .bottom, spacing: FledgeTheme.Space.l) {
+            VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
+                Text(eyebrow)
+                    .fledgeEyebrow()
+                Text(TodaySummary.title(for: cards))
+                    .font(FledgeTheme.Typeface.title)
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                    .contentTransition(.numericText())
+                Text(TodaySummary.detail(for: cards))
+                    .font(.subheadline)
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
+            if !dynamicTypeSize.isAccessibilitySize && !cards.isEmpty {
+                NestGlyph(rings: cards.map {
+                    NestGlyph.Ring(fraction: $0.progress.fraction, status: $0.progress.status, color: FledgeTheme.habitColor($0.colorKey))
+                })
+                .frame(width: 60, height: 60)
+                .padding(.bottom, FledgeTheme.Space.xs)
+            }
         }
         .padding(.top, FledgeTheme.Space.s)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
+        .animation(.snappy, value: cards.map(\.progress.status))
+    }
+
+    /// "Wednesday · 14 Oct"
+    private var eyebrow: String {
+        let date = day.date()
+        return "\(date.formatted(.dateTime.weekday(.wide))) · \(date.formatted(.dateTime.day().month(.abbreviated)))"
+    }
+
+    private var weekModel: WeekModel {
+        WeekModel(habits: sortedHabits.map { habit in
+            WeekModel.Habit(
+                colorKey: habit.colorKey,
+                startedOn: DayKey(habit.startedAt, dayEndHour: FledgeSettings.dayEndHour),
+                snapshots: habit.logs?.compactMap(\.snapshot) ?? []
+            )
+        }, today: day)
+    }
+
+    private var latestFlown: Habit? {
+        flownHabits.max { ($0.graduatedAt ?? .distantPast) < ($1.graduatedAt ?? .distantPast) }
     }
 
     // MARK: - Cards
@@ -145,7 +193,8 @@ struct TodayView: View {
                 pause: { perform(structural: true) { try context.pause(habitID: habit.id) } },
                 delete: { perform(structural: true) { try context.deleteHabit(habitID: habit.id) } }
             ),
-            showsNoDataHint: showsNoDataHint(for: habit, model: model)
+            showsNoDataHint: showsNoDataHint(for: habit, model: model),
+            lastUpdated: habit.source.isAuto ? todayLogs.first { $0.habit?.id == habit.id }?.updatedAt : nil
         )
     }
 
@@ -257,6 +306,53 @@ struct TodayView: View {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+}
+
+/// The Flown shelf preview under the cards: the latest graduate, or a hint about day 30 (UX-5).
+struct FlownShelfRow: View {
+    let latest: Habit?
+    let total: Int
+    let open: () -> Void
+
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: FledgeTheme.Space.m) {
+                Group {
+                    if let latest {
+                        FledgeBird(style: .tinted(FledgeTheme.habitColor(latest.colorKey)))
+                    } else {
+                        FledgeBird(.peeking, style: .glyph)
+                            .foregroundStyle(FledgeTheme.Palette.ink2.opacity(0.6))
+                    }
+                }
+                .frame(width: 36, height: 30)
+                Text(text)
+                    .font(.footnote)
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(FledgeTheme.Palette.ink2.opacity(0.6))
+            }
+            .padding(.horizontal, FledgeTheme.Space.l)
+            .padding(.vertical, FledgeTheme.Space.m)
+            .overlay {
+                RoundedRectangle(cornerRadius: FledgeTheme.Radius.tile, style: .continuous)
+                    .strokeBorder(FledgeTheme.Palette.hairline, style: StrokeStyle(lineWidth: 1.5, dash: [5, 5]))
+            }
+            .contentShape(.rect(cornerRadius: FledgeTheme.Radius.tile))
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(Text("Opens the Flown shelf"))
+    }
+
+    private var text: String {
+        let days = latest.flatMap { habit in
+            habit.graduatedAt.map { DayKey(habit.startedAt).days(to: DayKey($0)) + 1 }
+        }
+        return FlownPreview.text(latestName: latest?.name, flewOn: latest?.graduatedAt, days: days, total: total)
     }
 }
 

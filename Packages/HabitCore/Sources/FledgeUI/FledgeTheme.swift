@@ -98,6 +98,8 @@ public enum FledgeTheme {
 /// Solid card surface with the elevation token. Never glass (docs/DESIGN.md §4).
 public struct FledgeCardSurface: ViewModifier {
     let radius: CGFloat
+    /// Optional soft wash in a habit colour from the top-leading corner (done cards).
+    var tint: Color?
     @Environment(\.colorScheme) private var colorScheme
 
     public func body(content: Content) -> some View {
@@ -114,6 +116,14 @@ public struct FledgeCardSurface: ViewModifier {
                         color: FledgeTheme.Palette.ink.opacity(colorScheme == .dark ? 0 : FledgeTheme.Elevation.ambientOpacity),
                         radius: FledgeTheme.Elevation.ambientRadius, y: FledgeTheme.Elevation.ambientY
                     )
+                if let tint {
+                    shape.fill(
+                        LinearGradient(
+                            colors: [tint.opacity(colorScheme == .dark ? 0.22 : 0.13), tint.opacity(0)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        )
+                    )
+                }
             }
             .overlay {
                 if colorScheme == .dark {
@@ -136,8 +146,8 @@ public struct FledgeEyebrow: ViewModifier {
 
 extension View {
     /// A card on the cloud background: solid fill, soft shadow (light) or hairline (dark).
-    public func fledgeCard(cornerRadius: CGFloat = FledgeTheme.Radius.card) -> some View {
-        modifier(FledgeCardSurface(radius: cornerRadius))
+    public func fledgeCard(cornerRadius: CGFloat = FledgeTheme.Radius.card, tint: Color? = nil) -> some View {
+        modifier(FledgeCardSurface(radius: cornerRadius, tint: tint))
     }
 
     public func fledgeEyebrow() -> some View {

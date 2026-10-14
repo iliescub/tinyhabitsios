@@ -50,11 +50,15 @@ badges (check, moon, heart) from 40 pt; smaller rings keep v1 behaviour. Screens
 - [x] **UX-3** ✅ `HabitRing` v2: 72 pt, symbol persists, corner badges, soft rest state, Reduce Motion
 - [x] **UX-4** ✅ Screenshot harness: every `-FledgeDemoScreen` × light/dark × default/AX3 → `Design/review/`
 
-### Phase 2: Today, card, detail (Oct 22 – Nov 1, 4d)
-- [ ] **UX-5** Today: eyebrow date + status title, `NestGlyph`, `WeekStrip` (tested `WeekModel`), Flown shelf preview
-- [ ] **UX-6** Card: new hierarchy, done wash, "Health · 4 min ago", ready state with an inline "Let it fly"
-- [ ] **UX-7** Detail: hero row, stats above the fold, `JourneyTrack` (day 1 / 30 / 66), labeled heatmap + legend, pinned CTA
-- [ ] **UX-8** `FeatherBurst` on done (Canvas) + Reduce Motion variant
+### Phase 2: Today, card, detail (Oct 22 – Nov 1, 4d) — ✅ done 2026-10-14
+Notes: header title/detail from `TodaySummary.title/detail`; `WeekModel` = last 7 days ending today (rolling, not the calendar
+week), missed days are empty dots; card freshness hidden on rest days; `JourneyModel` + `JourneyTrack`; heatmap month/weekday
+labels from `HeatmapModel`; `FeatherBurst` uses a keyframe animator, off under Reduce Motion. Screens: `Design/review/screens/phase2/`.
+Found for Phase 4: graduation text truncates at AX3+ (make it scroll, UX-12).
+- [x] **UX-5** ✅ Today: eyebrow date + status title, `NestGlyph`, `WeekStrip` (tested `WeekModel`), Flown shelf preview
+- [x] **UX-6** ✅ Card: new hierarchy, done wash, "Health · 4 min ago", ready state with an inline "Let it fly"
+- [x] **UX-7** ✅ Detail: hero row, stats above the fold, `JourneyTrack` (day 1 / 30 / 66), labeled heatmap + legend, pinned CTA
+- [x] **UX-8** ✅ `FeatherBurst` on done (Canvas) + Reduce Motion variant
 
 ### Phase 3: add and onboarding (Nov 2–12, 3d)
 - [ ] **UX-9** Add: compact rows with `IconSquare`, one Pro banner, per-template colours

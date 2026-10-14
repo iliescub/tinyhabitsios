@@ -15,8 +15,22 @@ public struct HeatmapModel: Equatable, Sendable {
     }
 
     public let weeks: [[Cell]]
+    /// Month name over the first column of each month ("Jul", "Aug"…), as (column, text).
+    public let monthLabels: [MonthLabel]
+    /// One label per row; every other row is empty so the column stays light ("M", "", "W", "", "F", "", "").
+    public let weekdayLabels: [String]
 
-    public init(snapshots: [DaySnapshot], startedOn: DayKey, today: DayKey, weekCount: Int = 12, calendar: Calendar = .current) {
+    public struct MonthLabel: Equatable, Sendable {
+        public let week: Int
+        public let text: String
+    }
+
+    public init(
+        snapshots: [DaySnapshot], startedOn: DayKey, today: DayKey, weekCount: Int = 12,
+        calendar: Calendar = .current, locale: Locale = .current
+    ) {
+        var calendar = calendar
+        calendar.locale = locale
         let byDay = Dictionary(snapshots.map { ($0.day, $0.status) }, uniquingKeysWith: { _, last in last })
         let todayDate = today.date(in: calendar)
         let thisWeekStart = calendar.dateInterval(of: .weekOfYear, for: todayDate)?.start ?? todayDate
@@ -28,6 +42,24 @@ public struct HeatmapModel: Equatable, Sendable {
                 let day = DayKey(date, calendar: calendar, dayEndHour: 0)
                 return Cell(day: day, state: Self.state(for: day, byDay: byDay, startedOn: startedOn, today: today), isToday: day == today)
             }
+        }
+
+        var labels: [MonthLabel] = []
+        var lastMonth: Int?
+        for (index, week) in weeks.enumerated() {
+            guard let first = week.first else { continue }
+            if first.day.month != lastMonth {
+                labels.append(MonthLabel(week: index, text: calendar.shortMonthSymbols[first.day.month - 1]))
+                lastMonth = first.day.month
+            }
+        }
+        // The first column's month is dropped when the next month starts one column later: the labels would overlap.
+        if labels.count > 1, labels[1].week - labels[0].week < 2 { labels.removeFirst() }
+        monthLabels = labels
+
+        let symbols = calendar.veryShortWeekdaySymbols
+        weekdayLabels = (0..<7).map { row in
+            row.isMultiple(of: 2) && row < 6 ? symbols[(calendar.firstWeekday - 1 + row) % 7] : ""
         }
     }
 

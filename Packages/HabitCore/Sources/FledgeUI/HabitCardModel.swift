@@ -10,8 +10,12 @@ public struct HabitCardModel: Equatable, Sendable {
     public let target: Double
     public let unit: String
     public let progress: DayProgress
-    /// e.g. "4,210 / 6,000 steps", "Done", "Rest day".
+    /// e.g. "4,210 / 6,000 steps", "Done", "Rest day". Spoken by VoiceOver and shown in widgets.
     public let valueText: String
+    /// The big part of the value on cards: "4,210", "Done", "Rest day".
+    public let metricText: String
+    /// The small part after it: "/ 6,000 steps"; nil for one-time habits and rest days.
+    public let goalText: String?
     /// e.g. "23 days to fly", "Ready to fly".
     public let flightText: String
     /// 0...1 position on the day-0 → suggested-day track.
@@ -45,6 +49,7 @@ public struct HabitCardModel: Equatable, Sendable {
         let progress = DayEvaluator.evaluate(value: todayValue, target: target, stored: todayStatus, completedBy: todayCompletedBy)
         self.progress = progress
         self.valueText = Self.valueText(progress: progress, target: target, unit: unit, locale: locale)
+        (self.metricText, self.goalText) = Self.valueParts(progress: progress, target: target, unit: unit, locale: locale)
 
         let graduation = GraduationEvaluator.status(
             snapshots: history, cadence: cadence, startedOn: startedOn, today: today, rule: rule, calendar: calendar
@@ -70,6 +75,32 @@ public struct HabitCardModel: Equatable, Sendable {
         return "+\(step.formatted(.number.precision(.fractionLength(0...1)))) \(unit)"
     }
 
+    static func valueParts(progress: DayProgress, target: Double, unit: String, locale: Locale) -> (String, String?) {
+        switch progress.status {
+        case .skipped:
+            return ("Rest day", nil)
+        case .done where target <= 1:
+            return ("Done", nil)
+        case .pending where target <= 1:
+            return ("Not yet", nil)
+        default:
+            let style = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0...1)).locale(locale)
+            return (progress.value.formatted(style), "/ \(target.formatted(style)) \(unit)")
+        }
+    }
+
+    /// "just now", "4 min ago", "2 h ago" for when Apple Health last updated a value; nil when never.
+    public static func freshness(lastUpdated: Date?, now: Date) -> String? {
+        guard let lastUpdated else { return nil }
+        let seconds = max(0, now.timeIntervalSince(lastUpdated))
+        switch seconds {
+        case ..<60: return "just now"
+        case ..<3_600: return "\(Int(seconds / 60)) min ago"
+        case ..<86_400: return "\(Int(seconds / 3_600)) h ago"
+        default: return "over a day ago"
+        }
+    }
+
     static func valueText(progress: DayProgress, target: Double, unit: String, locale: Locale) -> String {
         switch progress.status {
         case .skipped:
@@ -85,8 +116,34 @@ public struct HabitCardModel: Equatable, Sendable {
     }
 }
 
-/// The one-line summary under the date on Today (docs/DESIGN.md §6.1).
+/// The one-line summary under the date on Today (docs/DESIGN.md §6.1), plus the v2 header (UX-5):
+/// a short status title and a detail line that names the next step.
 public enum TodaySummary {
+    /// "1 of 3 done", "All three done", "Three in the nest", "Rest day".
+    public static func title(for cards: [HabitCardModel]) -> String {
+        guard !cards.isEmpty else { return "An empty nest" }
+        let done = cards.filter { $0.progress.status == .done }.count
+        let resting = cards.filter { $0.progress.status == .skipped }.count
+        if done == cards.count { return cards.count == 1 ? "Done for today" : "All \(spelled(cards.count).lowercased()) done" }
+        if done == 0 && resting == cards.count { return "Rest day" }
+        if done == 0 && resting == 0 { return cards.count == 1 ? "One in the nest" : "\(spelled(cards.count)) in the nest" }
+        return "\(done) of \(cards.count) done"
+    }
+
+    /// "Walk is 1,790 steps away.", "Read is still to do.", "Nest is quiet.", "Rest day for Meditate."
+    public static func detail(for cards: [HabitCardModel], locale: Locale = .current) -> String {
+        guard !cards.isEmpty else { return "Add up to three habits." }
+        let pending = cards.filter { $0.progress.status == .pending }
+        guard let next = pending.max(by: { $0.progress.fraction < $1.progress.fraction }) else {
+            let resting = cards.filter { $0.progress.status == .skipped }.map(\.name)
+            return resting.isEmpty ? "Nest is quiet." : "Rest day for \(resting.formatted(.list(type: .and).locale(locale)))."
+        }
+        guard next.target > 1 else { return "\(next.name) is still to do." }
+        let left = max(0, next.target - next.progress.value)
+        let style = FloatingPointFormatStyle<Double>.number.precision(.fractionLength(0...1)).locale(locale)
+        return "\(next.name) is \(left.formatted(style)) \(next.unit) away."
+    }
+
     public static func text(for cards: [HabitCardModel]) -> String {
         guard !cards.isEmpty else { return "Your nest is empty. Add up to three habits." }
         let done = cards.filter { $0.progress.status == .done }.count

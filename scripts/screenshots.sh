@@ -58,10 +58,12 @@ shoot() {  # screen appearance size
     [[ "$screen" != "today" ]] && args+=(-FledgeDemoScreen "$screen")
     xcrun simctl terminate "$device" "$bundle" 2>/dev/null || true
     xcrun simctl launch "$device" "$bundle" "${args[@]}" > /dev/null
-    # Onboarding and graduation open with an animation (ring fills, then the bird); wait for its end state.
+    # A cold launch takes ~3 s; sheets open 0.7 s after Today appears; onboarding and graduation then animate
+    # (ring fills, then the bird). Wait for each screen's end state.
     case "$screen" in
-        onboarding|graduation) sleep 8 ;;
-        *) sleep 4 ;;
+        onboarding|graduation) sleep 9 ;;
+        today) sleep 5 ;;
+        *) sleep 6 ;;
     esac
     local png="$out/.tmp.png"
     xcrun simctl io "$device" screenshot "$png" > /dev/null 2>&1
