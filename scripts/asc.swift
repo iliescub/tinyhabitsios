@@ -559,6 +559,9 @@ func iapStatus() async throws {
             let shotState = (shot.flatMap { attrs($0)["assetDeliveryState"] as? [String: Any] })?["state"] ?? (shot == nil ? "none" : "?")
             let note = (attrs(sub)["reviewNote"] as? String)?.isEmpty == false ? "yes" : "no"
             print("  \(attrs(sub)["productId"] ?? "?"): \(attrs(sub)["state"] ?? "?"), localizations \(locs), prices \(prices), review screenshot \(shotState), note \(note)")
+            let territories = await related("/v1/subscriptions/\(id(sub))/subscriptionAvailability")
+            let names = try await all("/v1/subscriptions/\(id(sub))/subscriptionLocalizations").map { "\(attrs($0)["name"] ?? "?")" }
+            print("    reference \(attrs(sub)["name"] ?? "?"), period \(attrs(sub)["subscriptionPeriod"] ?? "?"), level \(attrs(sub)["groupLevel"] ?? "?"), family sharing \(attrs(sub)["familySharable"] ?? "–"), availability \(territories == nil ? "none" : "set"), store name \(names.joined())")
         }
     }
     for product in try await all("/v1/apps/\(appID)/inAppPurchasesV2?limit=200") {
@@ -568,6 +571,8 @@ func iapStatus() async throws {
         let shotState = (shot.flatMap { attrs($0)["assetDeliveryState"] as? [String: Any] })?["state"] ?? (shot == nil ? "none" : "?")
         let note = (attrs(product)["reviewNote"] as? String)?.isEmpty == false ? "yes" : "no"
         print("  \(attrs(product)["productId"] ?? "?"): \(attrs(product)["state"] ?? "?"), localizations \(locs), price schedule \(schedule == nil ? "none" : "yes"), review screenshot \(shotState), note \(note)")
+        let territories = await related("/v2/inAppPurchases/\(id(product))/inAppPurchaseAvailability")
+        print("    reference \(attrs(product)["name"] ?? "?"), family sharing \(attrs(product)["familySharable"] ?? "–"), availability \(territories == nil ? "none" : "set")")
     }
 }
 
