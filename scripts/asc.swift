@@ -633,6 +633,58 @@ func submissionStatus() async throws {
     }
 }
 
+// MARK: - Submission
+
+/// Builds a draft review submission with the editable version and every Fledge Pro product (first-time products have to go
+/// with a version). Doesn't send it: check with submission-status / iap-status, then `submit-send`.
+func submitPrepare() async throws {
+    let appID = id(try await app())
+    let version = try await editableVersion(appID: appID)
+    let open = try await all("/v1/reviewSubmissions?filter[app]=\(appID)&filter[platform]=IOS&limit=20")
+        .filter { attrs($0)["state"] as? String == "READY_FOR_REVIEW" }
+    let submission: [String: Any]
+    if let existing = open.first {
+        submission = existing
+        print("draft submission \(id(existing)) exists, reusing it")
+    } else {
+        let created = try await call("POST", "/v1/reviewSubmissions", ["data": ["type": "reviewSubmissions",
+            "attributes": ["platform": "IOS"], "relationships": ["app": ref("apps", appID)]]])
+        submission = created["data"] as? [String: Any] ?? [:]
+        print("draft submission \(id(submission)) created")
+    }
+    let itemsNow = items(try await call("GET", "/v1/reviewSubmissions/\(id(submission))/items?limit=50"))
+    if itemsNow.isEmpty {
+        try await call("POST", "/v1/reviewSubmissionItems", ["data": ["type": "reviewSubmissionItems", "relationships": [
+            "reviewSubmission": ref("reviewSubmissions", id(submission)), "appStoreVersion": ref("appStoreVersions", id(version))]]])
+        print("added version \(attrs(version)["versionString"] ?? "?")")
+    }
+    for group in try await all("/v1/apps/\(appID)/subscriptionGroups") {
+        for sub in try await all("/v1/subscriptionGroups/\(id(group))/subscriptions") where attrs(sub)["state"] as? String == "READY_TO_SUBMIT" {
+            do {
+                try await call("POST", "/v1/subscriptionSubmissions", ["data": ["type": "subscriptionSubmissions",
+                    "relationships": ["subscription": ref("subscriptions", id(sub))]]])
+                print("\(attrs(sub)["productId"] ?? "?"): added")
+            } catch { print("\(attrs(sub)["productId"] ?? "?"): FAILED \(error)") }
+        }
+    }
+    for product in try await all("/v1/apps/\(appID)/inAppPurchasesV2?limit=200") where attrs(product)["state"] as? String == "READY_TO_SUBMIT" {
+        do {
+            try await call("POST", "/v1/inAppPurchaseSubmissions", ["data": ["type": "inAppPurchaseSubmissions",
+                "relationships": ["inAppPurchaseV2": ref("inAppPurchases", id(product))]]])
+            print("\(attrs(product)["productId"] ?? "?"): added")
+        } catch { print("\(attrs(product)["productId"] ?? "?"): FAILED \(error)") }
+    }
+}
+
+/// Sends the draft review submission to App Review.
+func submitSend() async throws {
+    let appID = id(try await app())
+    guard let draft = try await all("/v1/reviewSubmissions?filter[app]=\(appID)&filter[platform]=IOS&limit=20")
+        .first(where: { attrs($0)["state"] as? String == "READY_FOR_REVIEW" }) else { throw ASCError.setup("no draft submission") }
+    try await call("PATCH", "/v1/reviewSubmissions/\(id(draft))", ["data": ["type": "reviewSubmissions", "id": id(draft), "attributes": ["submitted": true]]])
+    print("submitted \(id(draft))")
+}
+
 // MARK: - Builds
 
 func builds() async throws {
@@ -666,6 +718,18 @@ do {
     case "builds": try await builds()
     case "iap-status": try await iapStatus()
     case "submission-status": try await submissionStatus()
+    case "submit-prepare": try await submitPrepare()
+    case "submit-send": try await submitSend()
+    case "submit-cancel":
+        let appID = id(try await app())
+        for draft in try await all("/v1/reviewSubmissions?filter[app]=\(appID)&filter[platform]=IOS&limit=20")
+            where attrs(draft)["state"] as? String == "READY_FOR_REVIEW" {
+            // A draft can't be canceled; emptying it releases the version back to Prepare for Submission.
+            for item in items(try await call("GET", "/v1/reviewSubmissions/\(id(draft))/items?limit=50")) {
+                try await call("DELETE", "/v1/reviewSubmissionItems/\(id(item))")
+            }
+            print("emptied draft \(id(draft))")
+        }
     case "iap-review": try await iapReview(arguments.dropFirst().first ?? "/tmp/fledge-paywall-review.png")
     case "review-status": try await reviewStatus()
     case "review-setup": try await reviewSetup()
