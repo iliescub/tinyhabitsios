@@ -16,8 +16,10 @@ GRAD-3, GRAD-4, website (privacy, terms, support) in `website/`. Tests: 108 pack
 **Next steps, in order**
 1. **Publish the website (you):** `git push`, then GitHub › repo Settings › Pages › Source: **GitHub Actions**. Check
    `https://iliescub.github.io/tinyhabitsios/privacy/` loads — the app, paywall and listing link there.
-2. **App Privacy (you, App Store Connect › App Privacy):** "Data Not Collected" (no public API). Age rating questionnaire, price tier
-   for the app (free), and the "Fledge Pro" subscription group display name if App Store Connect asks.
+2. **Review checklist:** ✅ set via API on 2026-10-14 (`swift scripts/asc.swift review-setup`): primary category Health & Fitness,
+   secondary Productivity; content rights "no third-party content"; age rating (all none, health or wellness topics: yes); price free.
+   Still needed from you: App Review contact (name, phone, email) and the copyright holder → fill `Configuration/review-contact.json`
+   (git-ignored) and run `swift scripts/asc.swift review-contact`. App Privacy: "Data Not Collected" in App Store Connect (no public API).
 3. **IAP review screenshots:** run from Xcode (loads `Fledge.storekit`), open the paywall, screenshot, and add it to each of the three
    products (App Store Connect › Monetization). They stay "Missing Metadata" until then.
 4. **TestFlight + device checks (you):** install 1.0 (2); run HK-5, HEAD-2, WID-5, IPAD-2 and the POL-1 VoiceOver pass.

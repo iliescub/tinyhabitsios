@@ -6,6 +6,9 @@
 //   swift scripts/asc.swift screenshots            replaces the iPhone 6.9" and iPad 13" sets with Design/AppStore/*.png
 //   swift scripts/asc.swift iap                    creates Fledge Pro (subscription group, yearly + monthly, lifetime): names,
 //                                                  prices (all territories, equalized from USA), 7-day free trial, availability
+//   swift scripts/asc.swift review-status          read-only: category, age rating, content rights, price, contact, copyright
+//   swift scripts/asc.swift review-setup           sets categories, content rights, age rating answers and the free price
+//   swift scripts/asc.swift review-contact [file]  App Review contact + copyright from a git-ignored JSON file
 //   swift scripts/asc.swift builds                 lists builds and their processing state
 //   swift scripts/asc.swift attach-build <number>  attaches a processed build to the editable 1.0 version
 //
@@ -398,6 +401,96 @@ func iap() async throws {
     }
 }
 
+// MARK: - Review requirements
+
+/// Read-only: what App Store Connect still needs before review (category, age rating, content rights, price, contact, copyright).
+func reviewStatus() async throws {
+    let app = try await app()
+    print("contentRightsDeclaration: \(attrs(app)["contentRightsDeclaration"] ?? "–")")
+    let info = try await editableAppInfo(appID: id(app))
+    let primary = try? await call("GET", "/v1/appInfos/\(id(info))/primaryCategory")
+    print("primary category: \((primary?["data"] as? [String: Any]).map(id) ?? "–")")
+    if let rating = try? await call("GET", "/v1/appInfos/\(id(info))/ageRatingDeclaration"),
+       let data = rating["data"] as? [String: Any] {
+        print("age rating declaration \(id(data)):")
+        for (key, value) in attrs(data).sorted(by: { $0.key < $1.key }) { print("  \(key) = \(value)") }
+    }
+    let version = try await editableVersion(appID: id(app))
+    print("copyright: \(attrs(version)["copyright"] ?? "–")")
+    let detail = try? await call("GET", "/v1/appStoreVersions/\(id(version))/appStoreReviewDetail")
+    print("review detail: \((detail?["data"] as? [String: Any]).map { attrs($0).keys.sorted().joined(separator: ", ") } ?? "none")")
+    let schedule = try? await call("GET", "/v1/apps/\(id(app))/appPriceSchedule")
+    print("price schedule: \((schedule?["data"] as? [String: Any]).map(id) ?? "none")")
+}
+
+/// Sets what the review checklist needs and the app's facts decide: categories, content rights, age rating, free price.
+/// Contact information and copyright come from a private file (see `reviewContact`).
+func reviewSetup() async throws {
+    let app = try await app()
+    let appID = id(app)
+
+    try await call("PATCH", "/v1/apps/\(appID)", ["data": ["type": "apps", "id": appID,
+        "attributes": ["contentRightsDeclaration": "DOES_NOT_USE_THIRD_PARTY_CONTENT"]]])
+    print("content rights: does not use third-party content")
+
+    let info = try await editableAppInfo(appID: appID)
+    try await call("PATCH", "/v1/appInfos/\(id(info))", ["data": ["type": "appInfos", "id": id(info), "relationships": [
+        "primaryCategory": ref("appCategories", "HEALTH_AND_FITNESS"),
+        "secondaryCategory": ref("appCategories", "PRODUCTIVITY"),
+    ]]])
+    print("categories: Health & Fitness, Productivity")
+
+    // Age rating: no objectionable content; the app is about health habits, so "health or wellness topics" is yes.
+    if let rating = (try await call("GET", "/v1/appInfos/\(id(info))/ageRatingDeclaration"))["data"] as? [String: Any] {
+        let none = ["alcoholTobaccoOrDrugUseOrReferences", "contests", "gamblingSimulated", "gunsOrOtherWeapons", "horrorOrFearThemes",
+                    "matureOrSuggestiveThemes", "medicalOrTreatmentInformation", "profanityOrCrudeHumor", "sexualContentGraphicAndNudity",
+                    "sexualContentOrNudity", "violenceCartoonOrFantasy", "violenceRealistic", "violenceRealisticProlongedGraphicOrSadistic"]
+        var answers: [String: Any] = Dictionary(uniqueKeysWithValues: none.map { ($0, "NONE") })
+        for key in ["advertising", "ageAssurance", "gambling", "lootBox", "messagingAndChat", "parentalControls",
+                    "socialMedia", "unrestrictedWebAccess", "userGeneratedContent"] { answers[key] = false }
+        answers["healthOrWellnessTopics"] = true
+        try await call("PATCH", "/v1/ageRatingDeclarations/\(id(rating))", ["data": ["type": "ageRatingDeclarations", "id": id(rating), "attributes": answers]])
+        print("age rating answered (all none; health or wellness topics: yes)")
+    }
+
+    // Price: free (the money is in Fledge Pro).
+    let points = try await all("/v1/apps/\(appID)/appPricePoints?filter[territory]=USA&limit=200")
+    guard let free = points.first(where: { Double(attrs($0)["customerPrice"] as? String ?? "") == 0 }) else { throw ASCError.setup("no free price point") }
+    try await call("POST", "/v1/appPriceSchedules", [
+        "data": ["type": "appPriceSchedules", "relationships": [
+            "app": ref("apps", appID), "baseTerritory": ref("territories", "USA"),
+            "manualPrices": ["data": [["type": "appPrices", "id": "${free}"]]],
+        ]],
+        "included": [["type": "appPrices", "id": "${free}", "attributes": ["startDate": NSNull()],
+                      "relationships": ["appPricePoint": ref("appPricePoints", id(free))]]],
+    ])
+    print("price: free")
+}
+
+/// App Review contact and copyright from a private JSON file that never goes into git (default Configuration/review-contact.json):
+/// {"firstName": "", "lastName": "", "phone": "+40…", "email": "", "copyright": "2026 Name", "notes": ""}
+func reviewContact(_ file: String) async throws {
+    let info = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: file))) as? [String: String] ?? [:]
+    let app = try await app()
+    let version = try await editableVersion(appID: id(app))
+    if let copyright = info["copyright"] {
+        try await call("PATCH", "/v1/appStoreVersions/\(id(version))", ["data": ["type": "appStoreVersions", "id": id(version), "attributes": ["copyright": copyright]]])
+        print("copyright set")
+    }
+    let attributes: [String: Any] = [
+        "contactFirstName": info["firstName"] ?? "", "contactLastName": info["lastName"] ?? "",
+        "contactPhone": info["phone"] ?? "", "contactEmail": info["email"] ?? "",
+        "demoAccountRequired": false, "notes": info["notes"] ?? "",
+    ]
+    if let existing = (try? await call("GET", "/v1/appStoreVersions/\(id(version))/appStoreReviewDetail"))?["data"] as? [String: Any] {
+        try await call("PATCH", "/v1/appStoreReviewDetails/\(id(existing))", ["data": ["type": "appStoreReviewDetails", "id": id(existing), "attributes": attributes]])
+    } else {
+        try await call("POST", "/v1/appStoreReviewDetails", ["data": ["type": "appStoreReviewDetails", "attributes": attributes,
+            "relationships": ["appStoreVersion": ref("appStoreVersions", id(version))]]])
+    }
+    print("App Review contact set (no demo account needed)")
+}
+
 // MARK: - Builds
 
 func builds() async throws {
@@ -429,6 +522,9 @@ do {
     case "screenshots": try await screenshots()
     case "iap": try await iap()
     case "builds": try await builds()
+    case "review-status": try await reviewStatus()
+    case "review-setup": try await reviewSetup()
+    case "review-contact": try await reviewContact(arguments.dropFirst().first ?? "Configuration/review-contact.json")
     case "attach-build": try await attachBuild(arguments.dropFirst().first ?? "")
     default: print("usage: swift scripts/asc.swift status | metadata [file.json] | screenshots")
     }
