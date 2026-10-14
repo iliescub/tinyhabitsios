@@ -434,6 +434,8 @@ func reviewStatus() async throws {
     guard let version = items(try await call("GET", "/v1/apps/\(id(app))/appStoreVersions?filter[platform]=IOS&limit=1")).first else { return }
     print("version \(attrs(version)["versionString"] ?? "?"): \(attrs(version)["appStoreState"] ?? "?"), release: \(attrs(version)["releaseType"] ?? "–"), earliest: \(attrs(version)["earliestReleaseDate"] ?? "–")")
     print("copyright: \(attrs(version)["copyright"] ?? "–")")
+    let build = await related("/v1/appStoreVersions/\(id(version))/build")
+    print("build: \(build.map { attrs($0)["version"] ?? "?" } ?? "none")")
     let detail = try? await call("GET", "/v1/appStoreVersions/\(id(version))/appStoreReviewDetail")
     print("review detail: \((detail?["data"] as? [String: Any]).map { attrs($0).keys.sorted().joined(separator: ", ") } ?? "none")")
     let schedule = try? await call("GET", "/v1/apps/\(id(app))/appPriceSchedule")
@@ -603,6 +605,34 @@ func iapReview(_ file: String) async throws {
     }
 }
 
+/// Read-only: open review submissions and what's in them.
+func submissionStatus() async throws {
+    let appID = id(try await app())
+    for submission in try await all("/v1/reviewSubmissions?filter[app]=\(appID)&limit=20") {
+        let a = attrs(submission)
+        guard a["state"] as? String != "COMPLETE" else { continue }
+        print("submission \(id(submission)): \(a["state"] ?? "?"), platform \(a["platform"] ?? "–")")
+        let raw = try await call("GET", "/v1/reviewSubmissions/\(id(submission))/items?limit=50&include=appStoreVersion")
+        for item in items(raw) {
+            let rels = (item["relationships"] as? [String: Any]) ?? [:]
+            let linked = rels.compactMap { key, value -> String? in
+                guard let data = (value as? [String: Any])?["data"] as? [String: Any] else { return nil }
+                return "\(key)=\(data["id"] ?? "?")"
+            }
+            print("  item \(attrs(item)["state"] ?? "?"): \(linked.joined(separator: ", "))")
+        }
+        for included in raw["included"] as? [[String: Any]] ?? [] {
+            print("  includes \(included["type"] ?? "?") \(attrs(included)["versionString"] ?? id(included))")
+        }
+    }
+    for group in try await all("/v1/apps/\(appID)/subscriptionGroups") {
+        print("group \(id(group)) \(attrs(group)["referenceName"] ?? "?")")
+        for sub in try await all("/v1/subscriptionGroups/\(id(group))/subscriptions") {
+            print("  \(id(sub)) \(attrs(sub)["productId"] ?? "?"): \(attrs(sub)["state"] ?? "?")")
+        }
+    }
+}
+
 // MARK: - Builds
 
 func builds() async throws {
@@ -635,6 +665,7 @@ do {
     case "iap": try await iap()
     case "builds": try await builds()
     case "iap-status": try await iapStatus()
+    case "submission-status": try await submissionStatus()
     case "iap-review": try await iapReview(arguments.dropFirst().first ?? "/tmp/fledge-paywall-review.png")
     case "review-status": try await reviewStatus()
     case "review-setup": try await reviewSetup()
