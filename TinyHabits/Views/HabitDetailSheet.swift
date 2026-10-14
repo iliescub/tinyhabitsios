@@ -46,7 +46,8 @@ struct HabitDetailSheet: View {
                     hero(card)
                     statsRow(stats)
                     DetailCard(title: "Journey to fly") {
-                        let journey = JourneyModel(stats: stats, startedOn: startedOn)
+                        let flyDate = FlightForecast.flyDate(snapshots: history, cadence: habit.cadence, startedOn: startedOn, today: day)
+                        let journey = JourneyModel(stats: stats, startedOn: startedOn, flyDate: flyDate)
                         VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
                             JourneyTrack(model: journey, color: color)
                             Text(journey.headline)
@@ -55,6 +56,17 @@ struct HabitDetailSheet: View {
                             Text(journey.status)
                                 .font(.footnote)
                                 .foregroundStyle(FledgeTheme.Palette.ink2)
+                            if let forecast = journey.forecast {
+                                // GRAD-4: a date to look forward to.
+                                Label {
+                                    Text(forecast)
+                                } icon: {
+                                    FledgeBird(.flying, style: .tinted(color)).frame(width: 18)
+                                }
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(FledgeTheme.Palette.ink)
+                                .padding(.top, 2)
+                            }
                         }
                     }
                     DetailCard(title: "Last 12 weeks") {
@@ -311,6 +323,10 @@ struct HeatmapView: View {
                 legend("Done") { RoundedRectangle(cornerRadius: 3).fill(color) }
                 legend("Rest") { RoundedRectangle(cornerRadius: 3).strokeBorder(color.opacity(0.7), style: StrokeStyle(lineWidth: 1.5, dash: [2, 2])) }
                 legend("Today") { RoundedRectangle(cornerRadius: 3).strokeBorder(FledgeTheme.Palette.ink, lineWidth: 1.5) }
+                if model.hasEarlierDays {
+                    // HEAD-1: days met before the habit started in Fledge, read from Apple Health.
+                    legend("Before Fledge") { RoundedRectangle(cornerRadius: 3).fill(color.opacity(0.3)) }
+                }
             }
             .font(.caption2)
             .foregroundStyle(FledgeTheme.Palette.ink2)
@@ -350,6 +366,7 @@ struct HeatmapView: View {
     private func fill(for state: HeatmapModel.CellState) -> Color {
         switch state {
         case .done: color
+        case .earlier: color.opacity(0.3)
         case .rest: color.opacity(0.08)
         case .missed, .pending: FledgeTheme.Palette.hairline
         case .beforeStart, .future: FledgeTheme.Palette.hairline.opacity(0.35)

@@ -216,9 +216,10 @@ struct AddHabitSheet: View {
 
     private func add(_ draft: HabitDraft) {
         do {
-            try context.addHabit(draft: draft)
+            let habit = try context.addHabit(draft: draft)
             AppRefresh.afterWrite(context: context, structural: true)
             dismiss()
+            Task { await HeadStart.backfill(habit) }
         } catch HabitStoreError.nestFull {
             errorMessage = "Your nest holds three. Let one fly or pause one to add another."
         } catch {
@@ -238,6 +239,7 @@ struct HabitDraftRoute: Hashable {
 /// Configure step before adding.
 struct ConfigureHabitView: View {
     @State private var draft: HabitDraft
+    @State private var headStart: HeadStartState = .none
     let isBusy: Bool
     let onAdd: (HabitDraft) -> Void
 
@@ -248,7 +250,17 @@ struct ConfigureHabitView: View {
     }
 
     var body: some View {
-        HabitEditorView(draft: $draft)
+        HabitEditorView(draft: $draft, headStart: headStart)
+            .task {
+                // HEAD-1: read the last 30 days for Health habits (asks for read access the first time).
+                guard draft.source.isAuto, headStart == .none else { return }
+                headStart = .loading
+                if let values = await HeadStart.values(source: draft.source, unit: draft.unit) {
+                    headStart = .values(values)
+                } else {
+                    headStart = .none
+                }
+            }
             .navigationTitle(draft.trimmedName.isEmpty ? "New habit" : draft.trimmedName)
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .bottom) {

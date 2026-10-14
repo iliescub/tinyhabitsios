@@ -54,6 +54,13 @@ struct TodayView: View {
                 }
             }
             .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { windowWidth = $0 }
+            .onChange(of: NotificationRouter.shared.pending, initial: true) { _, route in
+                // The slip nudge (GRAD-3) opens the Flown shelf, also when it launched the app.
+                if route == .flown {
+                    sheet = .flown
+                    NotificationRouter.shared.pending = nil
+                }
+            }
             .background(SkyBackground().ignoresSafeArea())
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
@@ -380,6 +387,9 @@ struct TodayView: View {
         let first = sortedHabits.first
         switch screen {
         case "detail": detailHabit = first
+        case "detail-2", "detail-3":
+            let index = screen == "detail-2" ? 1 : 2
+            detailHabit = sortedHabits.indices.contains(index) ? sortedHabits[index] : first
         case "graduation": graduatingHabit = first
         case "add", "configure": sheet = .add
         case "flown": sheet = .flown

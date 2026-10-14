@@ -104,8 +104,11 @@ public struct JourneyModel: Equatable, Sendable {
     public let headline: String
     /// "Ready whenever you are.", "18 days until it can fly.", "Needs 80% of the last 30 days to fly."
     public let status: String
+    /// GRAD-4 flight forecast: "On track to fly around 30 Nov." / "Keep it going and it can fly around 4 Dec."
+    public let forecast: String?
 
-    public init(stats: HabitDetailStats, startedOn: DayKey, locale: Locale = .current, calendar: Calendar = .current) {
+    /// - Parameter flyDate: from `FlightForecast.flyDate` (nil when ready or out of reach).
+    public init(stats: HabitDetailStats, startedOn: DayKey, flyDate: DayKey? = nil, locale: Locale = .current, calendar: Calendar = .current) {
         let rule = stats.rule
         let days = stats.graduation.daysActive
         let suggested = Double(max(rule.suggestedDays, 1))
@@ -120,6 +123,15 @@ public struct JourneyModel: Equatable, Sendable {
             status = left == 1 ? "1 day until it can fly." : "\(left) days until it can fly."
         } else {
             status = "Needs \(Int((rule.threshold * 100).rounded()))% of the last \(rule.windowDays) days to fly."
+        }
+
+        if let flyDate, !stats.graduation.isReady {
+            let date = flyDate.date(in: calendar).formatted(.dateTime.day().month(.abbreviated).locale(locale))
+            let onPace = stats.graduation.recentRate >= rule.threshold
+                && flyDate.days(to: startedOn.adding(days: rule.minDays - 1, calendar: calendar), calendar: calendar) >= 0
+            forecast = onPace ? "On track to fly around \(date)." : "Keep it going and it can fly around \(date)."
+        } else {
+            forecast = nil
         }
 
         let started = startedOn.date(in: calendar).formatted(.dateTime.day().month(.abbreviated).locale(locale))

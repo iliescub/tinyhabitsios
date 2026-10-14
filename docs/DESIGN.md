@@ -18,13 +18,14 @@ and graduation (the habit becomes a bird and flies to the "Flown" shelf).
 | Habit-app users get discouraged by rigid or over-gamified interfaces; "show progress, not perfection"; missed days shouldn't erase progress ([paper](https://publikasi.mercubuana.ac.id/index.php/collabits/article/view/35091), [case study](https://contra.com/p/NXqYrFRo-most-habit-apps-fail-not)) | No points, coins, levels or red failure states. Progress to graduation never resets because of a missed day; streaks are secondary |
 | Onboarding is often cumbersome and notifications generic ([case study](https://contra.com/p/NXqYrFRo-most-habit-apps-fail-not)) | 4-screen onboarding, under 60 s; notifications only when a habit is still undone, written specifically |
 | Recent award winners in this space (Tiimo — iPhone App of the Year 2025; Structured — ADA 2026 finalist) win on calm visual clarity and inclusion, not features ([Tiimo](https://www.tiimoapp.com/resource-hub/tiimo-winner-2025-app-store-awards), [ADA 2026](https://macdailynews.com/2026/06/02/apple-reveals-winners-of-the-2026-apple-design-awards/)) | Accessibility is a launch feature (Dynamic Type to AX5, VoiceOver, Reduce Motion), and a featuring argument |
+| 2026 market check: Apple Health auto-completion (Streaks, Habitify) and a three-habit cap (free tiers) already exist; no app graduates habits ([positioning](POSITIONING.md)) | Lead every surface with graduation: "the habit tracker that lets go". Head start, forecast and slip check make it visible from day one to long after flight |
 | Finch already owns "cute bird pet you care for" | Our bird is **not a pet**: no feeding, no currency, no guilt. The bird appears only as the brand mark and as the reward when a habit graduates |
 
 ---
 
 ## 2. Marketing theme: "Leave the nest"
 
-**Positioning line:** Three habits. Done for you. Then they fly.
+**Positioning:** Fledge is the habit tracker that lets go. **Tagline:** Three habits. Done for you. Then they fly.
 **Campaign (New Year 2027):** *"This year, fewer habits."* Sub-line: *"Fledge tracks three habits from Apple Health — and lets them go once they stick."*
 
 | Element | Choice |
@@ -165,6 +166,9 @@ Layout top to bottom:
 - **Fledge progress**: horizontal track day 0 → 66 with gold tick at 30 ("can fly from day 30"), current position as small bird. Text: "Day 37 · 86 % of the last 30 days".
 - **12-week heatmap** (7 rows × 12 columns), cells in habit colour by completion; rest days hatched; today outlined.
 - Stats row (3 tiles): Current streak · Best streak · 30-day rate. Weekly-cadence habits show weeks.
+- **Flight forecast** (GRAD-4) under the journey: a small bird in the habit colour + "On track to fly around 30 Nov." or
+  "Keep it going and it can fly around 4 Dec." Hidden once the habit is ready.
+- Heatmap: days recorded **before Fledge** (head start backfill) in the habit colour at 30%, with a "Before Fledge" legend item.
 - Settings rows: Target, Cadence, Reminder, Colour & symbol, Source. Footer menu: Pause, Delete (confirmation).
 
 ### 6.3 Add habit (sheet)
@@ -173,6 +177,10 @@ Layout top to bottom:
    Pro lock badge on Health tiles when the free auto slot is used.
 2. **Configure** (push): name, symbol & colour, target stepper with unit, cadence (Every day / N days a week segmented), reminder toggle + time.
    CTA "Add to nest" (glass prominent). If a Health template: next step is the system Health prompt preceded by a one-line explanation.
+- **Head start** (HEAD-1), Health templates only: a "Your last 30 days" section under the preview — average a day, "N of 30 days at
+  <goal>", 30 bars (habit colour when met), one verdict line, and an opt-in button ("Start at 5,500 steps" / "Aim for 35 min").
+  Footer: "Read on this iPhone from Apple Health. Graduation still counts from the day you add the habit." Read access is asked when
+  Configure opens. Onboarding shows the same as a compact "Your head start" card after Connect, one row per Health habit.
 - When 3 slots are full, "+" is hidden; Add is reachable only via pausing/graduating (copy: "Your nest holds three. Let one fly or pause one to add another.").
 
 ### 6.4 Graduation (full-screen cover)
@@ -184,6 +192,8 @@ Layout top to bottom:
 - Grid of graduates: small bird in habit colour, name, "Flew Jan 31 · 37 days", holding rate last 14 days (gold if ≥ 80 %).
 - Empty state: sleeping bird, "Nothing has flown yet. Your first habit can fly from day 30."
 - Tap → mini detail with "Bring back to the nest" (needs a free slot).
+- **Slip check** (GRAD-3): one notification per slip — "Walk has slipped a little since it flew. Bring it back to the nest for a
+  while?" — opens this shelf. Only for Health graduates; never repeated until the habit holds again.
 
 ### 6.6 Onboarding (4 screens, paged, progress dots)
 1. **Promise** — animated ring filling by itself → turns into the bird. "Three habits. Done for you. Then they fly." CTA "Start".
@@ -214,7 +224,7 @@ Apple Health access (status + "Open Health") · Paused habits · Export CSV · P
 | Lock Screen inline | "2/3 · Walk 1.8k steps left" |
 | Control Center | "Mark Read done" — symbol + habit name; state shows done |
 | Siri / Shortcuts | "Mark meditate done in Fledge", "How are my habits in Fledge?" → spoken summary line |
-| Notifications | One per habit at its time, only if still undone: "Read — still in the nest today. 10 minutes is enough." Evening summary (optional): "2 of 3 done. Walk needs 1,800 steps." Graduation: "Walk is ready to fly ✦" |
+| Notifications | One per habit at its time, only if still undone: "Read — still in the nest today. 10 minutes is enough." Evening summary (optional): "2 of 3 done. Walk needs 1,800 steps." Graduation: "Walk is ready to fly ✦". Slip check (once per slip): "Walk has slipped a little since it flew. Bring it back to the nest for a while?" |
 | Widget freshness | Caption "updated 14 min ago" when Health data is older than 30 min |
 
 All widgets support tinted and clear Home Screen modes (`widgetAccentable` on rings, symbols as accented).
@@ -231,13 +241,14 @@ All widgets support tinted and clear Home Screen modes (`widgetAccentable` on ri
 
 ---
 
-## 9. App Store screenshots (6, in this order)
-1. Lock Screen with rectangular widget — "Your habits, done for you."
-2. Today with a ring filling from Health — "Walk 6,000 steps. Logged by Apple Health."
-3. Graduation — "When a habit sticks, it flies."
-4. Privacy — "No account. Health data stays on your iPhone."
-5. Widgets (Home + StandBy) — "Check in without opening the app."
-6. Siri / Control Center — "Or just ask Siri."
+## 9. App Store screenshots (6, in this order; updated 2026-10-14 to lead with graduation)
+1. Graduation — "When a habit sticks, it flies." / "Most habit apps want you forever. Fledge lets go after about 66 days."
+2. Today — "Three habits. Done for you." / "Fledge fills them in from Apple Health."
+3. Head start (Configure) — "Starts from your own data." / "Your last 30 days, and a goal you can win."
+4. Flown shelf — "See what stuck." / "Flown habits keep tracking quietly. If one slips, you hear once."
+5. Widgets (Home + Lock Screen, + StandBy on iPhone) — "Check in without opening the app."
+6. Privacy — "No account. Your data stays put."
+Generated by `scripts/appstore-screenshots.sh` (iPhone 6.9") and `--ipad` (13"). Lock Screen and Siri shots need a device.
 Style: sky gradient background, device frame, caption in SF Pro Rounded Bold, ink text.
 
 ---

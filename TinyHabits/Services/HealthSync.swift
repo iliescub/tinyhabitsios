@@ -46,6 +46,33 @@ final class HealthSync {
         return (metric, await reader.hasRecentSamples(for: metric))
     }
 
+    /// HEAD-1: one value per day for the 30 days before today, oldest first, for the head start in setup.
+    /// Nil when Health isn't available or this source has no Health metric. Call after `prepare` (read access).
+    func baselineValues(source: HabitSourceID, unit: String) async -> [Double]? {
+        guard HealthReader.isAvailable, let metric = HealthMetric(source: source, unit: unit) else { return nil }
+        let dayEndHour = FledgeSettings.dayEndHour
+        let today = DayKey.today()
+        var values: [Double] = []
+        for offset in (1...HealthBaseline.days).reversed() {
+            let day = today.adding(days: -offset)
+            values.append((try? await reader.value(for: metric, on: day, dayEndHour: dayEndHour)) ?? 0)
+        }
+        return values
+    }
+
+    /// HEAD-1: records the 30 days before a new Health habit started, so its history isn't empty on day one.
+    /// Streaks and graduation count from the start date only (StreakCalculator, GraduationEvaluator), and the
+    /// heatmap shows these days as "Before Fledge".
+    func backfill(habitID: UUID, source: HabitSourceID, unit: String) async {
+        guard let values = await baselineValues(source: source, unit: unit) else { return }
+        let context = container.mainContext
+        let today = DayKey.today()
+        for (index, value) in values.enumerated() where value > 0 {
+            let day = today.adding(days: index - values.count)
+            try? context.record(value: value, habitID: habitID, on: day, by: .auto)
+        }
+    }
+
     /// Re-registers observers when the set of Health habits changes, then refreshes.
     func updateObservers() {
         let metrics = Set(trackedHabits().compactMap { HealthMetric(source: $0.source, unit: $0.unit) })

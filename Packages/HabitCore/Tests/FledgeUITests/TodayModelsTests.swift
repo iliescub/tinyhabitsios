@@ -228,3 +228,31 @@ struct NestLayoutTests {
         #expect(NestLayout.nestColumnWidth(for: 1376) == 420)
     }
 }
+
+@Suite("Head start and forecast in the UI models")
+struct DifferentiatorModelTests {
+    @Test func heatmapShowsDaysBeforeFledgeAsEarlier() {
+        let history = [DaySnapshot(day: key("2026-12-05"), status: .done), DaySnapshot(day: key("2026-12-06"), status: .pending)]
+        let model = HeatmapModel(snapshots: history, startedOn: key("2026-12-10"), today: key("2026-12-16"), calendar: utc)
+        let cells = Dictionary(uniqueKeysWithValues: model.weeks.flatMap { $0 }.map { ($0.day, $0.state) })
+        #expect(cells[key("2026-12-05")] == .earlier)
+        #expect(cells[key("2026-12-06")] == .beforeStart)
+        #expect(model.hasEarlierDays)
+    }
+
+    @Test func forecastLine() {
+        let start = key("2026-11-01")
+        let today = start.adding(days: 11, calendar: utc)
+        let snapshots = (0..<12).map { DaySnapshot(day: start.adding(days: $0, calendar: utc), status: .done) }
+        let stats = HabitDetailStats(snapshots: snapshots, cadence: .daily, startedOn: start, today: today, calendar: utc)
+        let fly = FlightForecast.flyDate(snapshots: snapshots, cadence: .daily, startedOn: start, today: today, calendar: utc)
+        let model = JourneyModel(stats: stats, startedOn: start, flyDate: fly, locale: gb, calendar: utc)
+        #expect(model.forecast == "On track to fly around 30 Nov.")
+
+        let patchy = snapshots.enumerated().filter { $0.offset % 3 == 0 }.map(\.element)
+        let patchyStats = HabitDetailStats(snapshots: patchy, cadence: .daily, startedOn: start, today: today, calendar: utc)
+        let later = FlightForecast.flyDate(snapshots: patchy, cadence: .daily, startedOn: start, today: today, calendar: utc)
+        let patchyModel = JourneyModel(stats: patchyStats, startedOn: start, flyDate: later, locale: gb, calendar: utc)
+        #expect(patchyModel.forecast?.hasPrefix("Keep it going and it can fly around") == true)
+    }
+}

@@ -6,6 +6,8 @@ import FledgeUI
 /// a live preview of the card on top, a large goal control, and the icon picker in its own sheet.
 struct HabitEditorView: View {
     @Binding var draft: HabitDraft
+    /// HEAD-1: the last 30 days from Apple Health, shown when adding a Health habit.
+    var headStart: HeadStartState = .none
     @State private var pickingIcon = false
 
     var body: some View {
@@ -16,6 +18,24 @@ struct HabitEditorView: View {
                     .listRowBackground(Color.clear)
             } header: {
                 Text("Preview")
+            }
+
+            switch headStart {
+            case .none:
+                EmptyView()
+            case .loading:
+                Section("Your last 30 days") {
+                    Label("Looking at Apple Health…", systemImage: "heart.text.square")
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+            case .values(let values):
+                Section {
+                    HeadStartView(values: values, draft: $draft)
+                } header: {
+                    Text("Your last 30 days")
+                } footer: {
+                    Text("Read on this \(DeviceInfo.name) from Apple Health. Graduation still counts from the day you add the habit.")
+                }
             }
 
             Section {
@@ -151,6 +171,92 @@ struct HabitPreviewCard: View {
         .animation(.snappy, value: draft)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("Preview: \(card.name), \(card.valueText)"))
+    }
+}
+
+/// HEAD-1: the user's own last 30 days for this habit, what that means, and a goal to start from.
+struct HeadStartView: View {
+    let values: [Double]
+    @Binding var draft: HabitDraft
+
+    var body: some View {
+        let baseline = HealthBaseline(
+            values: values, target: draft.target,
+            step: TargetSteps.step(for: draft.unit), range: TargetSteps.range(for: draft.unit)
+        )
+        let color = FledgeTheme.habitColor(draft.colorKey)
+        VStack(alignment: .leading, spacing: FledgeTheme.Space.m) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(amount(baseline.average))
+                        .font(FledgeTheme.Typeface.metric)
+                        .foregroundStyle(FledgeTheme.Palette.ink)
+                    Text("\(draft.unit) on an average day")
+                        .font(.caption)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text("\(baseline.daysMet) of \(values.count)")
+                        .font(FledgeTheme.Typeface.metric)
+                        .foregroundStyle(FledgeTheme.Palette.ink)
+                    Text("days at \(amount(draft.target)) \(draft.unit)")
+                        .font(.caption)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+            }
+            .accessibilityElement(children: .combine)
+
+            // One bar per day, height by value, in the habit colour when the goal was met.
+            HStack(alignment: .bottom, spacing: 2) {
+                ForEach(Array(values.enumerated()), id: \.offset) { _, value in
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(value >= draft.target ? color : FledgeTheme.Palette.ink2.opacity(0.25))
+                        .frame(height: max(3, 34 * min(value / max(draft.target * 1.5, 1), 1)))
+                }
+            }
+            .frame(height: 34, alignment: .bottom)
+            .accessibilityHidden(true)
+
+            Text(message(baseline))
+                .font(.subheadline)
+                .foregroundStyle(FledgeTheme.Palette.ink)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let suggested = baseline.suggestedTarget {
+                Button {
+                    withAnimation(.snappy) { draft.target = suggested }
+                } label: {
+                    Label(
+                        baseline.verdict == .alreadyHabit ? "Aim for \(amount(suggested)) \(draft.unit)" : "Start at \(amount(suggested)) \(draft.unit)",
+                        systemImage: baseline.verdict == .alreadyHabit ? "arrow.up.right" : "leaf"
+                    )
+                    .font(.subheadline.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .tint(FledgeTheme.Palette.ink)
+            }
+        }
+        .padding(.vertical, FledgeTheme.Space.xs)
+        .animation(.snappy, value: draft.target)
+    }
+
+    private func message(_ baseline: HealthBaseline) -> String {
+        let name = draft.trimmedName.isEmpty ? "This" : draft.trimmedName
+        switch baseline.verdict {
+        case .notEnoughData:
+            return "There's not much \(name) data in Apple Health yet. Fledge fills it in from today."
+        case .alreadyHabit:
+            return "\(name) is already a habit for you. Aim a little higher, or pick something new and let this one be."
+        case .withinReach:
+            return "Within reach: you got there on \(baseline.daysMet) of the last 30 days. Keep the goal."
+        case .startSmaller:
+            return "You usually reach about \(amount(baseline.average)) \(draft.unit). Start just above that: small wins stick."
+        }
+    }
+
+    private func amount(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(value < 10 ? 0...1 : 0...0)))
     }
 }
 

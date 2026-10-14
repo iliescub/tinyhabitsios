@@ -31,17 +31,19 @@ Plan, diagnosis and tickets UX-1…UX-19: `docs/UI-REDESIGN.md` · mockups: `Des
   orientations, split Today (nest + detail pane ≥ 700 pt wide), ⌘N / ⌘, / ⌘1–3, hover, readable-width covers, tap-to-log
   fallback when Apple Health isn't available, device-neutral copy, extra-large widget. Concept: `docs/DESIGN.md` §12.
   13" App Store set: `Design/AppStore/iPad/` (`scripts/appstore-screenshots.sh --ipad`).
+- [ ] **HEAD-2** Device check for HEAD-1/GRAD-3: Health sheet appears when Configure opens; 30-day values match the Health app;
+  backfill shows "Before Fledge" days; force a flown Health habit below 50% (or wait) and confirm one nudge that opens Flown.
 - [ ] **IPAD-2** On a real iPad: Health permission and data (synced from iPhone), widgets incl. extra large, Lock Screen widget,
   Control Center control, Stage Manager resizing between split and single column, keyboard shortcuts.
 
-## Differentiation — proposal 2026-10-14 (`docs/POSITIONING.md`)
+## Differentiation — accepted 2026-10-14 (`docs/POSITIONING.md`); GRAD-3, HEAD-1, GRAD-4 built the same day
 Positioning: **the habit tracker that lets go** (graduation is the one claim no competitor makes).
-- [ ] **GRAD-3** (P0, 1d) Slip check for flown Health habits: one nudge when `HoldingRate` < 50% / 14 days; none again until ≥ 80%.
+- [x] **GRAD-3** ✅ (P0, 1d) Slip check for flown Health habits: one nudge when `HoldingRate` < 50% / 14 days; none again until ≥ 80%.
   The UI already promises it ("We'll nudge you only if it slips") — never cut; drop the copy instead.
-- [ ] **HEAD-1** (P0, 2d) Health head start: last-30-days baseline in setup, suggested goal, "already a habit" check, heatmap pre-filled
+- [x] **HEAD-1** ✅ (P0, 2d) Health head start: last-30-days baseline in setup, suggested goal, "already a habit" check, heatmap pre-filled
   "before Fledge" (graduation counts from the start date). `BaselineModel` in HabitCore with tests.
-- [ ] **GRAD-4** (P1, 0.5d) Flight forecast on detail ("On track to fly around 12 Nov").
-- [ ] **MKT-6** (0.5d) Messaging: subtitle "Habits that stick, then fly", promo text, screenshot order (graduation first),
+- [x] **GRAD-4** ✅ (P1, 0.5d) Flight forecast on detail ("On track to fly around 12 Nov").
+- [~] **MKT-6** (0.5d) ✅ Docs, captions and screenshot order updated. Still to do in App Store Connect / landing page: subtitle, promo text, keywords. Messaging: subtitle "Habits that stick, then fly", promo text, screenshot order (graduation first),
   landing headline, creator brief and featuring pitch around graduation.
 
 ## Design — Oct 11 → Oct 25 (parallel to M0; mockups run in Claude cloud)

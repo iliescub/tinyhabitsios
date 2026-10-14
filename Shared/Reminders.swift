@@ -50,15 +50,47 @@ enum Reminders {
         center.removePendingNotificationRequests(withIdentifiers: ours)
 
         for reminder in plan {
-            let content = UNMutableNotificationContent()
-            content.title = reminder.title
-            content.body = reminder.body
-            content.sound = .default
-            content.threadIdentifier = reminder.habitID.uuidString
-            let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: reminder.fireDate)
-            let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
-            try? await center.add(UNNotificationRequest(identifier: reminder.identifier, content: content, trigger: trigger))
+            await schedule(reminder, in: center)
         }
+        await checkFlownHabits(context: context, today: today, center: center)
+    }
+
+    /// GRAD-3: one gentle nudge when a flown Health habit falls below 50% over 14 days; none again until it holds (≥ 80%).
+    /// The pending nudge survives the rebuild above (different prefix), so a reconcile never cancels it.
+    private static func checkFlownHabits(context: ModelContext, today: DayKey, center: UNUserNotificationCenter) async {
+        let graduated = HabitState.graduated.rawValue
+        let flown = (try? context.fetch(FetchDescriptor<Habit>(predicate: #Predicate { $0.stateRaw == graduated }))) ?? []
+        var nudged = FledgeSettings.slipNudgedHabitIDs
+        for habit in flown where habit.source.isAuto {
+            let since = habit.graduatedAt.map { DayKey($0, dayEndHour: FledgeSettings.dayEndHour) }
+            let rate = HoldingRate.rate(snapshots: habit.logs?.compactMap(\.snapshot) ?? [], today: today, since: since)
+            let id = habit.id.uuidString
+            switch SlipCheck.decide(rate: rate, alreadyNudged: nudged.contains(id)) {
+            case .nudge:
+                await schedule(ReminderPlan.slipNudge(habitID: habit.id, name: habit.name, now: .now), in: center, route: "flown")
+                nudged.insert(id)
+            case .rearm:
+                nudged.remove(id)
+                center.removePendingNotificationRequests(withIdentifiers: [ReminderPlan.slipIdentifierPrefix + id])
+            case .none:
+                break
+            }
+        }
+        // Forget habits that were brought back, deleted or no longer exist.
+        nudged.formIntersection(flown.map(\.id.uuidString))
+        FledgeSettings.slipNudgedHabitIDs = nudged
+    }
+
+    private static func schedule(_ reminder: ReminderPlan.Reminder, in center: UNUserNotificationCenter, route: String? = nil) async {
+        let content = UNMutableNotificationContent()
+        content.title = reminder.title
+        content.body = reminder.body
+        content.sound = .default
+        content.threadIdentifier = reminder.habitID.uuidString
+        if let route { content.userInfo = ["route": route] }
+        let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: reminder.fireDate)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
+        try? await center.add(UNNotificationRequest(identifier: reminder.identifier, content: content, trigger: trigger))
     }
 
     /// "1,800 steps to go." for quantity habits; nil for once-a-day habits.

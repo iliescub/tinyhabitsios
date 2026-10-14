@@ -51,7 +51,7 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - Screenshots of every demo screen × light/dark × default/AX3 + contact sheet: `scripts/screenshots.sh [LABEL] [--no-build]`
   → `Design/review/screens/LABEL/index.html` (builds and boots through the watchdog; shuts the simulator down after).
 - App Store screenshots (iPhone 1320 × 2868; `--ipad` for the 13" set 2064 × 2752; captions in `Design/AppStore/compose.swift`): `scripts/appstore-screenshots.sh [--no-build] [--ipad]`. iPad screens in the harness: `scripts/screenshots.sh LABEL --device "iPad Pro 13-inch (M5)"`.
-- Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|configure|flown|settings|paywall|sharecard|widgets|onboarding[-pick|-health|-reminders]` to open a screen or onboarding step (screenshots). `-FledgePro` forces Pro.
+- Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|configure|flown|settings|paywall|sharecard|widgets|onboarding[-pick|-health|-headstart|-reminders]` to open a screen or onboarding step (screenshots). `-FledgePro` forces Pro.
 - StoreKit testing: the shared scheme uses `Configuration/Fledge.storekit` (run from Xcode; CLI `simctl launch` doesn't load it).
 - Pro rules: `ProPolicy` (free = 1 Health habit); widgets read `ProStatus` from the App Group. Never sell more than 3 slots.
 

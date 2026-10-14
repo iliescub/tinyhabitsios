@@ -8,6 +8,7 @@ Habits are fledglings. Fledge looks after three at a time, does the tracking for
 Most habit apps celebrate the grind. Fledge celebrates **letting go**.
 
 - **Brand idea:** *done becomes flight.* The checkmark is the bird's wing.
+- **Positioning:** Fledge is the habit tracker that lets go (the one claim no competitor makes; `docs/POSITIONING.md`).
 - **Promise:** Three habits. Done for you. Then they fly.
 - **Campaign line (New Year 2027):** This year, fewer habits.
 

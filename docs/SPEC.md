@@ -12,6 +12,12 @@ We relaunch the existing TinyHabits codebase as a **"do less" habit app**. You g
 
 **Name: Fledge.** A habit is "in the nest" while active and "fledged" when it graduates; graduated habits live on the "Flown" shelf. App Store title: *Fledge: Habit Tracker*. Subtitle: *3 habits that track themselves*. Icon: a small bird or feather in the accent colour.
 
+**Positioning (updated 2026-10-14, `docs/POSITIONING.md`): Fledge is the habit tracker that lets go.** A market check found that
+auto-completion from Apple Health (Streaks, Habitify) and a three-habit limit (a common free-tier cap) already exist elsewhere;
+**habits that graduate and leave the tracker** don't. Graduation is the headline; "done for you" and "three" are the proof.
+Research behind it: habits take ~66 days on average (Lally et al.); habit apps can build dependency, and people who drop the app
+often drop the habit (Renfree et al., CHI 2016); reminders support repetition but can hinder automaticity (CHI 2019).
+
 **Why this angle**
 
 - The category is crowded with "track everything" dashboards. A hard limit of 3 plus graduation is a position nobody clearly owns.
@@ -104,7 +110,16 @@ The app has three slots. Each holds one active habit, which moves through four s
 - A habit becomes **ready to graduate** once it has been active for at least 30 days **and** met its cadence in at least 80% of the last 30 days. The app offers graduation; it never forces it.
 - The default suggestion is 66 days, the median time to automaticity in Lally et al. (2010). The 30-day minimum keeps the first win reachable.
 - Graduating frees the slot, plays a celebration and adds the habit to the **Graduates** shelf with its start date, days to graduate and completion rate.
-- Graduated habits keep tracking quietly (auto habits at no cost). If one drops below 50% over 14 days, the app sends a single gentle nudge offering to bring it back to a slot.
+- Graduated habits keep tracking quietly (auto habits at no cost). If one drops below 50% over 14 days, the app sends a single gentle nudge offering to bring it back to a slot. **Built (GRAD-3):** `SlipCheck` + `HoldingRate` in HabitCore; one nudge per slip, re-armed when the habit holds again (≥ 80%); sent between 9:00 and 19:00 (else 10:00 next morning); tapping it opens the Flown shelf. Tap-to-log graduates aren't logged any more, so they're never nudged.
+- **Flight forecast (GRAD-4):** the detail shows "On track to fly around 30 Nov" (or "Keep it going and it can fly around…") — the first day the habit would be ready if it's met every day from now (`FlightForecast`).
+
+### Health head start (HEAD-1, added 2026-10-14)
+
+When a Health habit is added (Add › Configure, or onboarding after connecting Health), Fledge reads the **last 30 days** for that
+metric on the device and shows: the average on days with data, how many of the 30 days met the goal, and one of four verdicts
+(`HealthBaseline`): *not enough data* (< 7 days), *already a habit* (≥ 80% met → "aim higher, or pick something new"), *within reach*
+(≥ 50%), *start smaller* (suggest a goal just above the usual level). Suggestions are opt-in. After the habit is added, those 30 days
+are recorded as "Before Fledge" days: the heatmap shows them faded, while streaks and graduation still count from the start date.
 
 ### Pausing and replacing
 
@@ -409,9 +424,10 @@ Release on December 15 and push hardest from December 26 to January 15, when peo
 
 ### App Store optimisation
 
-- **Title:** `Fledge: Habit Tracker` (30 characters max). **Subtitle:** "3 habits that track themselves".
-- **Keywords to target:** habit tracker, automatic, routine, minimalist, streak, Apple Health, daily goals, new year.
-- **Screenshots in this order:** Lock Screen widget → auto-filled ring → graduation → privacy.
+- **Title:** `Fledge: Habit Tracker` (30 characters max). **Subtitle:** "Habits that stick, then fly" (was "3 habits that track themselves", which describes what Streaks already does).
+- **Promotional text:** "Most habit apps want you forever. Fledge fills in three habits from Apple Health and lets each one go once it sticks, about 66 days on average."
+- **Keywords to target:** habit tracker, apple health, automatic, routine, minimalist, streak, new year, goals, self improvement, 66 days.
+- **Screenshots in this order:** graduation → Today (done for you) → head start → Flown shelf → widgets → privacy (`Design/AppStore/`, `scripts/appstore-screenshots.sh`).
 - **In-app Events:** "New Year, 3 Habits" from Dec 26 to Jan 10, shown on the App Store.
 - **Rating prompt** (`requestReview`) appears only after the 7th completed day or the first graduation, never earlier.
 

@@ -13,7 +13,7 @@ device="iPhone 17"
 bundle="com.smartapps.TinyHabits"
 app="/tmp/fledge-dd/Build/Products/Debug-iphonesimulator/TinyHabits.app"
 raw="/tmp/fledge-appstore-raw"
-screens="today detail graduation onboarding-health widgets flown"
+screens="graduation today configure flown widgets onboarding-health"
 build=1
 ipad=0
 for arg in "$@"; do
@@ -27,8 +27,7 @@ if (( ipad )); then
     device="iPad Pro 13-inch (M5)"
     raw="/tmp/fledge-appstore-raw-ipad"
     out="Design/AppStore/iPad"
-    # On iPad the detail sits beside the nest, so Today already shows it; use the Add sheet instead.
-    screens="today add graduation onboarding-health widgets flown"
+    # Same story on iPad; Today already shows the detail beside the nest.
 fi
 mkdir -p "$out"
 
@@ -53,6 +52,7 @@ for screen in $screens; do
     xcrun simctl launch "$device" "$bundle" "${args[@]}" > /dev/null
     case "$screen" in
         graduation) sleep 9 ;;
+        configure) sleep 9 ;;
         today) sleep 6 ;;
         *) sleep 8 ;;
     esac

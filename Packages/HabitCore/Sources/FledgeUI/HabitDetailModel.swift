@@ -4,7 +4,8 @@ import HabitCore
 /// 12-week × 7-day grid for the habit detail heatmap (docs/DESIGN.md §6.2). Columns are weeks, oldest first.
 public struct HeatmapModel: Equatable, Sendable {
     public enum CellState: Equatable, Sendable {
-        case beforeStart, done, rest, missed, pending, future
+        /// `earlier`: met before the habit started in Fledge (Health head start, HEAD-1); shown faded, never counted.
+        case beforeStart, earlier, done, rest, missed, pending, future
     }
 
     public struct Cell: Identifiable, Equatable, Sendable {
@@ -15,6 +16,8 @@ public struct HeatmapModel: Equatable, Sendable {
     }
 
     public let weeks: [[Cell]]
+    /// True when any cell is `earlier`, so the legend can explain "Before Fledge".
+    public var hasEarlierDays: Bool { weeks.contains { $0.contains { $0.state == .earlier } } }
     /// Month name over the first column of each month ("Jul", "Aug"…), as (column, text).
     public let monthLabels: [MonthLabel]
     /// One label per row; every other row is empty so the column stays light ("M", "", "W", "", "F", "", "").
@@ -65,7 +68,7 @@ public struct HeatmapModel: Equatable, Sendable {
 
     private static func state(for day: DayKey, byDay: [DayKey: EntryStatus], startedOn: DayKey, today: DayKey) -> CellState {
         if day > today { return .future }
-        if day < startedOn { return .beforeStart }
+        if day < startedOn { return byDay[day] == .done ? .earlier : .beforeStart }
         switch byDay[day] {
         case .done: return .done
         case .skipped: return .rest

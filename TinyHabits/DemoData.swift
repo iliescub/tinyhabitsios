@@ -69,9 +69,29 @@ enum DemoData {
             startedAt: calendar.date(byAdding: .day, value: -2, to: .now) ?? .now
         )
         try context.skip(habitID: meditate.id, on: today)
+        // HEAD-1 backfill: the Health days before Meditate started ("Before Fledge" on its heatmap).
+        for offset in 3...30 where offset % 4 != 0 {
+            try context.record(value: 6, habitID: meditate.id, on: today.adding(days: -offset), by: .auto)
+        }
 
     }
 }
+extension DemoData {
+    /// Sample "last 30 days" for the head start (HEAD-1) in screenshots: Move is already a habit, Sleep is within reach,
+    /// everything else starts smaller. Deterministic, so screenshots don't change between runs.
+    static func baselineValues(for source: HabitSourceID) -> [Double] {
+        (0..<30).map { day in
+            let wobble = Double((day * 37) % 11) / 10        // 0.0 … 1.0
+            switch source {
+            case .exerciseMinutes: return day % 9 == 4 ? 12 : 22 + wobble * 14
+            case .sleep: return 6.4 + wobble * 1.1
+            case .steps: return day % 7 == 6 ? 0 : 3_800 + wobble * 2_600
+            default: return day % 3 == 0 ? 0 : 3 + wobble * 4
+            }
+        }
+    }
+}
+
 /// `-FledgeDemoScreen widgets`: every Home Screen widget size with the demo nest, at iPhone widget sizes
 /// (for review and the App Store "widgets" screenshot; the simulator can't screenshot real widgets from the CLI).
 struct WidgetGallery: View {

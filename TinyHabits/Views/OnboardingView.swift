@@ -16,6 +16,9 @@ struct OnboardingView: View {
     @State private var pack: Pack?
     @State private var picked: [Pack.Template] = []
     @State private var healthConnected = false
+    /// HEAD-1: last 30 days per picked Health habit, and the starting goals the user chose from them.
+    @State private var baselines: [String: [Double]] = [:]
+    @State private var startGoals: [String: Double] = [:]
     @State private var remindersOn = false
     @State private var showPaywall = false
     @State private var paywallForLockedTile = false
@@ -207,14 +210,18 @@ struct OnboardingView: View {
                     .font(.subheadline)
                     .foregroundStyle(FledgeTheme.Palette.ink2)
             }
-            VStack(alignment: .leading, spacing: 0) {
-                promiseRow("eye", FledgeTheme.Palette.sky, "Reads only what your habits need", "Nothing else, and never writes")
-                Divider().padding(.leading, 64)
-                promiseRow("lock.fill", FledgeTheme.Palette.meadow, "Stays on your \(DeviceInfo.name)", "No account, no cloud copy of Health data")
-                Divider().padding(.leading, 64)
-                promiseRow("hand.raised.fill", FledgeTheme.Palette.gold, "You choose", "Pick exactly what to share on the next screen")
+            if healthConnected && !baselines.isEmpty {
+                headStartCard
+            } else {
+                VStack(alignment: .leading, spacing: 0) {
+                    promiseRow("eye", FledgeTheme.Palette.sky, "Reads only what your habits need", "Nothing else, and never writes")
+                    Divider().padding(.leading, 64)
+                    promiseRow("lock.fill", FledgeTheme.Palette.meadow, "Stays on your \(DeviceInfo.name)", "No account, no cloud copy of Health data")
+                    Divider().padding(.leading, 64)
+                    promiseRow("hand.raised.fill", FledgeTheme.Palette.gold, "You choose", "Pick exactly what to share on the next screen")
+                }
+                .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
             }
-            .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
             if healthConnected {
                 Label("Connected", systemImage: "checkmark.circle.fill")
                     .font(.headline)
@@ -223,6 +230,61 @@ struct OnboardingView: View {
             Spacer()
         }
         .padding(.horizontal, FledgeTheme.screenMargin)
+    }
+
+    /// HEAD-1 in onboarding: what the last 30 days say about each picked Health habit.
+    private var headStartCard: some View {
+        VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
+            Text("Your head start").fledgeEyebrow()
+            VStack(spacing: 0) {
+                ForEach(Array(pickedAuto.enumerated()), id: \.element.name) { index, template in
+                    if let values = baselines[template.name] {
+                        headStartRow(template, values: values)
+                        if index < pickedAuto.count - 1 { Divider().padding(.leading, 64) }
+                    }
+                }
+            }
+            .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
+        }
+    }
+
+    private func headStartRow(_ template: Pack.Template, values: [Double]) -> some View {
+        let baseline = HealthBaseline(
+            values: values, target: template.target,
+            step: TargetSteps.step(for: template.unit), range: TargetSteps.range(for: template.unit)
+        )
+        let chosen = startGoals[template.name]
+        let average = baseline.average.formatted(.number.precision(.fractionLength(baseline.average < 10 ? 0...1 : 0...0)))
+        let summary: String = switch baseline.verdict {
+        case .notEnoughData: "Not much data yet. Fledge fills it in from today."
+        case .alreadyHabit: "Already a habit: \(baseline.daysMet) of 30 days. Aim higher, or swap it."
+        case .withinReach: "Within reach: \(baseline.daysMet) of 30 days at your goal."
+        case .startSmaller: "Usually about \(average) \(template.unit). Start a little lower."
+        }
+        return HStack(spacing: FledgeTheme.Space.m) {
+            IconSquare(symbol: template.symbol, color: FledgeTheme.habitColor(colorKey(for: template)))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(template.name).font(.body.weight(.semibold)).foregroundStyle(FledgeTheme.Palette.ink)
+                Text(summary).font(.footnote).foregroundStyle(FledgeTheme.Palette.ink2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            if let suggested = baseline.suggestedTarget {
+                let label = suggested.formatted(.number.precision(.fractionLength(suggested < 10 ? 0...1 : 0...0)))
+                Button {
+                    startGoals[template.name] = chosen == nil ? suggested : nil
+                } label: {
+                    Label(label, systemImage: chosen == nil ? "plus.circle" : "checkmark.circle.fill")
+                        .font(.footnote.weight(.semibold))
+                        .monospacedDigit()
+                }
+                .buttonStyle(.bordered)
+                .tint(chosen == nil ? FledgeTheme.Palette.ink2 : FledgeTheme.Palette.meadow)
+                .accessibilityLabel(Text(chosen == nil ? "Use \(label) \(template.unit) as the goal" : "Using \(label) \(template.unit)"))
+            }
+        }
+        .padding(.horizontal, FledgeTheme.Space.l)
+        .padding(.vertical, FledgeTheme.Space.m)
+        .accessibilityElement(children: .contain)
     }
 
     private func promiseRow(_ symbol: String, _ color: Color, _ title: String, _ detail: String) -> some View {
@@ -367,8 +429,14 @@ struct OnboardingView: View {
         for template in pickedAuto {
             _ = await HealthSync.shared?.prepare(source: template.source, unit: template.unit)
         }
+        // HEAD-1: stay on this step to show the head start; without any data, move on as before.
+        for template in pickedAuto {
+            if let values = await HeadStart.values(source: template.source, unit: template.unit) {
+                baselines[template.name] = values
+            }
+        }
         healthConnected = true
-        step = .reminders
+        if baselines.isEmpty { step = .reminders }
     }
 
     /// Each pick keeps its template colour unless an earlier pick took it (`TemplateStyle.preferredColorKey`).
@@ -391,12 +459,17 @@ struct OnboardingView: View {
     }
 
     private func createHabits() {
+        var added: [Habit] = []
         for (template, colorKey) in zip(picked, pickedColorKeys) {
             var draft = HabitDraft(template: template, colorKey: colorKey, packID: pack?.id ?? "essentials")
             if remindersOn { draft.reminderMinutes = 19 * 60 }
-            _ = try? context.addHabit(draft: draft)
+            if let goal = startGoals[template.name] { draft.target = goal }
+            if let habit = try? context.addHabit(draft: draft) { added.append(habit) }
         }
         AppRefresh.afterWrite(context: context, structural: true)
+        Task {
+            for habit in added { await HeadStart.backfill(habit) }
+        }
     }
 
     private func paywallDismissed() {
@@ -412,6 +485,13 @@ struct OnboardingView: View {
         switch screen {
         case "onboarding-pick": step = .pick
         case "onboarding-health": step = .health
+        case "onboarding-headstart":
+            picked = pack.templates.filter { ["Walk", "Read", "Move"].contains($0.name) }
+            for template in picked where template.source.isAuto {
+                baselines[template.name] = DemoData.baselineValues(for: template.source)
+            }
+            healthConnected = true
+            step = .health
         case "onboarding-reminders": step = .reminders
         default: break
         }

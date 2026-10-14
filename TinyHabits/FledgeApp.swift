@@ -33,6 +33,7 @@ final class AppModel {
     init() {
         container = Self.makeContainer()
         Purchases.shared.start()
+        NotificationRouter.shared.start()
         seenExternalWrite = FledgeSettings.lastExternalWrite ?? .distantPast
         #if DEBUG
         if DemoData.isEnabled { return } // keep demo values; don't touch Health

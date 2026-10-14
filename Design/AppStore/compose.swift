@@ -18,13 +18,12 @@ let ink2 = NSColor(srgbRed: 0x5B / 255.0, green: 0x62 / 255.0, blue: 0x80 / 255.
 
 /// (file, headline, subline)
 let shots: [(String, String, String)] = [
+    ("graduation", "When a habit sticks,\nit flies.", "Most habit apps want you forever. Fledge lets go after about 66 days."),
     ("today", "Three habits.\nDone for you.", "Fledge fills them in from Apple Health."),
-    ("detail", "Walk logs itself.", "Steps, sleep, mindful minutes and more, straight from Apple Health."),
-    ("add", "Start with what\nApple Health knows.", "Walk, sleep, mindful minutes and more fill in by themselves."),
-    ("graduation", "When a habit sticks,\nit flies.", "Graduate it after 30 strong days and free the slot."),
-    ("onboarding-health", "No account.\nYour data stays put.", "Health data never leaves your \(device)."),
+    ("configure", "Starts from\nyour own data.", "Your last 30 days from Apple Health, and a goal you can win."),
+    ("flown", "See what stuck.", "Flown habits keep tracking quietly. If one slips, you hear once."),
     ("widgets", "Check in without\nopening the app.", isPad ? "Widgets for the Home Screen and the Lock Screen." : "Widgets for the Home Screen, Lock Screen and StandBy."),
-    ("flown", "See what stuck.", "Flown habits keep tracking quietly, on their own."),
+    ("onboarding-health", "No account.\nYour data stays put.", "Health data never leaves your \(device)."),
 ]
 
 func roundedFont(_ size: CGFloat, _ weight: NSFont.Weight) -> NSFont {
