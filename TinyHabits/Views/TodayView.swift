@@ -21,6 +21,7 @@ struct TodayView: View {
     @State private var errorMessage: String?
     #if DEBUG
     @State private var shareCardHabit: Habit?
+    @State private var showsWidgetGallery = false
     #endif
     @Environment(\.requestReview) private var requestReview
     @AppStorage("reviewRequested") private var reviewRequested = false
@@ -102,6 +103,9 @@ struct TodayView: View {
                     )
                 )
                 .presentationDetents([.large])
+            }
+            .fullScreenCover(isPresented: $showsWidgetGallery) {
+                WidgetGallery(snapshot: NestSnapshot(context: context, day: day))
             }
             #endif
             .fullScreenCover(item: $graduatingHabit) { habit in
@@ -308,6 +312,7 @@ struct TodayView: View {
         case "settings": sheet = .settings
         case "paywall": sheet = .paywall
         case "sharecard": shareCardHabit = first
+        case "widgets": showsWidgetGallery = true
         default: break
         }
     }

@@ -239,7 +239,7 @@ struct ColorRow: View {
                         .frame(maxWidth: .infinity, minHeight: 40)
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel(key)
+                .accessibilityLabel(Text(FledgeTheme.habitColorName(key)))
                 .accessibilityAddTraits(key == selection ? .isSelected : [])
             }
         }

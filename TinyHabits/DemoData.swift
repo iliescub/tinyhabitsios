@@ -1,7 +1,9 @@
 #if DEBUG
 import Foundation
 import SwiftData
+import SwiftUI
 import HabitCore
+import FledgeUI
 
 /// Launch with `-FledgeDemoData` to run on an in-memory store with sample habits (never touches real data).
 enum DemoData {
@@ -68,6 +70,84 @@ enum DemoData {
         )
         try context.skip(habitID: meditate.id, on: today)
 
+    }
+}
+/// `-FledgeDemoScreen widgets`: every Home Screen widget size with the demo nest, at iPhone widget sizes
+/// (for review and the App Store "widgets" screenshot; the simulator can't screenshot real widgets from the CLI).
+struct WidgetGallery: View {
+    let snapshot: NestSnapshot
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 22) {
+                HStack(spacing: 22) {
+                    tile(.small, width: 170, height: 170)
+                    lockScreen
+                }
+                tile(.medium, width: 362, height: 170)
+                tile(.large, width: 362, height: 382)
+            }
+            .padding(.vertical, 24)
+            .frame(maxWidth: .infinity)
+        }
+        .background(
+            LinearGradient(colors: [Color(red: 0.36, green: 0.55, blue: 0.95), Color(red: 0.98, green: 0.72, blue: 0.6)], startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+        )
+    }
+
+    /// A Lock Screen with the rectangular nest widget: three mini rings and the one-line summary.
+    private var lockScreen: some View {
+        VStack(spacing: 6) {
+            Text(snapshot.day.date().formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
+                .font(.system(size: 11, weight: .semibold))
+            Text("9:41")
+                .font(.system(size: 52, weight: .semibold, design: .rounded))
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 5) {
+                    ForEach(snapshot.items.prefix(3)) { item in
+                        HabitRing(
+                            fraction: item.card.progress.fraction, status: item.card.progress.status,
+                            color: .white, symbol: item.card.symbol, size: 24, lineWidth: 3
+                        )
+                    }
+                }
+                Text(snapshot.inlineText)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .padding(8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.white.opacity(0.18), in: .rect(cornerRadius: 12, style: .continuous))
+        }
+        .foregroundStyle(.white)
+        .padding(14)
+        .frame(width: 170, height: 170)
+        .background(
+            LinearGradient(colors: [Color(red: 0.12, green: 0.16, blue: 0.36), Color(red: 0.3, green: 0.36, blue: 0.7)], startPoint: .top, endPoint: .bottom)
+        )
+        .clipShape(.rect(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.15), radius: 10, y: 4)
+    }
+
+    private func tile(_ family: NestWidgetContent<HabitRing>.Family, width: CGFloat, height: CGFloat, pro: Bool = true, empty: Bool = false) -> some View {
+        NestWidgetContent(
+            family: family,
+            snapshot: empty ? NestSnapshot(day: snapshot.day, items: []) : snapshot,
+            date: .now,
+            isPro: pro
+        ) { item, size, lineWidth in
+            HabitRing(
+                fraction: item.card.progress.fraction, status: item.card.progress.status,
+                color: FledgeTheme.habitColor(item.card.colorKey), symbol: item.card.symbol, size: size, lineWidth: lineWidth
+            )
+        }
+        .padding(16)
+        .frame(width: width, height: height, alignment: family == .small ? .center : .topLeading)
+        .background(NestWidgetBackground())
+        .clipShape(.rect(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.15), radius: 10, y: 4)
     }
 }
 #endif

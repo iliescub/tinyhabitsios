@@ -14,7 +14,7 @@ cd "$(dirname "$0")/.."
 label=""
 build=1
 keep=0
-screens="today detail add configure flown settings paywall onboarding onboarding-pick onboarding-health onboarding-reminders graduation sharecard"
+screens="today detail add configure flown settings paywall onboarding onboarding-pick onboarding-health onboarding-reminders graduation sharecard widgets"
 sizes="default ax3"
 device="iPhone 17"
 bundle="com.smartapps.TinyHabits"
@@ -48,6 +48,7 @@ xcrun simctl status_bar "$device" override --time 9:41 --batteryState charged --
 content_size() {
     case "$1" in
         ax3) echo "accessibility-extra-large" ;;
+        ax5) echo "accessibility-extra-extra-extra-large" ;;
         *) echo "large" ;;
     esac
 }

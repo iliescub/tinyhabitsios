@@ -20,6 +20,7 @@ struct PaywallView: View {
     }
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query private var activeHabits: [Habit]
     @State private var purchases = Purchases.shared
     @State private var loadState: LoadState = .loading
@@ -151,7 +152,7 @@ struct PaywallView: View {
                         Label("Connecting to the App Store…", systemImage: "arrow.triangle.2.circlepath")
                             .font(.footnote)
                             .foregroundStyle(FledgeTheme.Palette.ink2)
-                            .symbolEffect(.rotate, isActive: true)
+                            .symbolEffect(.rotate, isActive: !reduceMotion)
                     } else {
                         Label("The App Store can't be reached right now.", systemImage: "wifi.exclamationmark")
                             .font(.subheadline.weight(.semibold))

@@ -68,12 +68,19 @@ struct HabitCardView: View {
         return layout {
             ringButton
             VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
-                HStack(alignment: .firstTextBaseline, spacing: FledgeTheme.Space.s) {
+                if dynamicTypeSize.isAccessibilitySize {
                     Text(model.name)
                         .font(.headline)
                         .foregroundStyle(FledgeTheme.Palette.ink)
-                    Spacer(minLength: 0)
                     sourceMeta
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: FledgeTheme.Space.s) {
+                        Text(model.name)
+                            .font(.headline)
+                            .foregroundStyle(FledgeTheme.Palette.ink)
+                        Spacer(minLength: 0)
+                        sourceMeta
+                    }
                 }
                 ValueLine(model: model)
                 if showsNoDataHint {
@@ -189,9 +196,14 @@ struct HabitCardView: View {
 struct ValueLine: View {
     let model: HabitCardModel
     var large = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: FledgeTheme.Space.xs) {
+        // At accessibility sizes the goal wraps under the number instead of being cut off.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: FledgeTheme.Space.xs))
+        layout {
             Text(model.metricText)
                 .font(metricFont)
                 .foregroundStyle(model.progress.status == .skipped ? FledgeTheme.Palette.ink2 : FledgeTheme.Palette.ink)
@@ -204,7 +216,7 @@ struct ValueLine: View {
                     .foregroundStyle(FledgeTheme.Palette.ink2)
             }
         }
-        .lineLimit(1)
+        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
         .minimumScaleFactor(0.8)
         .animation(.snappy, value: model.metricText)
     }

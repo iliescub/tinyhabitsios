@@ -79,6 +79,21 @@ public enum FledgeTheme {
         habitColorKeys.indices.contains(slot) ? habitColorKeys[slot] : "sky"
     }
 
+    /// What VoiceOver says for a habit colour.
+    public static func habitColorName(_ key: String) -> String {
+        switch key {
+        case "dawn": "Coral"
+        case "sky": "Blue"
+        case "meadow": "Green"
+        case "gold": "Gold"
+        case "lilac": "Lilac"
+        case "teal": "Teal"
+        case "rose": "Pink"
+        case "slate": "Slate grey"
+        default: key.capitalized
+        }
+    }
+
     public static func habitColor(_ key: String) -> Color {
         switch key {
         case "dawn": Palette.dawn

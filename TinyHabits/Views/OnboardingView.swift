@@ -9,6 +9,8 @@ struct OnboardingView: View {
     let onFinish: () -> Void
 
     @Environment(\.modelContext) private var context
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var step: Step = .promise
     @State private var goingBack = false
     @State private var pack: Pack?
@@ -30,7 +32,7 @@ struct OnboardingView: View {
                 topBar
                 content
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .transition(.asymmetric(
+                    .transition(reduceMotion ? .opacity : .asymmetric(
                         insertion: .move(edge: goingBack ? .leading : .trailing).combined(with: .opacity),
                         removal: .opacity
                     ))
@@ -276,15 +278,19 @@ struct OnboardingView: View {
         HStack(spacing: FledgeTheme.Space.m) {
             NestGlyph(rings: pickedColors.map { NestGlyph.Ring(fraction: 1, status: .done, color: $0) })
                 .frame(width: 34, height: 34)
-            Text(picked.isEmpty ? "Nothing chosen yet" : "\(picked.count) of \(SlotPolicy.maxActive) chosen")
+            Text(summaryText)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(FledgeTheme.Palette.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
                 .contentTransition(.numericText())
             Spacer(minLength: 0)
-            Text(picked.map(\.name).formatted(.list(type: .and)))
-                .font(.footnote)
-                .foregroundStyle(FledgeTheme.Palette.ink2)
-                .lineLimit(1)
+            if !dynamicTypeSize.isAccessibilitySize {
+                Text(picked.map(\.name).formatted(.list(type: .and)))
+                    .font(.footnote)
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+                    .lineLimit(1)
+            }
         }
         .padding(.horizontal, FledgeTheme.Space.l)
         .padding(.vertical, FledgeTheme.Space.m)
@@ -292,6 +298,12 @@ struct OnboardingView: View {
         .padding(.horizontal, FledgeTheme.screenMargin)
         .animation(.snappy, value: picked.count)
         .accessibilityElement(children: .combine)
+    }
+
+    /// "2 of 3 chosen"; just "2/3" at accessibility sizes, where the bar must stay one line.
+    private var summaryText: String {
+        if dynamicTypeSize.isAccessibilitySize { return "\(picked.count)/\(SlotPolicy.maxActive)" }
+        return picked.isEmpty ? "Nothing chosen yet" : "\(picked.count) of \(SlotPolicy.maxActive) chosen"
     }
 
     private var visibleSteps: [Step] {

@@ -25,6 +25,8 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 
 ## UI/UX redesign — Oct 15 → Nov 29 (proposal)
 Plan, diagnosis and tickets UX-1…UX-19: `docs/UI-REDESIGN.md` · mockups: `Design/review/redesign-plan.html`.
+- [x] **UX-1…UX-19** ✅ All five phases done 2026-10-14 (commits on `relaunch/v1`). Brand v2 "First flight" + new icon: `docs/BRAND.md`.
+  Screens per phase in `Design/review/screens/`; App Store images (6 of 8 planned) in `Design/AppStore/` — feeds **REL-2**.
 
 ## Design — Oct 11 → Oct 25 (parallel to M0; mockups run in Claude cloud)
 - [x] **DES-0** ✅ Research, marketing theme "Leave the nest", brand palette (contrast-checked), typography, full screen/widget spec → `docs/DESIGN.md`

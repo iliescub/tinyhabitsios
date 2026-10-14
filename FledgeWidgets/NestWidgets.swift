@@ -12,7 +12,7 @@ struct NestWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: Self.kind, provider: NestProvider()) { entry in
             NestWidgetView(entry: entry)
-                .containerBackground(for: .widget) { WidgetBackground() }
+                .containerBackground(for: .widget) { NestWidgetBackground() }
         }
         .configurationDisplayName("Your nest")
         .description("Today's three habits. Tap a ring to mark a tap-to-log habit done.")
@@ -25,90 +25,16 @@ struct NestWidgetView: View {
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        if entry.snapshot.items.isEmpty {
-            EmptyNestView()
-        } else if family != .systemSmall && !entry.isPro {
-            ProWidgetView()
-        } else {
-            switch family {
-            case .systemSmall: SmallNestView(snapshot: entry.snapshot)
-            case .systemLarge: LargeNestView(snapshot: entry.snapshot, date: entry.date)
-            default: MediumNestView(snapshot: entry.snapshot, date: entry.date)
-            }
+        NestWidgetContent(family: contentFamily, snapshot: entry.snapshot, date: entry.date, isPro: entry.isPro) { item, size, lineWidth in
+            RingButton(item: item, size: size, lineWidth: lineWidth)
         }
     }
-}
 
-/// Three rings arranged as a nest, count in the middle.
-struct SmallNestView: View {
-    let snapshot: NestSnapshot
-
-    var body: some View {
-        let items = Array(snapshot.items.prefix(3))
-        VStack(spacing: 6) {
-            HStack(spacing: 10) {
-                ForEach(items.prefix(2)) { RingButton(item: $0, size: 52) }
-            }
-            HStack(spacing: 10) {
-                if items.count == 3 { RingButton(item: items[2], size: 52) }
-                Text(snapshot.countText)
-                    .font(.title3.bold().monospacedDigit())
-                    .fontDesign(.rounded)
-                    .foregroundStyle(FledgeTheme.Palette.ink)
-                    .frame(width: 52)
-            }
-        }
-    }
-}
-
-struct MediumNestView: View {
-    let snapshot: NestSnapshot
-    let date: Date
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(snapshot.items.prefix(3)) { item in
-                HStack(spacing: 10) {
-                    RingButton(item: item, size: 30, lineWidth: 4)
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(item.card.name).font(.subheadline.weight(.semibold)).foregroundStyle(FledgeTheme.Palette.ink)
-                        Text(item.card.valueText).font(.caption.monospacedDigit()).foregroundStyle(FledgeTheme.Palette.ink2)
-                    }
-                    Spacer(minLength: 0)
-                    if item.card.isAuto {
-                        Image(systemName: "heart.fill").font(.caption2).foregroundStyle(FledgeTheme.Palette.skyText)
-                    }
-                }
-            }
-            Spacer(minLength: 0)
-            FreshnessLabel(snapshot: snapshot, now: date)
-        }
-    }
-}
-
-struct LargeNestView: View {
-    let snapshot: NestSnapshot
-    let date: Date
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(snapshot.day.date().formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
-                .font(.headline)
-                .fontDesign(.rounded)
-                .foregroundStyle(FledgeTheme.Palette.ink)
-            ForEach(snapshot.items.prefix(3)) { item in
-                HStack(spacing: 14) {
-                    RingButton(item: item, size: 56, lineWidth: 7)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(item.card.name).font(.headline).foregroundStyle(FledgeTheme.Palette.ink)
-                        Text(item.card.valueText).font(.subheadline.monospacedDigit()).foregroundStyle(FledgeTheme.Palette.ink2)
-                        Text(item.card.flightText).font(.caption).foregroundStyle(FledgeTheme.Palette.ink2)
-                    }
-                    Spacer(minLength: 0)
-                }
-            }
-            Spacer(minLength: 0)
-            FreshnessLabel(snapshot: snapshot, now: date)
+    private var contentFamily: NestWidgetContent<RingButton>.Family {
+        switch family {
+        case .systemSmall: .small
+        case .systemLarge: .large
+        default: .medium
         }
     }
 }
@@ -130,64 +56,16 @@ struct RingButton: View {
         )
         if item.card.isAuto {
             ring
+                .accessibilityElement()
+                .accessibilityLabel(Text("\(item.card.name), \(item.card.valueText), from Apple Health"))
         } else {
             Button(intent: ToggleHabitIntent(habit: HabitEntity(id: item.id, name: item.card.name, symbol: item.card.symbol))) {
                 ring
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text("\(item.card.name), \(item.card.valueText)"))
+            .accessibilityHint(Text(item.card.progress.status == .done ? "Marks it not done" : "Marks it done"))
         }
-    }
-}
-
-/// "updated 14 min ago" when Health data is older than 30 minutes.
-struct FreshnessLabel: View {
-    let snapshot: NestSnapshot
-    let now: Date
-
-    var body: some View {
-        if let updated = snapshot.oldestHealthUpdate, now.timeIntervalSince(updated) > 30 * 60 {
-            Text("Health updated \(updated, style: .relative) ago")
-                .font(.caption2)
-                .foregroundStyle(FledgeTheme.Palette.ink2)
-        }
-    }
-}
-
-/// Shown in Pro-only widget slots for free users; tapping opens the app.
-struct ProWidgetView: View {
-    var body: some View {
-        VStack(spacing: 6) {
-            FledgeBird(style: .tinted(FledgeTheme.Palette.sky)).frame(height: 30)
-            Text("Fledge Pro")
-                .font(.caption.bold())
-                .foregroundStyle(FledgeTheme.Palette.ink)
-            Text("Unlock in the app")
-                .font(.caption2)
-                .foregroundStyle(FledgeTheme.Palette.ink2)
-        }
-    }
-}
-
-struct EmptyNestView: View {
-    var body: some View {
-        VStack(spacing: 6) {
-            FledgeBird(.peeking, style: .glyph).foregroundStyle(FledgeTheme.Palette.sky).frame(height: 32)
-            Text("Add a habit in Fledge")
-                .font(.caption)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(FledgeTheme.Palette.ink2)
-        }
-    }
-}
-
-struct WidgetBackground: View {
-    var body: some View {
-        LinearGradient(
-            colors: [FledgeTheme.Palette.sky.opacity(0.10), FledgeTheme.Palette.card],
-            startPoint: .top,
-            endPoint: .center
-        )
-        .background(FledgeTheme.Palette.card)
     }
 }
 

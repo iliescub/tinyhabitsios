@@ -83,10 +83,17 @@ DEBUG: `-FledgeDemoScreen sharecard`; demo data has a Health graduate (Drink wat
 - [x] **UX-15** ✅ Paywall: personalised headline, free-vs-Pro table, trial timeline, loading skeleton
 - [x] **UX-16** ✅ Settings: Pro card, icon squares, Restore moved into About
 
-### Phase 5: surfaces and QA (Nov 23–29, 1.5d)
-- [ ] **UX-17** Widgets: ring v2, badges, bird in empty/all-done states
-- [ ] **UX-18** Accessibility pass: VoiceOver for new elements, AX5, contrast of the ink CTA, Reduce Motion/Transparency
-- [ ] **UX-19** Regenerate App Store screenshots from the harness (feeds REL-2)
+### Phase 5: surfaces and QA (Nov 23–29, 1.5d) — ✅ done 2026-10-14
+Notes: widget content lives in FledgeUI (`NestWidgetContent`, ring supplied by the caller) so the app can render a DEBUG
+gallery (`-FledgeDemoScreen widgets`). Accessibility pass: WCAG contrast computed for every new pairing (all text ≥ 4.5:1 in
+both themes; lowest is ink2 on the dark done wash at 4.79:1); widget rings now have VoiceOver labels (they were unlabeled
+since 0.1); onboarding slides become fades under Reduce Motion; colour swatches have spoken names; values and card
+meta wrap at AX sizes (checked at AX5). App Store set: `scripts/appstore-screenshots.sh` → `Design/AppStore/01…06-*.png`
+(1320 × 2868). Still needs a device: the Lock Screen and Siri/Control Center shots (DESIGN.md §9, 1 and 6), a VoiceOver
+walk-through (POL-1), and the paywall with live StoreKit products.
+- [x] **UX-17** ✅ Widgets: ring v2, badges, bird in empty/all-done states
+- [x] **UX-18** ✅ Accessibility pass: VoiceOver for new elements, AX5, contrast of the ink CTA, Reduce Motion/Transparency
+- [x] **UX-19** ✅ Regenerate App Store screenshots from the harness (feeds REL-2)
 
 Cut order if late: UX-13 → UX-14 sparkline → UX-11 animation polish. Never cut: UX-2, UX-5/6, UX-15.
 
