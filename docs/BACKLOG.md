@@ -23,6 +23,9 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 
 **How to ship the next build:** bump `CURRENT_PROJECT_VERSION` (build number) in both targets, then see `CLAUDE.md` › Release.
 
+## UI/UX redesign — Oct 15 → Nov 29 (proposal)
+Plan, diagnosis and tickets UX-1…UX-19: `docs/UI-REDESIGN.md` · mockups: `Design/review/redesign-plan.html`.
+
 ## Design — Oct 11 → Oct 25 (parallel to M0; mockups run in Claude cloud)
 - [x] **DES-0** ✅ Research, marketing theme "Leave the nest", brand palette (contrast-checked), typography, full screen/widget spec → `docs/DESIGN.md`
 - [x] **DES-2a** ✅ Icon concept: fledgling with checkmark wing; SVG + 1024 PNG + dark/tinted + two layers (`Design/Icon/`)

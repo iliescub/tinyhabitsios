@@ -1,20 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Fledge app icon. Two layers for Icon Composer: #background and #bird. Geometry matches render-icon.swift. -->
+  <!-- Fledge app icon, brand concept "First flight" (docs/BRAND.md). Layers for Icon Composer: #background, #bird, #wing.
+       Geometry matches render-icon.swift (mark space centred at 549,470, scaled 1.06). -->
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4F8DFF"/>
-      <stop offset="0.6" stop-color="#9CC4FF"/>
-      <stop offset="1" stop-color="#FFD2AE"/>
+      <stop offset="0" stop-color="#4A86FF"/>
+      <stop offset="0.5" stop-color="#8DB6FF"/>
+      <stop offset="1" stop-color="#FFC7A1"/>
     </linearGradient>
   </defs>
   <g id="background">
     <rect width="1024" height="1024" fill="url(#sky)"/>
   </g>
-  <g id="bird" transform="translate(-28 0)">
-    <ellipse cx="520" cy="314" rx="22" ry="48" transform="rotate(20 520 318)" fill="#FFFFFF"/>
-    <circle cx="512" cy="550" r="250" fill="#FFFFFF"/>
-    <polygon points="748,478 840,514 748,550" fill="#FFB13D"/>
-    <circle cx="666" cy="450" r="26" fill="#1B2240"/>
-    <polyline points="360,588 456,680 612,548" fill="none" stroke="#FF6A52" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(512 512) scale(1.06) translate(-549 -470)">
+    <g id="bird">
+      <circle cx="548" cy="470" r="214" fill="#FFFFFF"/>
+      <polygon points="356,404 256,436 356,468" fill="#FFB13D"/>
+      <circle cx="430" cy="404" r="23" fill="#1B2240"/>
+    </g>
+    <g id="wing">
+      <polyline points="478,522 558,598 810,300" fill="none" stroke="#FF5F45" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
   </g>
 </svg>

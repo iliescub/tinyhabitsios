@@ -40,10 +40,14 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - No guilt UI: no red failure states, no points/coins. Every animation has a Reduce Motion variant; Dynamic Type to AX5.
 
 ## Commands
+- **Run every long command through the watchdog** (`scripts/watchdog.sh`): it kills the whole process tree on a hard timeout (exit 124)
+  or when output stalls (exit 125) and prints the log tail, so a hung build never blocks the session. Don't pass `-quiet` to
+  xcodebuild under the watchdog (no output looks like a stall). Full log path is printed at the end.
 - Tests (build dir outside Documents, which is iCloud-synced and breaks codesign with xattrs):
-  `cd Packages/HabitCore && swift test --scratch-path /tmp/habitcore-build`
+  `scripts/watchdog.sh --timeout 600 --idle 180 --name tests -- swift test --package-path Packages/HabitCore --scratch-path /tmp/habitcore-build`
 - App: open `TinyHabits.xcodeproj`, scheme `TinyHabits` (app display name "Fledge").
-- CLI build (DerivedData outside Documents): `xcodebuild -project TinyHabits.xcodeproj -scheme TinyHabits -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/fledge-dd build`
+- CLI build (DerivedData outside Documents): `scripts/watchdog.sh --timeout 900 --idle 300 --name build -- xcodebuild -project TinyHabits.xcodeproj -scheme TinyHabits -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/fledge-dd build`
+- Simulator steps (boot, install, screenshots) also go through the watchdog with `--timeout 180`; shut the simulator down when done (`xcrun simctl shutdown all`).
 - Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|flown|settings|paywall|onboarding` to open a screen (screenshots). `-FledgePro` forces Pro.
 - StoreKit testing: the shared scheme uses `Configuration/Fledge.storekit` (run from Xcode; CLI `simctl launch` doesn't load it).
 - Pro rules: `ProPolicy` (free = 1 Health habit); widgets read `ProStatus` from the App Group. Never sell more than 3 slots.
@@ -53,8 +57,8 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - Signing: **Xcode cloud signing** (automatic). No local distribution certificate — don't create one (it triggers keychain password prompts).
 - Before each upload bump `CURRENT_PROJECT_VERSION` in both targets (app + widget must match).
 - Archive + upload from CLI (Xcode must be signed in to the Apple ID):
-  `xcodebuild archive -project TinyHabits.xcodeproj -scheme TinyHabits -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/Fledge.xcarchive -allowProvisioningUpdates`
-  `xcodebuild -exportArchive -archivePath /tmp/Fledge.xcarchive -exportPath /tmp/fledge-export -exportOptionsPlist Configuration/ExportOptions-AppStore.plist -allowProvisioningUpdates`
+  `scripts/watchdog.sh --timeout 1800 --idle 600 --name archive -- xcodebuild archive -project TinyHabits.xcodeproj -scheme TinyHabits -configuration Release -destination 'generic/platform=iOS' -archivePath /tmp/Fledge.xcarchive -allowProvisioningUpdates`
+  `scripts/watchdog.sh --timeout 900 --idle 600 --name export -- xcodebuild -exportArchive -archivePath /tmp/Fledge.xcarchive -exportPath /tmp/fledge-export -exportOptionsPlist Configuration/ExportOptions-AppStore.plist -allowProvisioningUpdates`
 - Or in Xcode: Product › Archive › Distribute App › App Store Connect › Upload.
 - App Store Connect API key: `~/APIkeys/appstoreconnect/AuthKey_YLSMVZ7F79.p8` (issuer ID in the .rtf next to it). Never print files from `~/APIkeys`; reference paths only.
 - Required for validation (already set): privacy manifests (`PrivacyInfo.xcprivacy` in app + widget), `ITSAppUsesNonExemptEncryption = NO`, `NSHealthShareUsageDescription` and `NSHealthUpdateUsageDescription`.

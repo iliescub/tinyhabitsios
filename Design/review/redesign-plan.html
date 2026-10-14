@@ -1,0 +1,625 @@
+<title>Fledge Redesign Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column for the plan; mockups break out into a wrapping grid of phone frames. */
+:root {
+  --cloud: #F7F5F2; --card: #FFFFFF; --ink: #1B2240; --ink2: #5B6280; --hair: #E6E2DC;
+  --sky: #4F8DFF; --skyText: #2563D6; --dawn: #FF5F45; --gold: #D0830E; --meadow: #2CA874; --lilac: #8E7CF0;
+  --skyTop: #DCE9FF; --dawnTop: #FFE2CF; --page: #FBFAF8; --shadow: 0 1px 2px rgba(27,34,64,.05), 0 6px 18px rgba(27,34,64,.06);
+  --btn: #1B2240; --btnText: #FFFFFF; --frame: #1B2240; --bad: #B4471F;
+  --display: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+  --body: -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --cloud: #0E1120; --card: #191D33; --ink: #E9ECF8; --ink2: #A3A9C2; --hair: #2A2F4A;
+  --sky: #6FA3FF; --skyText: #8DB6FF; --dawn: #FF8169; --gold: #FFC15E; --meadow: #4CCB94; --lilac: #A595F5;
+  --skyTop: #1B2240; --dawnTop: #2A2546; --page: #0B0E1A; --shadow: 0 0 0 1px #2A2F4A;
+  --btn: #E9ECF8; --btnText: #1B2240; --frame: #2A2F4A; --bad: #FF9C7A; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --cloud: #0E1120; --card: #191D33; --ink: #E9ECF8; --ink2: #A3A9C2; --hair: #2A2F4A;
+  --sky: #6FA3FF; --skyText: #8DB6FF; --dawn: #FF8169; --gold: #FFC15E; --meadow: #4CCB94; --lilac: #A595F5;
+  --skyTop: #1B2240; --dawnTop: #2A2546; --page: #0B0E1A; --shadow: 0 0 0 1px #2A2F4A;
+  --btn: #E9ECF8; --btnText: #1B2240; --frame: #2A2F4A; --bad: #FF9C7A; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--page); color: var(--ink); font: 16px/1.6 var(--body); padding-inline: 20px; padding-block: 0 64px }
+.wrap { max-width: 760px; margin: 0 auto }
+.wide { max-width: 1180px; margin: 0 auto }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0 }
+h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; letter-spacing: -.02em }
+h2 { font-size: 1.6rem; font-weight: 800; margin-top: 3.5rem; margin-bottom: .75rem }
+h3 { font-size: 1.1rem; font-weight: 700; margin-top: 1.75rem; margin-bottom: .4rem }
+p { margin: .6rem 0 }
+.eyebrow { font: 600 .75rem/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--ink2) }
+.lede { font-size: 1.15rem; color: var(--ink2); max-width: 62ch }
+.muted { color: var(--ink2) }
+a { color: var(--skyText) }
+code { font: .88em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--hair); padding: .1em .35em; border-radius: 5px }
+
+header.hero { padding-block: 56px 8px; display: grid; gap: 14px }
+.hero-row { display: flex; align-items: center; gap: 16px }
+.hero-row svg { width: 64px; height: 64px; flex: none }
+.facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 10px }
+.facts div { display: grid }
+.facts b { font: 800 1.5rem/1.1 var(--display); font-variant-numeric: tabular-nums }
+.facts span { font-size: .82rem; color: var(--ink2) }
+
+/* current screenshots */
+.strip { display: flex; gap: 16px; overflow-x: auto; padding: 8px 2px 16px; scroll-snap-type: x mandatory }
+.strip figure { margin: 0; flex: 0 0 180px; scroll-snap-align: start }
+.strip img { width: 180px; border-radius: 22px; border: 1px solid var(--hair); display: block }
+.strip figcaption { font-size: .8rem; color: var(--ink2); margin-top: 6px; line-height: 1.4 }
+
+.tbl { overflow-x: auto; margin: 12px 0 }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; min-width: 620px }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--hair) }
+th { font: 600 .72rem/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink2) }
+td:first-child { font-weight: 600; white-space: nowrap }
+.sev { display: inline-block; font: 700 .7rem/1 var(--body); padding: 4px 7px; border-radius: 99px; letter-spacing: .04em }
+.sev.h { background: color-mix(in srgb, var(--dawn) 18%, transparent); color: var(--bad) }
+.sev.m { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--ink) }
+.sev.l { background: var(--hair); color: var(--ink2) }
+
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 14px }
+.principles div { background: var(--card); border-radius: 18px; padding: 16px 18px; box-shadow: var(--shadow) }
+.principles b { font-family: var(--display); font-size: 1.02rem; display: block; margin-bottom: 4px }
+.principles p { font-size: .9rem; color: var(--ink2); margin: 0 }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 }
+.sw { display: flex; align-items: center; gap: 8px; font-size: .82rem }
+.sw i { width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--hair); display: block }
+
+/* ---------- phone mockups ---------- */
+.mocks { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 40px 28px; margin-top: 22px; justify-items: center }
+.mock { display: grid; gap: 14px; width: 100%; max-width: 320px }
+.mock h3 { margin: 0 }
+.mock ul { margin: 0; padding-left: 18px; font-size: .86rem; color: var(--ink2); display: grid; gap: 4px }
+.phone { width: 100%; max-width: 300px; aspect-ratio: 300 / 640; border: 7px solid var(--frame); border-radius: 46px; background: var(--cloud); overflow: hidden; position: relative; font-family: var(--body); color: var(--ink); font-size: 12px; line-height: 1.35; display: flex; flex-direction: column }
+.phone .sb { display: flex; justify-content: space-between; padding: 12px 24px 0; font: 600 12px var(--body); flex: none }
+.scr { flex: 1; overflow: hidden; padding: 6px 14px 14px; display: flex; flex-direction: column; gap: 9px; position: relative }
+.sky { background: linear-gradient(180deg, var(--dawnTop) 0%, var(--cloud) 42%) }
+.skyday { background: linear-gradient(180deg, var(--skyTop) 0%, var(--cloud) 55%) }
+.tb { display: flex; justify-content: space-between; align-items: center; min-height: 32px }
+.glass { display: inline-flex; gap: 12px; align-items: center; padding: 7px 12px; border-radius: 99px; background: color-mix(in srgb, var(--card) 62%, transparent); border: 1px solid color-mix(in srgb, var(--card) 80%, transparent); box-shadow: 0 2px 10px rgba(27,34,64,.08); backdrop-filter: blur(8px) }
+.glass svg { width: 17px; height: 17px }
+.ttl { font: 800 24px/1.05 var(--display); letter-spacing: -.01em }
+.sub { color: var(--ink2); font-size: 11.5px }
+.ey { font: 600 9.5px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--ink2) }
+
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: var(--card); border-radius: 16px; padding: 7px 6px; box-shadow: var(--shadow) }
+.wd { display: grid; justify-items: center; gap: 4px; font-size: 9px; color: var(--ink2); padding: 3px 0; border-radius: 10px }
+.wd.on { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--ink); font-weight: 700 }
+.dots { display: flex; gap: 2px }
+.dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--hair); display: block }
+.dots i.a { background: var(--dawn) } .dots i.b { background: var(--sky) } .dots i.c { background: var(--meadow) }
+.dots i.r { background: transparent; box-shadow: inset 0 0 0 1px var(--meadow) }
+
+.hc { background: var(--card); border-radius: 20px; padding: 11px 12px; display: flex; gap: 11px; align-items: center; box-shadow: var(--shadow); position: relative }
+.hc.done { background: linear-gradient(135deg, color-mix(in srgb, var(--sky) 13%, var(--card)) 0%, var(--card) 70%) }
+.hc.ready { box-shadow: 0 0 0 1.5px var(--gold), var(--shadow) }
+.hc .t { flex: 1; min-width: 0; display: grid; gap: 2px }
+.nm { display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 13px }
+.nm svg { width: 10px; height: 10px }
+.big { font: 800 19px/1 var(--display); font-variant-numeric: tabular-nums }
+.big small { font: 500 11px var(--body); color: var(--ink2) }
+.meta { font-size: 10px; color: var(--ink2) }
+.ring { width: 52px; height: 52px; flex: none; position: relative }
+.ring svg { width: 100%; height: 100% }
+.ring .badge { position: absolute; right: -2px; bottom: -2px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--card) }
+.ring .badge svg { width: 9px; height: 9px }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 99px; font: 700 10px var(--body) }
+.chip.gold { background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--ink) }
+.track { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink2) }
+.track .bar { position: relative; flex: 0 0 74px; height: 4px; border-radius: 4px; background: var(--hair) }
+.track .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--ink2) }
+.track .bar b { position: absolute; top: -3px; width: 2px; height: 10px; background: var(--gold); border-radius: 1px }
+
+.shelf { margin-top: auto; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 16px; border: 1px dashed var(--hair); font-size: 11px; color: var(--ink2) }
+.shelf svg { width: 26px; height: 26px; flex: none }
+.shelf b { color: var(--ink) }
+
+.btn { display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--btn); color: var(--btnText); border-radius: 99px; padding: 11px 16px; font: 700 13px var(--body); box-shadow: 0 4px 14px rgba(27,34,64,.18) }
+.btn.gold { background: var(--gold); color: #1B2240 }
+.link { text-align: center; color: var(--skyText); font-size: 11.5px; font-weight: 500 }
+
+.nav { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; min-height: 32px }
+.circ { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--card) 70%, transparent); border: 1px solid var(--hair) }
+.circ svg { width: 13px; height: 13px }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px }
+.tile { background: var(--card); border-radius: 14px; padding: 8px 9px; box-shadow: var(--shadow) }
+.tile b { font: 800 16px/1.1 var(--display); display: block; font-variant-numeric: tabular-nums }
+.tile span { font-size: 9.5px; color: var(--ink2) }
+.panel { background: var(--card); border-radius: 18px; padding: 11px 12px; box-shadow: var(--shadow); display: grid; gap: 8px }
+.panel h4 { margin: 0; font: 700 12.5px var(--display) }
+.journey { position: relative; height: 34px }
+.journey .ln { position: absolute; left: 4px; right: 4px; top: 21px; height: 6px; border-radius: 6px; background: var(--hair) }
+.journey .fill { position: absolute; left: 4px; top: 21px; height: 6px; border-radius: 6px; background: var(--dawn) }
+.journey .ms { position: absolute; top: 17px; width: 14px; height: 14px; border-radius: 50%; background: var(--card); border: 3px solid var(--hair); transform: translateX(-50%) }
+.journey .ms.on { border-color: var(--dawn) }
+.journey .ms.g { border-color: var(--gold) }
+.journey .me { position: absolute; top: -2px; width: 20px; height: 20px; transform: translateX(-50%) }
+.jl { display: flex; justify-content: space-between; font-size: 9px; color: var(--ink2) }
+.hm { display: grid; grid-template-columns: 12px repeat(12, 1fr); gap: 2.5px; font-size: 7.5px; color: var(--ink2) }
+.hm i { aspect-ratio: 1; border-radius: 2.5px; background: var(--hair); display: block }
+.hm i.d { background: var(--dawn) } .hm i.r { background: transparent; box-shadow: inset 0 0 0 1px var(--dawn) } .hm i.f { opacity: .35 } .hm i.t { box-shadow: 0 0 0 1.5px var(--ink) }
+.hm span { line-height: 1; align-self: center }
+.legend { display: flex; gap: 10px; font-size: 9px; color: var(--ink2); align-items: center }
+.legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 3px; vertical-align: -1px }
+
+.banner { display: flex; gap: 8px; align-items: center; background: color-mix(in srgb, var(--gold) 14%, var(--card)); border-radius: 14px; padding: 9px 11px; font-size: 10.5px }
+.banner b { font-weight: 700 }
+.sec { font: 700 9.5px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); margin-top: 3px; display: flex; gap: 5px; align-items: center }
+.sec svg { width: 9px; height: 9px }
+.list { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden }
+.row { display: flex; gap: 9px; align-items: center; padding: 7px 11px; border-bottom: 1px solid var(--hair); font-size: 12px }
+.row:last-child { border-bottom: 0 }
+.ico { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; flex: none }
+.ico svg { width: 14px; height: 14px }
+.row .t { flex: 1; min-width: 0 }
+.row .t b { font-weight: 600; display: block; font-size: 12px }
+.row .t span { font-size: 9.5px; color: var(--ink2) }
+.chev { color: var(--ink2); font-size: 13px }
+.lock { font: 700 8.5px var(--body); padding: 3px 6px; border-radius: 99px; background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--ink) }
+
+.recap { background: color-mix(in srgb, var(--card) 85%, transparent); border-radius: 18px; padding: 11px 12px; display: grid; gap: 8px; box-shadow: var(--shadow) }
+.recap .r3 { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center }
+.recap .r3 b { font: 800 16px var(--display); display: block }
+.recap .r3 span { font-size: 9px; color: var(--ink2) }
+.strip30 { display: grid; grid-template-columns: repeat(30, 1fr); gap: 1.5px }
+.strip30 i { height: 12px; border-radius: 2px; background: var(--dawn); display: block }
+.strip30 i.n { background: var(--hair) }
+
+.cmp { display: grid; grid-template-columns: 1fr 44px 44px; font-size: 10.5px; background: var(--card); border-radius: 14px; padding: 6px 11px; box-shadow: var(--shadow) }
+.cmp > * { padding: 5px 0; border-bottom: 1px solid var(--hair) }
+.cmp > :nth-last-child(-n+3) { border-bottom: 0 }
+.cmp .h { font: 700 9px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); text-align: center }
+.cmp .c { text-align: center; font-weight: 600 }
+.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 6px }
+.plan { background: var(--card); border-radius: 14px; padding: 8px 10px; box-shadow: var(--shadow); font-size: 10px; color: var(--ink2) }
+.plan b { display: block; font: 800 13px var(--display); color: var(--ink) }
+.plan.sel { box-shadow: 0 0 0 2px var(--ink) }
+.plan em { font-style: normal; font: 700 8.5px var(--body); color: var(--meadow) }
+.tl { display: grid; gap: 5px; font-size: 10px; padding-left: 4px }
+.tl div { display: flex; gap: 8px; align-items: baseline }
+.tl i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); flex: none; display: block; position: relative; top: 0 }
+.tl b { color: var(--ink); font-weight: 700; min-width: 40px }
+.tl span { color: var(--ink2) }
+
+.fl { display: flex; gap: 10px; align-items: center; background: var(--card); border-radius: 16px; padding: 10px 12px; box-shadow: var(--shadow) }
+.fl > svg { width: 38px; height: 38px; flex: none }
+.fl .t { flex: 1; min-width: 0 }
+.fl .t b { font-size: 13px; display: block }
+.fl .t span { font-size: 9.5px; color: var(--ink2) }
+.spark { width: 54px; height: 22px; flex: none }
+
+/* plan / phases */
+.phases { display: grid; gap: 14px; margin-top: 14px }
+.phase { background: var(--card); border-radius: 18px; padding: 16px 18px; box-shadow: var(--shadow); display: grid; grid-template-columns: 120px 1fr; gap: 6px 18px }
+.phase .when { font: 700 .8rem/1.3 var(--body); color: var(--ink2) }
+.phase .when b { display: block; font: 800 1.05rem var(--display); color: var(--ink) }
+.phase ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: .92rem }
+.phase li span { color: var(--ink2) }
+@media (max-width: 560px) { .phase { grid-template-columns: 1fr } }
+.decisions li { margin-bottom: 8px }
+.sources { font-size: .85rem; color: var(--ink2) }
+.sources li { margin-bottom: 4px }
+:focus-visible { outline: 2px solid var(--skyText); outline-offset: 2px }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="bird" viewBox="236 236 626 468">
+      <circle cx="548" cy="470" r="214" style="fill:var(--bird, #fff)"/>
+      <polygon points="356,404 256,436 356,468" fill="#FFB13D"/>
+      <circle cx="430" cy="404" r="23" fill="#1B2240"/>
+      <polyline points="478,522 558,598 810,300" style="fill:none;stroke:var(--wing, #FF5F45);stroke-width:64;stroke-linecap:round;stroke-linejoin:round"/>
+    </symbol>
+    <symbol id="appicon" viewBox="0 0 100 100">
+      <defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A86FF"/><stop offset=".5" stop-color="#8DB6FF"/><stop offset="1" stop-color="#FFC7A1"/></linearGradient></defs>
+      <rect width="100" height="100" rx="23" fill="url(#ig)"/>
+      <svg x="14" y="20" width="72" height="60"><use href="#bird"/></svg>
+    </symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z" fill="currentColor"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="steps" viewBox="0 0 24 24"><ellipse cx="8" cy="9" rx="3" ry="4.6" fill="currentColor"/><ellipse cx="16" cy="13" rx="3" ry="4.6" fill="currentColor"/><circle cx="8" cy="16.3" r="1.7" fill="currentColor"/><circle cx="16" cy="20.3" r="1.5" fill="currentColor"/></symbol>
+    <symbol id="book" viewBox="0 0 24 24"><path d="M3 5.5c3-1 6-1 9 1 3-2 6-2 9-1v13c-3-1-6-1-9 1-3-2-6-2-9-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 6.5v13" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14z" fill="currentColor" opacity=".9"/><path d="M5 19l8-8" stroke-width="1.6" stroke-linecap="round" style="stroke:var(--card)"/></symbol>
+    <symbol id="flame" viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9z" fill="currentColor"/></symbol>
+    <symbol id="bed" viewBox="0 0 24 24"><path d="M3 18V7M3 13h18v5M21 13a4 4 0 0 0-4-4h-6v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="7" cy="10.5" r="1.8" fill="currentColor"/></symbol>
+    <symbol id="drop" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" fill="currentColor"/></symbol>
+    <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-row">
+      <svg aria-hidden="true"><use href="#appicon"/></svg>
+      <div>
+        <div class="eyebrow">Fledge · UI/UX review and redesign plan · 14 Oct 2026</div>
+        <h1>Fledge Redesign Plan</h1>
+      </div>
+    </div>
+    <p class="lede">The engine, the copy and the concept are strong. The interface is not yet doing them justice. It reads as a careful prototype: generic symbols where the brand should be, half an empty screen, and four competing signals on every card. This plan brings the app icon's character into the product, gives every screen one clear hero, and fits inside the time left before the 29 November feature freeze.</p>
+    <div class="facts">
+      <div><b>12</b><span>issues found on 9 screens</span></div>
+      <div><b>8</b><span>comparable apps studied</span></div>
+      <div><b>5</b><span>phases, ~14 focused days</span></div>
+      <div><b>29 Nov</b><span>feature freeze; this fits before it</span></div>
+    </div>
+  </header>
+
+  <h2>Where the app stands today</h2>
+  <p class="muted">Simulator captures from build 0.1 with demo data (iPhone 17, iOS 27). The paywall shows only a spinner because the command-line launch doesn't load the StoreKit configuration, but a slow network leaves real users looking at the same blank sheet.</p>
+</div>
+<div class="wide">
+  <div class="strip" tabindex="0" aria-label="Current screenshots">
+    <figure><img src="shots/today-light.jpg" alt="Current Today screen in light mode"><figcaption>Today: the lower 45% of the screen is empty</figcaption></figure>
+    <figure><img src="shots/today-dark.jpg" alt="Current Today screen in dark mode"><figcaption>Dark mode works, but cards are flat on a flat background</figcaption></figure>
+    <figure><img src="shots/detail.jpg" alt="Current habit detail sheet"><figcaption>Detail: the bird marker sits on the tick, and the heatmap has no labels</figcaption></figure>
+    <figure><img src="shots/add.jpg" alt="Current add habit sheet"><figcaption>Add: 8 Pro badges and 8 Health labels; manual habits are off-screen</figcaption></figure>
+    <figure><img src="shots/onboarding.jpg" alt="Current onboarding first page"><figcaption>Onboarding: one ring, a lot of empty sky</figcaption></figure>
+    <figure><img src="shots/graduation.jpg" alt="Current graduation screen"><figcaption>Graduation: the peak moment uses a stock hummingbird</figcaption></figure>
+    <figure><img src="shots/flown.jpg" alt="Current Flown shelf"><figcaption>Flown: one tile on a blank sheet</figcaption></figure>
+    <figure><img src="shots/settings.jpg" alt="Current settings sheet"><figcaption>Settings: the upsell looks like any other row</figcaption></figure>
+    <figure><img src="shots/paywall.jpg" alt="Current paywall loading"><figcaption>Paywall: no designed loading state</figcaption></figure>
+  </div>
+</div>
+<div class="wrap">
+  <h3>Diagnosis</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Issue</th><th>What we see</th><th>Why it matters</th><th>Impact</th></tr></thead>
+    <tbody>
+      <tr><td>Brand missing</td><td>The icon is a round white fledgling with a checkmark wing. In the app, every bird is SF Symbols' <code>bird.fill</code>, a hummingbird: toolbar, onboarding, graduation, Flown, paywall</td><td>The one distinctive asset never shows up where users spend time. This is the biggest gap between "prototype" and "product"</td><td><span class="sev h">High</span></td></tr>
+      <tr><td>Today feels empty</td><td>Three short cards, then about 380 pt of blank background. The summary "1 of 3 done." is 15 pt grey text</td><td>The home screen sets the impression in screenshots and in the first five seconds. Empty space reads as unfinished, not calm</td><td><span class="sev h">High</span></td></tr>
+      <tr><td>Card hierarchy</td><td>Ring, value, source badge and flight track all carry about the same weight. "4.210 / 6.000 steps" puts value and goal in one style</td><td>The answer to "how am I doing?" needs one glance. Today it takes a read</td><td><span class="sev h">High</span></td></tr>
+      <tr><td>Status language</td><td>Done swaps the habit's symbol for a generic check. Rest day's dashed ring looks like a loading spinner. The flight track's grey fill and orange tick have no labels</td><td>Users lose which habit is which, and the graduation concept, the main differentiator, goes unexplained</td><td><span class="sev h">High</span></td></tr>
+      <tr><td>Colour noise</td><td>The CTA is blue, the header peach, rings use habit colours, and every "Health" label is also blue</td><td>Blue is everywhere, so it no longer marks the action. Habit colour shows only inside the ring</td><td><span class="sev m">Medium</span></td></tr>
+      <tr><td>Add sheet</td><td>Tall tiles in identical blue. A free user sees "Pro" on all 8 Health tiles, and "Tap to log" and Custom are below the fold</td><td>It reads as a wall of locks, and it slows the most important flow, adding a habit</td><td><span class="sev h">High</span></td></tr>
+      <tr><td>Detail sheet</td><td>"Fledge progress" is internal jargon. The bird icon overlaps the day-30 tick. The heatmap has no weekday or month labels, its cells are oversized, and stats are below the fold</td><td>The stats screen is where people judge whether the app is "serious"</td><td><span class="sev m">Medium</span></td></tr>
+      <tr><td>Graduation</td><td>A stock bird, a line of stats, mostly empty space. Nothing to share</td><td>This is the moment that makes Fledge different, and the best organic marketing asset it has</td><td><span class="sev h">High</span></td></tr>
+      <tr><td>Flown shelf</td><td>One tile on a blank sheet. No totals, no "holding" rate</td><td>The reward for the whole loop feels like an afterthought</td><td><span class="sev m">Medium</span></td></tr>
+      <tr><td>Paywall</td><td>Stock <code>SubscriptionStoreView</code> layout. No free-vs-Pro comparison, no trial timeline, no designed loading state</td><td>The paywall drives revenue. Trial-timeline paywalls are now the norm in health apps</td><td><span class="sev h">High</span></td></tr>
+      <tr><td>Onboarding</td><td>One walking ring on screen 1. Plain progress dots and no back button</td><td>Under 60 seconds is right. The first screen should show the whole idea: three rings that fill by themselves, then fly</td><td><span class="sev m">Medium</span></td></tr>
+      <tr><td>Settings</td><td>Plain form. "Get Fledge Pro" looks like any other row. "Restore purchases" is near the top for free users</td><td>Small, but it is where reviewers look for polish</td><td><span class="sev l">Low</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>What similar apps get right</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>App</th><th>What works</th><th>Take for Fledge</th></tr></thead>
+    <tbody>
+      <tr><td>Streaks</td><td>Apple Design Award. Big tappable circles, one gesture to complete, very low friction, widgets whose ring fills as you go</td><td>Make the ring the main control and enlarge it. Keep one gesture per action</td></tr>
+      <tr><td>(Not Boring) Habits</td><td>Treats each check-off as an event, with 3D, sound and haptics. Focus on building one habit at a time</td><td>Make "done" the best 0.8 s in the app: ring closes, check draws in, feathers lift</td></tr>
+      <tr><td>Gentler Streak</td><td>Apple Design Award 2024. Rest is a first-class state, numbers are shown simply, and the home view changes with the time of day</td><td>Show rest as calm, not as a broken loop. One plain summary sentence. Keep the time-of-day sky</td></tr>
+      <tr><td>Apple Fitness rings</td><td>One glyph tells the whole day</td><td>A "nest" glyph of three mini rings in the Today header, matching the small widget</td></tr>
+      <tr><td>HabitKit</td><td>A GitHub-style grid as its visual identity. Strong widgets. A solo developer that took off in January</td><td>Label the heatmap properly and use it on the graduation recap and the share card</td></tr>
+      <tr><td>Structured, Tiimo</td><td>Award-winning calm: soft colour, generous type, inclusive by default</td><td>Use habit colour as a soft card wash, not just a stroke. Keep AX5 and VoiceOver as launch features</td></tr>
+      <tr><td>Health and fitness paywalls</td><td>Trial timeline (today, reminder on day 5, billed on day 7), annual price shown per month, the user's own goals on the paywall, a visible way to cancel</td><td>Name the user's habits in the headline, add a free-vs-Pro table, show the timeline, and design a loading state</td></tr>
+      <tr><td>Liquid Glass guidance</td><td>Glass on the navigation layer only, grouped in one <code>GlassEffectContainer</code>, with consistent shapes</td><td>Already in DESIGN.md. Keep it, and keep cards solid</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Design direction: quiet sky, warm nest</h2>
+  <p>Keep everything DESIGN.md already gets right: one screen plus sheets, no guilt, glass only on navigation, SF Pro Rounded numbers. Change how it is expressed.</p>
+  <div class="principles">
+    <div><b>The fledgling is the brand</b><p>A vector <code>FledgeBird</code> drawn in SwiftUI, with poses for sitting, peeking, flying and sleeping. It replaces every <code>bird.fill</code>, in the app and in widgets.</p></div>
+    <div><b>One hero per screen</b><p>Today: the day's summary. Detail: today's number. Graduation: the bird. Everything else steps back.</p></div>
+    <div><b>Numbers big, labels small</b><p>Values in rounded 800 weight. Goals, units and sources in small secondary text.</p></div>
+    <div><b>Colour means identity</b><p>Habit colour runs through the ring, the card wash and the heatmap. The CTA is ink, links are skyText, gold is for flying.</p></div>
+    <div><b>Every state has a shape</b><p>Done: a full ring with a check badge, and the symbol stays. Rest: a soft moon badge. Ready: a gold edge and a button.</p></div>
+    <div><b>Celebrate, quietly</b><p>Feather burst on done, a flight path on graduation, a shareable recap card. Reduce Motion gets cross-fades.</p></div>
+  </div>
+
+  <h3>System changes in FledgeUI</h3>
+  <ul>
+    <li><b>Primary button:</b> an ink-filled capsule (white label, 14:1 contrast), light ink in dark mode, glass prominent on iOS 26. The current skyText fill competes with the Health colour.</li>
+    <li><b>Elevation:</b> one card shadow token (<code>y 1/6, blur 2/18, 5–6 %</code>) in light mode and a 1 pt hairline stroke in dark mode. Cards currently disappear on the cloud background.</li>
+    <li><b>Type ramp additions:</b> <code>metric</code> (title2, rounded, heavy, monospaced digits), <code>eyebrow</code> (caption2, semibold, tracked, uppercase), <code>meta</code> (caption, ink2).</li>
+    <li><b>Ring v2:</b> 72 pt on cards (up from 64). The symbol stays on done, with a corner badge for check, moon or heart. Rest becomes a soft full track with a moon badge, replacing the dashed stroke.</li>
+    <li><b>Components:</b> <code>FledgeBird</code>, <code>NestGlyph</code>, <code>WeekStrip</code>, <code>JourneyTrack</code> (milestones at day 1, 30 and 66), <code>IconSquare</code> (settings and template rows), <code>MetricText</code>, <code>FeatherBurst</code> (Canvas), <code>ShareRecapCard</code> (ImageRenderer).</li>
+  </ul>
+  <div class="swatches" aria-label="Palette (unchanged tokens, new roles)">
+    <div class="sw"><i style="background:var(--ink)"></i>ink · CTA, text</div>
+    <div class="sw"><i style="background:var(--skyText)"></i>skyText · links</div>
+    <div class="sw"><i style="background:var(--dawn)"></i>dawn · slot 1</div>
+    <div class="sw"><i style="background:var(--sky)"></i>sky · slot 2, Health</div>
+    <div class="sw"><i style="background:var(--meadow)"></i>meadow · slot 3</div>
+    <div class="sw"><i style="background:var(--gold)"></i>gold · flying only</div>
+    <div class="sw"><i style="background:var(--cloud)"></i>cloud · screen</div>
+  </div>
+</div>
+
+<div class="wide">
+  <h2 style="max-width:760px;margin-left:auto;margin-right:auto">Proposed screens</h2>
+  <p class="muted" style="max-width:760px;margin:0 auto">HTML mockups at iPhone proportions, drawn from the app's own tokens. They follow your light or dark setting, so switch themes to check the dark variant.</p>
+  <div class="mocks">
+
+    <!-- TODAY -->
+    <div class="mock">
+      <div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="scr sky">
+          <div class="tb"><span></span><span class="glass"><svg style="color:var(--ink)"><use href="#bird" style="--bird:var(--ink);--wing:var(--cloud)"/></svg><svg style="color:var(--ink)"><use href="#gear"/></svg></span></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px">
+            <div style="display:grid;gap:4px"><div class="ey">Wednesday · 14 Oct</div><div class="ttl">1 of 3 done</div><div class="sub">Walk is 1,790 steps away.</div></div>
+            <svg width="54" height="50" viewBox="0 0 54 50" aria-hidden="true">
+              <circle cx="15" cy="15" r="11" fill="none" stroke-opacity=".2" stroke-width="4" style="stroke:var(--dawn)"/><circle cx="15" cy="15" r="11" fill="none" stroke-width="4" stroke-linecap="round" stroke-dasharray="48.4 69.1" transform="rotate(-90 15 15)" style="stroke:var(--dawn)"/>
+              <circle cx="39" cy="15" r="11" fill="none" stroke-width="4" style="stroke:var(--sky)"/>
+              <circle cx="27" cy="36" r="11" fill="none" stroke-opacity=".25" stroke-width="4" style="stroke:var(--meadow)"/>
+            </svg>
+          </div>
+          <div class="week" aria-hidden="true">
+            <div class="wd">M<span class="dots"><i class="a"></i><i class="b"></i><i class="c"></i></span></div>
+            <div class="wd">T<span class="dots"><i class="a"></i><i class="b"></i><i></i></span></div>
+            <div class="wd">W<span class="dots"><i class="a"></i><i class="b"></i><i class="c"></i></span></div>
+            <div class="wd">T<span class="dots"><i class="a"></i><i class="b"></i><i class="c"></i></span></div>
+            <div class="wd">F<span class="dots"><i></i><i class="b"></i><i class="r"></i></span></div>
+            <div class="wd">S<span class="dots"><i class="a"></i><i class="b"></i><i class="c"></i></span></div>
+            <div class="wd on">W<span class="dots"><i></i><i class="b"></i><i class="r"></i></span></div>
+          </div>
+          <div class="hc ready">
+            <div class="ring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="21.5" fill="none" stroke-opacity=".18" stroke-width="7" style="stroke:var(--dawn)"/><circle cx="26" cy="26" r="21.5" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="95.4 135.1" transform="rotate(-90 26 26)" style="stroke:var(--dawn)"/><g transform="translate(17 17)" style="color:var(--dawn)"><svg width="18" height="18"><use href="#steps"/></svg></g></svg></div>
+            <div class="t"><div class="nm">Walk <svg style="color:var(--sky)"><use href="#heart"/></svg></div><div class="big">4,210 <small>/ 6,000 steps</small></div><div style="display:flex;gap:6px;align-items:center;margin-top:3px"><span class="chip gold">✦ Ready to fly</span><span class="meta">Health · 4 min ago</span></div></div>
+          </div>
+          <div class="hc done">
+            <div class="ring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="21.5" stroke-width="7" style="fill:color-mix(in srgb, var(--sky) 14%, transparent);stroke:var(--sky)"/><g transform="translate(17 17)" style="color:var(--sky)"><svg width="18" height="18"><use href="#book"/></svg></g></svg><span class="badge" style="background:var(--sky);color:#fff"><svg><use href="#check"/></svg></span></div>
+            <div class="t"><div class="nm">Read</div><div class="big">Done <small>· 20 pages</small></div><div class="track"><span class="bar"><i style="width:40%"></i><b style="left:45%"></b></span>Day 12 · flies from day 30</div></div>
+          </div>
+          <div class="hc">
+            <div class="ring"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="21.5" fill="none" stroke-opacity=".22" stroke-width="7" style="stroke:var(--meadow)"/><g transform="translate(17 17)" style="color:var(--meadow)"><svg width="18" height="18"><use href="#leaf"/></svg></g></svg><span class="badge" style="background:var(--card);color:var(--meadow);box-shadow:inset 0 0 0 1.5px var(--meadow)">☾</span></div>
+            <div class="t"><div class="nm">Meditate <svg style="color:var(--sky)"><use href="#heart"/></svg></div><div class="big" style="font-size:16px">Rest day</div><div class="meta">1 rest day left in October</div></div>
+          </div>
+          <div class="shelf"><svg><use href="#bird" style="--bird:var(--lilac)"/></svg><span><b>Stretch flew</b> on 30 Sep after 67 days. See the Flown shelf ›</span></div>
+        </div></div>
+      <h3>Today: the nest</h3>
+      <ul>
+        <li>The title is the day's status. The date becomes an eyebrow line.</li>
+        <li>The nest glyph matches the small widget, so the app and Home Screen look alike.</li>
+        <li>The week strip shows "progress, not perfection" at a glance. Rest days appear as open dots.</li>
+        <li>Big numbers. The habit symbol stays on done, with a check badge and a soft colour wash.</li>
+        <li>The Flown shelf preview fills the empty space with the reward, not with decoration.</li>
+      </ul>
+    </div>
+
+    <!-- DETAIL -->
+    <div class="mock">
+      <div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="scr">
+          <div class="nav"><span class="circ"><svg><use href="#dots"/></svg></span>Walk<span class="circ"><svg><use href="#x"/></svg></span></div>
+          <div style="display:flex;gap:14px;align-items:center;padding:4px 2px">
+            <div class="ring" style="width:92px;height:92px"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="21.5" fill="none" stroke-opacity=".18" stroke-width="6" style="stroke:var(--dawn)"/><circle cx="26" cy="26" r="21.5" fill="none" stroke-width="6" stroke-linecap="round" stroke-dasharray="95.4 135.1" transform="rotate(-90 26 26)" style="stroke:var(--dawn)"/><g transform="translate(16 16)" style="color:var(--dawn)"><svg width="20" height="20"><use href="#steps"/></svg></g></svg></div>
+            <div style="display:grid;gap:3px"><div class="ey">Today</div><div class="big" style="font-size:28px">4,210</div><div class="sub">of 6,000 steps</div><div class="meta" style="color:var(--skyText)">♥ Apple Health · 4 min ago</div></div>
+          </div>
+          <div class="tiles"><div class="tile"><b>12</b><span>day streak</span></div><div class="tile"><b>21</b><span>best streak</span></div><div class="tile"><b>87%</b><span>last 30 days</span></div></div>
+          <div class="panel"><h4>Journey to fly</h4>
+            <div class="journey"><div class="ln"></div><div class="fill" style="width:58%"></div><span class="ms on" style="left:4%"></span><span class="ms g" style="left:45%"></span><span class="ms" style="left:96%"></span><svg class="me" style="left:60%"><use href="#bird" style="--bird:var(--dawn);--wing:#fff"/></svg></div>
+            <div class="jl"><span>Day 1<br>4 Sep</span><span style="text-align:center">Day 30<br>can fly</span><span style="text-align:right">Day 66<br>automatic</span></div>
+            <div style="font-size:11px">Day 40 · 87% of the last 30 days. <b>Ready whenever you are.</b></div>
+          </div>
+          <div class="panel"><div style="display:flex;justify-content:space-between;align-items:baseline"><h4>Last 12 weeks</h4><span class="legend"><span><i style="background:var(--dawn)"></i>done</span><span><i style="box-shadow:inset 0 0 0 1px var(--dawn)"></i>rest</span></span></div>
+            <div class="hm" id="hm" aria-label="Heatmap example"></div>
+            <div class="jl" style="padding-left:14px"><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span></div>
+          </div>
+          <div class="btn gold" style="margin-top:auto">Let it fly</div>
+        </div></div>
+      <h3>Habit detail</h3>
+      <ul>
+        <li>The hero is today's number, with the source and freshness under it.</li>
+        <li>Stats move above the fold.</li>
+        <li>"Journey to fly" replaces "Fledge progress": three labelled milestones, and the bird rides the line without overlapping it.</li>
+        <li>The heatmap gets weekday and month labels, a legend and smaller cells.</li>
+        <li>When the habit is ready, a gold "Let it fly" button is pinned to the bottom.</li>
+      </ul>
+    </div>
+
+    <!-- ADD -->
+    <div class="mock">
+      <div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="scr">
+          <div class="nav"><span class="circ"><svg><use href="#x"/></svg></span>Add a habit<span style="width:30px"></span></div>
+          <div class="banner"><svg width="22" height="22" style="flex:none"><use href="#bird"/></svg><span>Free includes <b>one</b> Health habit, and you're using it on Walk. <b style="color:var(--skyText)">Pro does all three ›</b></span></div>
+          <div class="sec"><svg style="color:var(--sky)"><use href="#heart"/></svg>Done for you · Apple Health</div>
+          <div class="list">
+            <div class="row"><span class="ico" style="background:color-mix(in srgb,var(--dawn) 16%,transparent);color:var(--dawn)"><svg><use href="#flame"/></svg></span><span class="t"><b>Move</b><span>20 min a day</span></span><span class="lock">PRO</span></div>
+            <div class="row"><span class="ico" style="background:color-mix(in srgb,var(--lilac) 18%,transparent);color:var(--lilac)"><svg><use href="#bed"/></svg></span><span class="t"><b>Sleep</b><span>7 h a night</span></span><span class="lock">PRO</span></div>
+            <div class="row"><span class="ico" style="background:color-mix(in srgb,var(--meadow) 16%,transparent);color:var(--meadow)"><svg><use href="#leaf"/></svg></span><span class="t"><b>Meditate</b><span>5 min a day</span></span><span class="lock">PRO</span></div>
+            <div class="row"><span class="ico" style="background:color-mix(in srgb,var(--sky) 16%,transparent);color:var(--sky)"><svg><use href="#drop"/></svg></span><span class="t"><b>Drink water</b><span>2 L a day</span></span><span class="lock">PRO</span></div>
+            <div class="row"><span class="ico" style="background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold)"><svg><use href="#sun"/></svg></span><span class="t"><b>Get daylight</b><span>20 min a day</span></span><span class="chev">›</span></div>
+          </div>
+          <div class="sec">Tap to log</div>
+          <div class="list">
+            <div class="row"><span class="ico" style="background:color-mix(in srgb,var(--sky) 16%,transparent);color:var(--sky)"><svg><use href="#book"/></svg></span><span class="t"><b>Read</b><span>10 pages a day</span></span><span class="chev">›</span></div>
+            <div class="row"><span class="ico" style="background:color-mix(in srgb,var(--meadow) 16%,transparent);color:var(--meadow)"><svg><use href="#leaf"/></svg></span><span class="t"><b>Stretch</b><span>Once a day</span></span><span class="chev">›</span></div>
+            <div class="row"><span class="ico" style="background:var(--hair);color:var(--ink)"><svg><use href="#plus"/></svg></span><span class="t"><b>Your own habit</b><span>Name, icon, goal</span></span><span class="chev">›</span></div>
+          </div>
+        </div></div>
+      <h3>Add a habit</h3>
+      <ul>
+        <li>Compact rows: all 11 templates and Custom fit on 1.3 screens instead of 3.</li>
+        <li>One explanatory banner replaces 8 Pro and 8 Health badges. Small lock pills remain.</li>
+        <li>Each template has its own colour in an icon square.</li>
+        <li>Configure step (not shown): a live preview of the card at the top, so people see exactly what they'll get.</li>
+      </ul>
+    </div>
+
+    <!-- GRADUATION -->
+    <div class="mock">
+      <div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="scr sky" style="gap:12px">
+          <div style="flex:1;display:grid;place-items:center;position:relative">
+            <svg width="230" height="150" viewBox="0 0 230 150" style="position:absolute;top:8px" aria-hidden="true"><path d="M30 140 C 90 120, 120 70, 210 20" fill="none" stroke-width="2" stroke-dasharray="3 6" stroke-linecap="round" style="stroke:var(--gold)"/></svg>
+            <svg width="118" height="118" style="filter:drop-shadow(0 10px 18px rgba(27,34,64,.18))"><use href="#bird" style="--wing:var(--dawn)"/></svg>
+          </div>
+          <div style="text-align:center;display:grid;gap:4px"><div class="ey">Day 40</div><div class="ttl" style="font-size:22px">Walk is ready to fly</div><div class="sub">It stuck. You don't need to watch it anymore.</div></div>
+          <div class="recap">
+            <div class="r3"><div><b>40</b><span>days</span></div><div><b>87%</b><span>last 30 days</span></div><div><b>21</b><span>best streak</span></div></div>
+            <div class="strip30" id="s30" aria-hidden="true"></div>
+            <div class="meta" style="text-align:center">Started 4 Sep · 6,000 steps a day</div>
+          </div>
+          <div class="btn">Let it fly</div>
+          <div style="display:flex;justify-content:space-between;padding:0 8px"><span class="link">Keep it in the nest</span><span class="link">Share ↑</span></div>
+        </div></div>
+      <h3>Graduation</h3>
+      <ul>
+        <li>The brand fledgling hops out of the ring, then flies along the dotted path on "Let it fly".</li>
+        <li>A recap card shows days, rate, best streak and a 30-day strip.</li>
+        <li>Share renders the recap as an image, at a 1080×1920 story size with the app name. This is free marketing during the January push.</li>
+        <li>Reduce Motion: a cross-fade, with the same haptics.</li>
+      </ul>
+    </div>
+
+    <!-- PAYWALL -->
+    <div class="mock">
+      <div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="scr skyday" style="gap:8px">
+          <div class="tb"><span class="circ"><svg><use href="#x"/></svg></span><span class="link">Restore</span></div>
+          <div style="display:flex;gap:10px;align-items:center"><svg width="46" height="46" style="flex:none"><use href="#appicon"/></svg><div><div class="ey">Fledge Pro</div><div class="ttl" style="font-size:18px">Let Walk, Sleep and Meditate fill in by themselves</div></div></div>
+          <div class="cmp">
+            <span></span><span class="h">Free</span><span class="h">Pro</span>
+            <span>Habits from Apple Health</span><span class="c">1</span><span class="c">3</span>
+            <span>Lock Screen, StandBy, all widgets</span><span class="c">–</span><span class="c">✓</span>
+            <span>App icons and CSV export</span><span class="c">–</span><span class="c">✓</span>
+          </div>
+          <div class="plans"><div class="plan sel"><em>7 DAYS FREE</em><b>$19.99/yr</b>$1.67 a month</div><div class="plan"><em>&nbsp;</em><b>$2.99/mo</b>Cancel anytime</div></div>
+          <div class="tl"><div><i></i><b>Today</b><span>Everything unlocks</span></div><div><i style="background:var(--ink2)"></i><b>Day 5</b><span>We remind you the trial is ending</span></div><div><i style="background:var(--hair)"></i><b>Day 7</b><span>$19.99 is charged. Cancel before and pay nothing</span></div></div>
+          <div class="btn" style="margin-top:auto">Start 7-day free trial</div>
+          <div class="meta" style="text-align:center">Or $39.99 once, for life · Terms · Privacy</div>
+        </div></div>
+      <h3>Fledge Pro</h3>
+      <ul>
+        <li>The headline names the habits the user picked.</li>
+        <li>A three-row free-vs-Pro table, using the tier rules in <code>ProPolicy</code>.</li>
+        <li>The trial timeline removes the fear of a surprise charge. The yearly plan shows its monthly price.</li>
+        <li>Built on <code>SubscriptionStoreView</code> with a custom header and a <code>ProductView</code> skeleton while it loads.</li>
+      </ul>
+    </div>
+
+    <!-- FLOWN -->
+    <div class="mock">
+      <div class="phone"><div class="sb"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="scr skyday">
+          <div class="nav"><span style="width:30px"></span>Flown<span class="circ"><svg><use href="#x"/></svg></span></div>
+          <div style="display:grid;gap:3px;padding:2px 0 4px"><div class="ttl">2 habits flew</div><div class="sub">They keep tracking quietly. We'll nudge you only if one slips.</div></div>
+          <div class="fl"><svg><use href="#bird" style="--bird:var(--lilac);--wing:#fff"/></svg><div class="t"><b>Stretch</b><span>Flew 30 Sep · 67 days</span></div><div style="text-align:right"><svg class="spark" viewBox="0 0 54 22"><polyline points="0,8 9,6 18,7 27,4 36,6 45,3 54,4" fill="none" stroke-width="2" stroke-linecap="round" style="stroke:var(--gold)"/></svg><div class="meta"><b style="color:var(--ink)">92%</b> holding</div></div></div>
+          <div class="fl"><svg><use href="#bird" style="--bird:var(--meadow);--wing:#fff"/></svg><div class="t"><b>Floss</b><span>Flew 2 Aug · 41 days</span></div><div style="text-align:right"><svg class="spark" viewBox="0 0 54 22"><polyline points="0,5 9,6 18,9 27,8 36,12 45,11 54,14" fill="none" stroke-width="2" stroke-linecap="round" style="stroke:var(--ink2)"/></svg><div class="meta"><b style="color:var(--ink)">71%</b> holding</div></div></div>
+          <div style="margin-top:auto;display:grid;justify-items:center;gap:6px;padding-bottom:6px;text-align:center">
+            <svg width="70" height="34" viewBox="0 0 70 34" aria-hidden="true"><path d="M4 14 Q35 40 66 14" fill="none" stroke-width="3" stroke-linecap="round" style="stroke:var(--gold)"/><path d="M10 18 Q35 34 60 18" fill="none" stroke-opacity=".5" stroke-width="2" stroke-linecap="round" style="stroke:var(--gold)"/></svg>
+            <span class="meta">The nest has room for one more.</span>
+          </div>
+        </div></div>
+      <h3>Flown shelf</h3>
+      <ul>
+        <li>The header gives totals: how many flew and what they add up to.</li>
+        <li>Each graduate is its own coloured fledgling, with a 14-day "holding" sparkline. Gold means 80% or more.</li>
+        <li>Rows are tappable: open a mini detail with "Bring back to the nest".</li>
+        <li>Empty state: the sleeping bird, with "Your first habit can fly from day 30."</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <h3>Also in scope (not drawn)</h3>
+  <ul>
+    <li><b>Onboarding:</b> screen 1 shows three rings filling one by one, then the fledgling hops out. A segmented progress bar and a back button replace the dots. The "pick" step uses the new rows with a sticky "2 of 3" bar whose mini rings fill as you choose. The widget step shows the real widget view, not a drawing.</li>
+    <li><b>Configure habit:</b> a live card preview at the top. Icon and colour pickers move into a compact sheet. The goal is a large number with −/+ instead of a list stepper.</li>
+    <li><b>Settings:</b> a Pro card at the top (bird and "Try 7 days free"), or a "Pro active" card. Rows get coloured icon squares in the iOS Settings style. Restore moves into About.</li>
+    <li><b>Widgets:</b> the same ring v2, badges and nest glyph. The fledgling appears in empty and all-done states ("Nest is quiet").</li>
+    <li><b>Motion:</b> on done, the ring closes, the check draws in and six feathers drift up 40 pt over 0.8 s, with <code>.success</code>. A partial log steps the ring forward with <code>.light</code>. Ready to fly pulses the gold edge once.</li>
+  </ul>
+
+  <h2>Implementation plan</h2>
+  <p class="muted">Ticket IDs continue the backlog's naming. The estimates are focused days for one developer. The work is UI-only: no schema changes and no write-API changes, and business logic stays in HabitCore under test.</p>
+  <div class="phases">
+    <div class="phase"><div class="when"><b>Phase 1</b>15–21 Oct · 2.5 d</div><ul>
+      <li><b>UX-1 Tokens:</b> elevation, ink CTA (<code>FledgeButtonStyle</code>), type ramp (<code>metric</code>, <code>eyebrow</code>, <code>meta</code>). <span>FledgeTheme.swift</span></li>
+      <li><b>UX-2 FledgeBird:</b> a SwiftUI <code>Shape</code> set in four poses, plus snapshot tests. Replace every <code>bird.fill</code>. <span>FledgeUI, widgets</span></li>
+      <li><b>UX-3 Ring v2:</b> 72 pt, symbol persists, corner badges, soft rest state, Reduce Motion. <span>HabitRing.swift</span></li>
+      <li><b>UX-4 Screenshot harness:</b> a script that captures every <code>-FledgeDemoScreen</code> in light and dark, at default and AX3 text sizes, for before/after review.</li>
+    </ul></div>
+    <div class="phase"><div class="when"><b>Phase 2</b>22 Oct – 1 Nov · 4 d</div><ul>
+      <li><b>UX-5 Today:</b> eyebrow and status title, <code>NestGlyph</code>, <code>WeekStrip</code> (needs a 7-day <code>WeekModel</code> in FledgeUI, tested), Flown shelf preview. <span>TodayView.swift</span></li>
+      <li><b>UX-6 Card:</b> new hierarchy, done wash, "Health · 4 min ago" freshness, ready state with an inline button. AX layout kept. <span>HabitCardView.swift</span></li>
+      <li><b>UX-7 Detail:</b> hero row, stats above the fold, <code>JourneyTrack</code>, labelled heatmap and legend, pinned "Let it fly". <span>HabitDetailSheet.swift</span></li>
+      <li><b>UX-8 FeatherBurst:</b> Canvas particles on done, with a Reduce Motion variant.</li>
+    </ul></div>
+    <div class="phase"><div class="when"><b>Phase 3</b>2–12 Nov · 3 d</div><ul>
+      <li><b>UX-9 Add:</b> row list with <code>IconSquare</code>, one Pro banner, per-template colours. <span>AddHabitSheet.swift</span></li>
+      <li><b>UX-10 Configure:</b> live card preview, large goal control, compact icon and colour sheet. <span>HabitEditorView.swift</span></li>
+      <li><b>UX-11 Onboarding:</b> three-ring promise animation, progress bar and back button, sticky pick bar, real widget preview. <span>OnboardingView.swift</span></li>
+    </ul></div>
+    <div class="phase"><div class="when"><b>Phase 4</b>13–22 Nov · 3 d</div><ul>
+      <li><b>UX-12 Graduation:</b> bird hops out of the ring, flight path, recap card. <b>UX-13 Share card</b> (<code>ImageRenderer</code> + <code>ShareLink</code>). <span>GraduationView.swift</span></li>
+      <li><b>UX-14 Flown:</b> totals header, fledgling rows, 14-day holding sparkline (a <code>HoldingRate</code> model in HabitCore, tested), empty state. <span>FlownSheet.swift</span></li>
+      <li><b>UX-15 Paywall:</b> personalised headline, comparison, trial timeline, loading skeleton. <span>PaywallView.swift</span></li>
+      <li><b>UX-16 Settings:</b> Pro card, icon squares, Restore moved into About. <span>SettingsSheet.swift</span></li>
+    </ul></div>
+    <div class="phase"><div class="when"><b>Phase 5</b>23–29 Nov · 1.5 d</div><ul>
+      <li><b>UX-17 Widgets:</b> ring v2, badges, bird in empty and all-done states. <span>NestWidgets.swift</span></li>
+      <li><b>UX-18 Accessibility and QA:</b> VoiceOver labels for the new elements, AX5 layouts, contrast check of the ink CTA in both themes, Reduce Motion and Reduce Transparency.</li>
+      <li><b>UX-19 App Store screenshots:</b> regenerate from the harness, then REL-2.</li>
+    </ul></div>
+  </div>
+
+  <h3>How we'll know it worked</h3>
+  <ul>
+    <li><b>Glance test:</b> 5 people shown Today for 3 seconds can say how many habits are done and which one is closest to flying.</li>
+    <li><b>Time to first habit</b> under 60 s in onboarding (unchanged target). Measure it on TestFlight.</li>
+    <li><b>Paywall:</b> trial start rate of at least 20% of installs (spec target). Compare the TestFlight cohorts once ANA-1 is decided.</li>
+    <li><b>Quality bar:</b> every screen passes light, dark, AX3 and AX5, VoiceOver and Reduce Motion in the harness before the freeze.</li>
+  </ul>
+
+  <h2>Decisions and risks</h2>
+  <ul class="decisions">
+    <li><b>Primary button colour:</b> ink (recommended: most legible, calmest) or dawn. Dawn with a white label is only 3:1, below AA, so it would need an ink label.</li>
+    <li><b>DEC-1, minimum iOS 26:</b> still open. The plan works on 18.6 with fallbacks. Moving to iOS 26 removes the fallback branches in UX-1 and UX-15.</li>
+    <li><b>Week strip:</b> read-only in 1.0 (recommended). Editing past days stays in the detail sheet.</li>
+    <li><b>Schedule risk:</b> about 14 days of UI work alongside HK-5, WID-5 and the release tasks. If it slips, cut in this order: UX-13 share card, then UX-14 sparkline, then UX-11 animation polish. Never cut: UX-2 bird, UX-5 and UX-6 Today, UX-15 paywall.</li>
+  </ul>
+
+  <h2>Sources</h2>
+  <ul class="sources">
+    <li><a href="https://www.macstories.net/reviews/streaks-3-review/">MacStories: Streaks 3 review</a> · <a href="https://daringfireball.net/linked/2024/november">Daring Fireball on Streaks</a></li>
+    <li><a href="https://www.tapsmart.com/apps/review-not-boring-habits/">TapSmart: (Not Boring) Habits review</a> · <a href="https://cur.at/wicwETc?m=web">Behind the Design: (Not Boring) Habits</a></li>
+    <li><a href="https://apps.apple.com/us/app/gentler-streak-fitness-tracker/id1576857102">Gentler Streak on the App Store</a> · <a href="https://go.sketch.com/blog/gentler-streak/">Sketch: designing Gentler Streak</a> · <a href="https://bgr.com/tech/gentler-streak-gets-a-major-redesign-focused-on-your-wellbeing/">BGR: Gentler Streak redesign</a></li>
+    <li><a href="https://www.apple.com/newsroom/2026/06/apple-reveals-winners-of-the-2026-apple-design-awards/">Apple: 2026 Apple Design Awards</a> · <a href="https://9to5mac.com/2026/05/18/apple-unveils-30-apple-design-award-app-finalists/">9to5Mac: ADA 2026 finalists (Structured, Harvee)</a></li>
+    <li><a href="https://habitdoom.com/blog/best-habit-tracker-iphone-2026">Best habit tracker for iPhone (2026)</a> (written by a competitor) · <a href="https://toolfinder.com/best/habit-trackers-ios">Toolfinder: habit trackers for iOS</a></li>
+    <li><a href="https://paywallpro1.substack.com/p/effective-paywall-examples-in-health">Effective paywall examples in health and fitness apps</a> · <a href="https://www.airbridge.io/en/blog/5-steps-app-onboarding-before-the-paywall">Airbridge: onboarding before the paywall</a></li>
+    <li><a href="https://www.atelier-socle.com/en/articles/swiftui-liquid-glass-guide">SwiftUI Liquid Glass guide</a> · <a href="https://dev.to/diskcleankit/liquid-glass-in-swift-official-best-practices-for-ios-26-macos-tahoe-1coo">Liquid Glass best practices</a></li>
+    <li>Repository: <code>docs/DESIGN.md</code>, <code>docs/SPEC.md</code>, <code>docs/BACKLOG.md</code>, and the screenshots in <code>Design/review/current/</code></li>
+  </ul>
+</div>
+
+<script>
+// Example heatmap (12 weeks × 7 days) and 30-day strip, generated deterministically for the mockups.
+(function () {
+  var hm = document.getElementById('hm');
+  if (hm) {
+    var days = ['M', '', 'W', '', 'F', '', ''];
+    var html = '';
+    for (var r = 0; r < 7; r++) {
+      html += '<span>' + days[r] + '</span>';
+      for (var c = 0; c < 12; c++) {
+        var idx = c * 7 + r, cls = '';
+        if (c < 5) cls = 'f';
+        else if (c === 11 && r > 2) cls = 'f';
+        else if (c === 11 && r === 2) cls = 'd t';
+        else cls = ((idx * 37) % 11 === 0) ? '' : ((idx * 13) % 17 === 0 ? 'r' : 'd');
+        html += '<i class="' + cls + '"></i>';
+      }
+    }
+    hm.innerHTML = html;
+  }
+  var s = document.getElementById('s30');
+  if (s) {
+    var h = '';
+    for (var i = 0; i < 30; i++) h += '<i class="' + ((i * 7) % 9 === 0 ? 'n' : '') + '"></i>';
+    s.innerHTML = h;
+  }
+})();
+</script>

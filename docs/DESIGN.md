@@ -41,11 +41,11 @@ and graduation (the habit becomes a bird and flies to the "Flown" shelf).
 ## 3. Brand identity
 
 ### 3.1 App icon
-- Concept: a round white **fledgling** whose wing is a **checkmark** — "done" that becomes flight. Gold beak, ink eye, sky-to-dawn background.
-- Files: `Design/Icon/fledge-icon.svg` (layers `#background`, `#bird`), rendered PNGs: `fledge-icon-1024.png`, `-dark-`, `-tinted-`,
-  and `layer-background.png` / `layer-bird.png` for **Icon Composer** (import both, bird layer with Liquid Glass on, specular on, shadow soft).
-- Regenerate: `swift Design/Icon/render-icon.swift Design/Icon`.
-- Checks done: readable at 120 px and 180 px; tinted variant keeps the silhouette. Still to do (DES-2): build the `.icon` file in Icon Composer, test clear mode, test on a real Home Screen.
+- **v2 (2026-10-14), concept "First flight": see `docs/BRAND.md`.** A round white fledgling, facing left, whose wing is a checkmark;
+  the long stroke breaks out of the body, so the wing is lifting. Sky-to-dawn background; Night and tinted variants.
+- Files: `Design/Icon/fledge-icon.svg` (layers `#background`, `#bird`, `#wing`), rendered PNGs, Icon Composer layers, mark and lockup.
+  Regenerate: `swift Design/Icon/render-icon.swift Design/Icon`, then copy the icon PNGs into `AppIcon`, `AppIcon-Night` and `IconPreview-*`.
+- Checked at 29–180 px and on the simulator Home Screen. Still to do (DES-2): build `Fledge.icon` in Icon Composer and test clear mode on a device.
 
 ### 3.2 Colour
 
