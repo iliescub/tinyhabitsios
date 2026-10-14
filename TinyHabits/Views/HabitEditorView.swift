@@ -2,67 +2,47 @@ import SwiftUI
 import HabitCore
 import FledgeUI
 
-/// Form for a `HabitDraft`, shared by Add (configure step) and Edit (docs/DESIGN.md §6.3).
+/// Form for a `HabitDraft`, shared by Add (configure step) and Edit (docs/DESIGN.md §6.3, v2 in UX-10):
+/// a live preview of the card on top, a large goal control, and the icon picker in its own sheet.
 struct HabitEditorView: View {
     @Binding var draft: HabitDraft
-
-    private let symbolColumns = Array(repeating: GridItem(.flexible(), spacing: FledgeTheme.Space.s), count: 6)
+    @State private var pickingIcon = false
 
     var body: some View {
         Form {
             Section {
+                HabitPreviewCard(draft: draft)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            } header: {
+                Text("Preview")
+            }
+
+            Section {
                 TextField("Name", text: $draft.name)
                     .textInputAutocapitalization(.sentences)
+                Button { pickingIcon = true } label: {
+                    LabeledContent("Icon") {
+                        IconSquare(symbol: draft.symbol, color: FledgeTheme.habitColor(draft.colorKey))
+                    }
+                }
+                .tint(FledgeTheme.Palette.ink)
+                ColorRow(selection: $draft.colorKey)
             } footer: {
                 if draft.problem == .nameTooLong {
                     Text("Keep it under \(HabitDraft.maxNameLength) characters so it fits on widgets.")
                 }
             }
 
-            Section("Icon and colour") {
-                LazyVGrid(columns: symbolColumns, spacing: FledgeTheme.Space.s) {
-                    ForEach(FledgeTheme.habitSymbols, id: \.self) { symbol in
-                        Button { draft.symbol = symbol } label: {
-                            Image(systemName: symbol)
-                                .font(.title3)
-                                .frame(maxWidth: .infinity, minHeight: 40)
-                                .foregroundStyle(symbol == draft.symbol ? Color.white : FledgeTheme.habitColor(draft.colorKey))
-                                .background(
-                                    symbol == draft.symbol ? FledgeTheme.habitColor(draft.colorKey) : FledgeTheme.habitColor(draft.colorKey).opacity(0.12),
-                                    in: .rect(cornerRadius: 10)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(symbol.replacingOccurrences(of: ".", with: " "))
-                        .accessibilityAddTraits(symbol == draft.symbol ? .isSelected : [])
-                    }
-                }
-                .padding(.vertical, FledgeTheme.Space.xs)
-
-                HStack {
-                    ForEach(FledgeTheme.habitColorKeys, id: \.self) { key in
-                        Button { draft.colorKey = key } label: {
-                            Circle()
-                                .fill(FledgeTheme.habitColor(key))
-                                .frame(width: 30, height: 30)
-                                .overlay {
-                                    if key == draft.colorKey {
-                                        Circle().strokeBorder(FledgeTheme.Palette.ink, lineWidth: 2).padding(-4)
-                                    }
-                                }
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(key)
-                        .accessibilityAddTraits(key == draft.colorKey ? .isSelected : [])
-                    }
-                }
-                .padding(.vertical, FledgeTheme.Space.xs)
-            }
-
             Section {
                 if draft.source.isAuto {
-                    LabeledContent("Completes from", value: "Apple Health")
+                    HStack {
+                        Text("Completes from")
+                        Spacer()
+                        Image(systemName: "heart.fill").foregroundStyle(FledgeTheme.Palette.sky)
+                        Text("Apple Health").foregroundStyle(FledgeTheme.Palette.ink2)
+                    }
+                    .accessibilityElement(children: .combine)
                 } else {
                     Picker("Unit", selection: $draft.unit) {
                         ForEach(FledgeTheme.manualUnits, id: \.self) { Text($0).tag($0) }
@@ -71,9 +51,7 @@ struct HabitEditorView: View {
                         draft.target = TargetSteps.clamp(draft.target, unit: unit)
                     }
                 }
-                Stepper(value: $draft.target, in: TargetSteps.range(for: draft.unit), step: TargetSteps.step(for: draft.unit)) {
-                    Text(goalText).monospacedDigit()
-                }
+                GoalControl(target: $draft.target, unit: draft.unit)
             } header: {
                 Text("Daily goal")
             }
@@ -104,14 +82,12 @@ struct HabitEditorView: View {
                 Text("Sent only if the habit isn't done yet.")
             }
         }
-    }
-
-    private var goalText: String {
-        let amount = draft.target.formatted(.number.precision(.fractionLength(0...2)))
-        if draft.unit == "times" {
-            return draft.target == 1 ? "Once" : "\(amount) times"
+        .scrollContentBackground(.hidden)
+        .background(FledgeTheme.Palette.cloud)
+        .sheet(isPresented: $pickingIcon) {
+            IconPickerSheet(symbol: $draft.symbol, color: FledgeTheme.habitColor(draft.colorKey))
+                .presentationDetents([.medium, .large])
         }
-        return "\(amount) \(draft.unit)"
     }
 
     private var dailyBinding: Binding<Bool> {
@@ -133,6 +109,183 @@ struct HabitEditorView: View {
                 draft.reminderMinutes = (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
             }
         )
+    }
+}
+
+/// The card as it will look on Today, two thirds of the way to the goal, updating as the form changes.
+struct HabitPreviewCard: View {
+    let draft: HabitDraft
+
+    var body: some View {
+        let today = DayKey(.now)
+        let card = HabitCardModel(
+            name: draft.trimmedName.isEmpty ? "New habit" : draft.trimmedName,
+            symbol: draft.symbol, colorKey: draft.colorKey, source: draft.source,
+            target: draft.target, unit: draft.unit, cadence: Cadence(perWeek: draft.perWeek),
+            startedOn: today, today: today,
+            todayValue: draft.target > 1 ? (draft.target * 2 / 3).rounded() : 0,
+            todayStatus: .pending, todayCompletedBy: nil, history: []
+        )
+        VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
+            HStack(spacing: FledgeTheme.Space.l) {
+                HabitRing(
+                    fraction: card.progress.fraction, status: .pending,
+                    color: FledgeTheme.habitColor(draft.colorKey), symbol: draft.symbol
+                )
+                VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
+                    Text(card.name)
+                        .font(.headline)
+                        .foregroundStyle(FledgeTheme.Palette.ink)
+                        .lineLimit(1)
+                    ValueLine(model: card)
+                    Text(draft.source.isAuto ? "Fills in from Apple Health" : "Tap the ring to log")
+                        .font(FledgeTheme.Typeface.meta)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(FledgeTheme.Space.l)
+            .fledgeCard()
+        }
+        .padding(.vertical, FledgeTheme.Space.xs)
+        .animation(.snappy, value: draft)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("Preview: \(card.name), \(card.valueText)"))
+    }
+}
+
+/// The goal as a large rounded number with − and + (UX-10). Adjustable for VoiceOver.
+struct GoalControl: View {
+    @Binding var target: Double
+    let unit: String
+
+    private var range: ClosedRange<Double> { TargetSteps.range(for: unit) }
+    private var step: Double { TargetSteps.step(for: unit) }
+
+    var body: some View {
+        HStack {
+            stepButton("minus", enabled: target > range.lowerBound) { change(by: -step) }
+            Spacer(minLength: 0)
+            VStack(spacing: 0) {
+                Text(amountText)
+                    .font(.system(.largeTitle, design: .rounded, weight: .heavy).monospacedDigit())
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                    .contentTransition(.numericText(value: target))
+                Text(unitText)
+                    .font(.subheadline)
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+            }
+            Spacer(minLength: 0)
+            stepButton("plus", enabled: target < range.upperBound) { change(by: step) }
+        }
+        .padding(.vertical, FledgeTheme.Space.s)
+        .accessibilityElement()
+        .accessibilityLabel(Text("Daily goal"))
+        .accessibilityValue(Text("\(amountText) \(unitText)"))
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: change(by: step)
+            case .decrement: change(by: -step)
+            @unknown default: break
+            }
+        }
+    }
+
+    private var amountText: String {
+        unit == "times" && target == 1 ? "Once" : target.formatted(.number.precision(.fractionLength(0...2)))
+    }
+
+    private var unitText: String {
+        unit == "times" && target == 1 ? "a day" : "\(unit) a day"
+    }
+
+    private func change(by delta: Double) {
+        withAnimation(.snappy) {
+            target = TargetSteps.clamp(target + delta, unit: unit)
+        }
+    }
+
+    private func stepButton(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.title3.weight(.bold))
+                .frame(width: 44, height: 44)
+                .background(FledgeTheme.Palette.hairline.opacity(0.6), in: .circle)
+                .foregroundStyle(FledgeTheme.Palette.ink)
+        }
+        .buttonStyle(.borderless)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.35)
+        .sensoryFeedback(.selection, trigger: target)
+    }
+}
+
+/// The eight habit colours as swatches.
+struct ColorRow: View {
+    @Binding var selection: String
+
+    var body: some View {
+        HStack {
+            ForEach(FledgeTheme.habitColorKeys, id: \.self) { key in
+                Button { selection = key } label: {
+                    Circle()
+                        .fill(FledgeTheme.habitColor(key))
+                        .frame(width: 28, height: 28)
+                        .overlay {
+                            if key == selection {
+                                Circle().strokeBorder(FledgeTheme.Palette.ink, lineWidth: 2).padding(-4)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel(key)
+                .accessibilityAddTraits(key == selection ? .isSelected : [])
+            }
+        }
+    }
+}
+
+/// Every habit symbol in a grid, in the habit's colour.
+struct IconPickerSheet: View {
+    @Binding var symbol: String
+    let color: Color
+    @Environment(\.dismiss) private var dismiss
+
+    private let columns = [GridItem(.adaptive(minimum: 52), spacing: FledgeTheme.Space.m)]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: FledgeTheme.Space.m) {
+                    ForEach(FledgeTheme.habitSymbols, id: \.self) { item in
+                        Button {
+                            symbol = item
+                            dismiss()
+                        } label: {
+                            Image(systemName: item)
+                                .font(.title2)
+                                .symbolRenderingMode(.hierarchical)
+                                .frame(width: 52, height: 52)
+                                .foregroundStyle(item == symbol ? Color.white : color)
+                                .background(item == symbol ? color : color.opacity(0.12), in: .rect(cornerRadius: 14, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(item.replacingOccurrences(of: ".", with: " "))
+                        .accessibilityAddTraits(item == symbol ? .isSelected : [])
+                    }
+                }
+                .padding(FledgeTheme.screenMargin)
+            }
+            .background(FledgeTheme.Palette.cloud)
+            .navigationTitle("Icon")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
     }
 }
 

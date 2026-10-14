@@ -163,3 +163,29 @@ struct HeatmapLabelTests {
         #expect(FlownPreview.text(latestName: "Stretch", flewOn: date, days: 67, total: 3) == "Stretch and 2 more have flown.")
     }
 }
+
+@Suite("TemplateStyle")
+struct TemplateStyleTests {
+    private let walk = Pack.Template(name: "Walk", symbol: "figure.walk", source: .steps, target: 6_000, unit: "steps")
+    private let workout = Pack.Template(name: "Work out", symbol: "dumbbell.fill", source: .workout, target: 1, unit: "workout", perWeek: 3)
+    private let read = Pack.Template(name: "Read", symbol: "book.fill", source: .manual, target: 1, unit: "times")
+
+    @Test func healthSourcesHaveFixedColours() {
+        #expect(TemplateStyle.colorKey(for: walk) == "dawn")
+        #expect(TemplateStyle.colorKey(for: workout) == "teal")
+        #expect(FledgeTheme.habitColorKeys.contains(TemplateStyle.colorKey(for: read)))
+        #expect(TemplateStyle.colorKey(for: read) == TemplateStyle.colorKey(for: read))   // stable
+    }
+
+    @Test func preferredColourAvoidsColoursInTheNest() {
+        #expect(TemplateStyle.preferredColorKey(for: walk, taken: [], slot: 1) == "dawn")
+        #expect(TemplateStyle.preferredColorKey(for: walk, taken: ["dawn"], slot: 1) == "sky")
+        #expect(TemplateStyle.preferredColorKey(for: walk, taken: ["dawn", "sky"], slot: 1) == "meadow")
+    }
+
+    @Test func targetText() {
+        #expect(TemplateStyle.targetText(for: walk, locale: Locale(identifier: "en_US")) == "6,000 steps a day")
+        #expect(TemplateStyle.targetText(for: workout) == "1 workout · 3× a week")
+        #expect(TemplateStyle.targetText(for: read) == "Once a day")
+    }
+}

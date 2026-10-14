@@ -14,7 +14,7 @@ cd "$(dirname "$0")/.."
 label=""
 build=1
 keep=0
-screens="today detail add flown settings paywall onboarding graduation"
+screens="today detail add configure flown settings paywall onboarding onboarding-pick onboarding-health onboarding-reminders graduation"
 sizes="default ax3"
 device="iPhone 17"
 bundle="com.smartapps.TinyHabits"
@@ -62,6 +62,7 @@ shoot() {  # screen appearance size
     # (ring fills, then the bird). Wait for each screen's end state.
     case "$screen" in
         onboarding|graduation) sleep 9 ;;
+        configure|onboarding-*) sleep 7 ;;
         today) sleep 5 ;;
         *) sleep 6 ;;
     esac

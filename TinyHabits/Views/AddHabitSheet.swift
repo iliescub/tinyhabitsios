@@ -15,35 +15,29 @@ struct AddHabitSheet: View {
     @State private var showPaywall = false
     @State private var purchases = Purchases.shared
 
-    private let columns = [GridItem(.adaptive(minimum: 150), spacing: FledgeTheme.Space.m)]
-
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
                 if let pack {
                     VStack(alignment: .leading, spacing: FledgeTheme.Space.xl) {
+                        if !canAddAuto {
+                            ProBanner(usedOn: activeHabits.first { $0.source.isAuto }?.name) { showPaywall = true }
+                        }
                         section(
                             "Done for you",
                             subtitle: "Completes itself from Apple Health.",
+                            symbol: "heart.fill",
                             templates: pack.templates.filter { $0.source.isAuto },
                             pack: pack
                         )
                         section(
                             "Tap to log",
-                            subtitle: "One tap from the card or a widget.",
+                            subtitle: "One tap from the card, a widget or Siri.",
+                            symbol: "hand.tap.fill",
                             templates: pack.templates.filter { !$0.source.isAuto },
-                            pack: pack
+                            pack: pack,
+                            custom: true
                         )
-                        Button {
-                            path.append(HabitDraftRoute(draft: HabitDraft(colorKey: defaultColorKey, packID: pack.id)))
-                        } label: {
-                            Label("Custom habit", systemImage: "plus")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity, minHeight: 52)
-                                .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.tile))
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(FledgeTheme.Palette.skyText)
                     }
                     .padding(FledgeTheme.screenMargin)
                 }
@@ -90,45 +84,98 @@ struct AddHabitSheet: View {
         }
     }
 
-    private func section(_ title: String, subtitle: String, templates: [Pack.Template], pack: Pack) -> some View {
+    /// A titled group of template rows in one card (UX-9).
+    private func section(
+        _ title: String, subtitle: String, symbol: String, templates: [Pack.Template], pack: Pack, custom: Bool = false
+    ) -> some View {
         VStack(alignment: .leading, spacing: FledgeTheme.Space.m) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.title3.bold()).fontDesign(.rounded).foregroundStyle(FledgeTheme.Palette.ink)
+                Label(title, systemImage: symbol)
+                    .font(.title3.bold())
+                    .fontDesign(.rounded)
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                    .labelStyle(SectionLabelStyle())
                 Text(subtitle).font(.subheadline).foregroundStyle(FledgeTheme.Palette.ink2)
             }
-            LazyVGrid(columns: columns, spacing: FledgeTheme.Space.m) {
-                ForEach(templates, id: \.name) { template in
-                    if template.source.isAuto && !canAddAuto {
-                        Button { showPaywall = true } label: {
-                            TemplateTile(template: template).overlay(alignment: .topTrailing) { ProBadge().padding(FledgeTheme.Space.s) }
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("Needs Fledge Pro")
-                    } else {
-                        NavigationLink(value: HabitDraftRoute(draft: HabitDraft(template: template, colorKey: defaultColorKey, packID: pack.id))) {
-                            TemplateTile(template: template)
-                        }
-                        .buttonStyle(.plain)
+            VStack(spacing: 0) {
+                ForEach(Array(templates.enumerated()), id: \.element.name) { index, template in
+                    templateRow(template, pack: pack)
+                    if index < templates.count - 1 || custom {
+                        Divider().padding(.leading, 64)
                     }
                 }
+                if custom {
+                    NavigationLink(value: HabitDraftRoute(draft: HabitDraft(colorKey: newColorKey, packID: pack.id))) {
+                        TemplateRow(
+                            symbol: "plus", color: FledgeTheme.Palette.ink2, title: "Your own habit",
+                            subtitle: "Name, icon and goal", trailing: .chevron
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
         }
+    }
+
+    @ViewBuilder
+    private func templateRow(_ template: Pack.Template, pack: Pack) -> some View {
+        let color = FledgeTheme.habitColor(TemplateStyle.colorKey(for: template))
+        let subtitle = TemplateStyle.targetText(for: template)
+        if activeHabits.contains(where: { $0.name == template.name }) {
+            TemplateRow(symbol: template.symbol, color: color, title: template.name, subtitle: subtitle, trailing: .inNest)
+                .accessibilityHint("Already in your nest")
+        } else if template.source.isAuto && !canAddAuto {
+            Button { showPaywall = true } label: {
+                TemplateRow(symbol: template.symbol, color: color, title: template.name, subtitle: subtitle, trailing: .locked)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Needs Fledge Pro")
+        } else {
+            NavigationLink(value: HabitDraftRoute(draft: draft(for: template, pack: pack))) {
+                TemplateRow(symbol: template.symbol, color: color, title: template.name, subtitle: subtitle, trailing: .chevron)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var activeHabits: [Habit] {
+        (try? context.activeHabits()) ?? []
+    }
+
+    private var nextSlot: Int {
+        SlotPolicy.nextFreeSlot(occupied: Set(activeHabits.compactMap(\.slot))) ?? 0
+    }
+
+    private func draft(for template: Pack.Template, pack: Pack) -> HabitDraft {
+        let colorKey = TemplateStyle.preferredColorKey(for: template, taken: Set(activeHabits.map(\.colorKey)), slot: nextSlot)
+        return HabitDraft(template: template, colorKey: colorKey, packID: pack.id)
+    }
+
+    /// A free colour for a custom habit.
+    private var newColorKey: String {
+        let taken = Set(activeHabits.map(\.colorKey))
+        let slotDefault = FledgeTheme.defaultColorKey(forSlot: nextSlot)
+        return taken.contains(slotDefault) ? (FledgeTheme.habitColorKeys.first { !taken.contains($0) } ?? slotDefault) : slotDefault
     }
 
     /// Free tier: one active habit from Apple Health (PAY-2).
     private var canAddAuto: Bool {
-        let activeAuto = ((try? context.activeHabits()) ?? []).filter { $0.source.isAuto }.count
+        let activeAuto = activeHabits.filter { $0.source.isAuto }.count
         return ProPolicy.canAddAutoHabit(isPro: purchases.isPro, activeAutoCount: activeAuto)
-    }
-
-    private var defaultColorKey: String {
-        let occupied = Set((try? context.activeHabits())?.compactMap(\.slot) ?? [])
-        return FledgeTheme.defaultColorKey(forSlot: SlotPolicy.nextFreeSlot(occupied: occupied) ?? 0)
     }
 
     private func loadPack() {
         do {
-            pack = try PackLibrary.essentials()
+            let loaded = try PackLibrary.essentials()
+            pack = loaded
+            #if DEBUG
+            // `-FledgeDemoScreen configure`: open the configure step for the first template not in the nest.
+            if DemoData.screen == "configure",
+               let template = loaded.templates.first(where: { t in !activeHabits.contains { $0.name == t.name } }) {
+                path = [HabitDraftRoute(draft: draft(for: template, pack: loaded))]
+            }
+            #endif
         } catch {
             errorMessage = "The habit templates couldn't be loaded."
         }
@@ -252,41 +299,107 @@ struct EditHabitSheet: View {
     }
 }
 
-struct TemplateTile: View {
-    let template: Pack.Template
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
-            Image(systemName: template.symbol)
-                .font(.title2)
-                .foregroundStyle(FledgeTheme.Palette.sky)
-                .symbolRenderingMode(.hierarchical)
-                .frame(height: 30, alignment: .leading)
-            Text(template.name)
-                .font(.headline)
-                .foregroundStyle(FledgeTheme.Palette.ink)
-            Text(targetText)
-                .font(.footnote)
-                .foregroundStyle(FledgeTheme.Palette.ink2)
-            Spacer(minLength: 0)
-            if template.source.isAuto {
-                SourceBadge(isAuto: true)
-            }
-        }
-        .padding(FledgeTheme.Space.l)
-        .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
-        .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("Choose and adjust this habit")
+/// One template in Add or onboarding: coloured icon square, name, goal, and what tapping does (UX-9).
+struct TemplateRow: View {
+    enum Trailing: Equatable {
+        case chevron, locked, inNest, none
+        case selectable(Bool)
     }
 
-    private var targetText: String {
-        let amount = template.target.formatted(.number.precision(.fractionLength(0...1)))
-        let isOnce = template.target <= 1 && template.unit == "times"
-        if let perWeek = template.perWeek, perWeek < 7 {
-            return "\(isOnce ? "Once" : "\(amount) \(template.unit)") · \(perWeek)× a week"
+    let symbol: String
+    let color: Color
+    let title: String
+    let subtitle: String
+    let trailing: Trailing
+
+    var body: some View {
+        HStack(spacing: FledgeTheme.Space.m) {
+            IconSquare(symbol: symbol, color: color)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                Text(subtitle)
+                    .font(.footnote)
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            trailingView
         }
-        return isOnce ? "Once a day" : "\(amount) \(template.unit) a day"
+        .padding(.horizontal, FledgeTheme.Space.l)
+        .padding(.vertical, FledgeTheme.Space.m)
+        .contentShape(.rect)
+        .opacity(trailing == .inNest ? 0.55 : 1)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(trailing == .selectable(true) ? .isSelected : [])
+    }
+
+    @ViewBuilder
+    private var trailingView: some View {
+        switch trailing {
+        case .chevron:
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(FledgeTheme.Palette.ink2.opacity(0.6))
+        case .locked:
+            ProBadge()
+        case .inNest:
+            Text("In the nest")
+                .font(FledgeTheme.Typeface.meta)
+                .foregroundStyle(FledgeTheme.Palette.ink2)
+        case .none:
+            EmptyView()
+        case .selectable(let isOn):
+            Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                .font(.title2)
+                .foregroundStyle(isOn ? color : FledgeTheme.Palette.hairline)
+                .contentTransition(.symbolEffect(.replace))
+        }
+    }
+}
+
+/// The one explanation of the free tier, replacing a Pro badge on every Health template (UX-9).
+struct ProBanner: View {
+    let usedOn: String?
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: FledgeTheme.Space.m) {
+                FledgeBird()
+                    .frame(width: 40)
+                    .padding(6)
+                    .background(FledgeTheme.Palette.sky, in: .circle)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(usedOn.map { "Your free Health habit is \($0)." } ?? "Free includes one Health habit.")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(FledgeTheme.Palette.ink)
+                    Text("Fledge Pro lets all three fill in by themselves.")
+                        .font(.footnote)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(FledgeTheme.Palette.ink2.opacity(0.6))
+            }
+            .padding(FledgeTheme.Space.l)
+            .fledgeCard(cornerRadius: FledgeTheme.Radius.tile, tint: FledgeTheme.Palette.gold)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens Fledge Pro")
+    }
+}
+
+/// Section title with a small coloured symbol in front.
+struct SectionLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: FledgeTheme.Space.s) {
+            configuration.icon
+                .font(.subheadline)
+                .foregroundStyle(FledgeTheme.Palette.ink2)
+            configuration.title
+        }
     }
 }
 

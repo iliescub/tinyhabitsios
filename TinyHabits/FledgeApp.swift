@@ -82,10 +82,10 @@ struct RootView: View {
         }
     }
 
-    /// DEBUG: `-FledgeDemoScreen onboarding` always shows onboarding.
+    /// DEBUG: `-FledgeDemoScreen onboarding[-pick|-health|-reminders]` always shows onboarding (at that step).
     private static var forcesOnboarding: Bool {
         #if DEBUG
-        return DemoData.isEnabled && DemoData.screen == "onboarding"
+        return DemoData.isEnabled && (DemoData.screen?.hasPrefix("onboarding") ?? false)
         #else
         return false
         #endif
@@ -94,7 +94,7 @@ struct RootView: View {
     /// DEBUG: demo data and screenshots skip onboarding unless `-FledgeDemoScreen onboarding`.
     private static var skipsOnboarding: Bool {
         #if DEBUG
-        return DemoData.isEnabled && DemoData.screen != "onboarding"
+        return DemoData.isEnabled && !(DemoData.screen?.hasPrefix("onboarding") ?? false)
         #else
         return false
         #endif

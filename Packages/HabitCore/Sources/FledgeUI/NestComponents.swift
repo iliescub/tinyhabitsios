@@ -235,3 +235,25 @@ public struct FeatherBurst: View {
         }
     }
 }
+
+/// A symbol on a soft square of its colour: template rows, settings rows (UX-9, UX-16). Scales with Dynamic Type.
+public struct IconSquare: View {
+    public let symbol: String
+    public let color: Color
+    @ScaledMetric(relativeTo: .body) private var side: CGFloat = 34
+
+    public init(symbol: String, color: Color) {
+        self.symbol = symbol
+        self.color = color
+    }
+
+    public var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: side * 0.48, weight: .semibold))
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(color)
+            .frame(width: side, height: side)
+            .background(color.opacity(0.15), in: .rect(cornerRadius: side * 0.28, style: .continuous))
+            .accessibilityHidden(true)
+    }
+}

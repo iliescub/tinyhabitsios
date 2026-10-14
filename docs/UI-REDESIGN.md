@@ -60,10 +60,15 @@ Found for Phase 4: graduation text truncates at AX3+ (make it scroll, UX-12).
 - [x] **UX-7** ✅ Detail: hero row, stats above the fold, `JourneyTrack` (day 1 / 30 / 66), labeled heatmap + legend, pinned CTA
 - [x] **UX-8** ✅ `FeatherBurst` on done (Canvas) + Reduce Motion variant
 
-### Phase 3: add and onboarding (Nov 2–12, 3d)
-- [ ] **UX-9** Add: compact rows with `IconSquare`, one Pro banner, per-template colours
-- [ ] **UX-10** Configure: live card preview, large goal control, compact icon/colour sheet
-- [ ] **UX-11** Onboarding: three-ring promise animation, progress bar + back, sticky "2 of 3" bar, real widget preview
+### Phase 3: add and onboarding (Nov 2–12, 3d) — ✅ done 2026-10-14
+Notes: `TemplateStyle` gives each template a fixed colour (Health source) and picks a colour no other nest habit uses;
+`TemplateRow` is shared by Add and onboarding; templates already in the nest show "In the nest". Configure: preview card,
+`GoalControl` (adjustable for VoiceOver), icon picker sheet. Onboarding steps scroll at AX sizes (`FittingScroll`).
+Gotcha: in a Form, `LabeledContent` with a `Label` as content laid out ~200 pt tall on iOS 27; use a plain HStack.
+DEBUG: `-FledgeDemoScreen configure` and `onboarding-pick|-health|-reminders`. Screens: `Design/review/screens/phase3/`.
+- [x] **UX-9** ✅ Add: compact rows with `IconSquare`, one Pro banner, per-template colours
+- [x] **UX-10** ✅ Configure: live card preview, large goal control, compact icon/colour sheet
+- [x] **UX-11** ✅ Onboarding: three-ring promise animation, progress bar + back, sticky "2 of 3" bar, real widget preview
 
 ### Phase 4: rewards and money (Nov 13–22, 3d)
 - [ ] **UX-12** Graduation: bird hops out of the ring, flight path, recap card (days, rate, best, 30-day strip)

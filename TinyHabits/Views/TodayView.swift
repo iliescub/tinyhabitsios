@@ -284,7 +284,7 @@ struct TodayView: View {
         switch screen {
         case "detail": detailHabit = first
         case "graduation": graduatingHabit = first
-        case "add": sheet = .add
+        case "add", "configure": sheet = .add
         case "flown": sheet = .flown
         case "settings": sheet = .settings
         case "paywall": sheet = .paywall

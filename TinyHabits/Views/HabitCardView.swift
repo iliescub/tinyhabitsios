@@ -235,18 +235,6 @@ struct NoDataHint: View {
     }
 }
 
-/// "Health" or "Tap" mini-badge.
-struct SourceBadge: View {
-    let isAuto: Bool
-
-    var body: some View {
-        Label(isAuto ? "Health" : "Tap", systemImage: isAuto ? "heart.fill" : "hand.tap.fill")
-            .font(.caption)
-            .foregroundStyle(isAuto ? FledgeTheme.Palette.skyText : FledgeTheme.Palette.ink2)
-            .labelStyle(.titleAndIcon)
-    }
-}
-
 /// Thin day-0 → day-66 track with a gold tick where graduation becomes possible (day 30).
 struct FlightTrack: View {
     let fraction: Double

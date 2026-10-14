@@ -9,7 +9,8 @@ enum DemoData {
 
     static var isEnabled: Bool { ProcessInfo.processInfo.arguments.contains(launchArgument) }
 
-    /// `-FledgeDemoScreen detail|graduation|add|flown|settings` opens that screen on launch (for screenshots).
+    /// `-FledgeDemoScreen detail|graduation|add|configure|flown|settings|paywall|onboarding[-pick|-health|-reminders]`
+    /// opens that screen on launch (for screenshots).
     static var screen: String? {
         let arguments = ProcessInfo.processInfo.arguments
         guard let index = arguments.firstIndex(of: "-FledgeDemoScreen"), arguments.indices.contains(index + 1) else { return nil }
