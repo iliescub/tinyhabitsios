@@ -48,6 +48,8 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - App: open `TinyHabits.xcodeproj`, scheme `TinyHabits` (app display name "Fledge").
 - CLI build (DerivedData outside Documents): `scripts/watchdog.sh --timeout 900 --idle 300 --name build -- xcodebuild -project TinyHabits.xcodeproj -scheme TinyHabits -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/fledge-dd build`
 - Simulator steps (boot, install, screenshots) also go through the watchdog with `--timeout 180`; shut the simulator down when done (`xcrun simctl shutdown all`).
+- Screenshots of every demo screen × light/dark × default/AX3 + contact sheet: `scripts/screenshots.sh [LABEL] [--no-build]`
+  → `Design/review/screens/LABEL/index.html` (builds and boots through the watchdog; shuts the simulator down after).
 - Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|flown|settings|paywall|onboarding` to open a screen (screenshots). `-FledgePro` forces Pro.
 - StoreKit testing: the shared scheme uses `Configuration/Fledge.storekit` (run from Xcode; CLI `simctl launch` doesn't load it).
 - Pro rules: `ProPolicy` (free = 1 Health habit); widgets read `ProStatus` from the App Group. Never sell more than 3 slots.

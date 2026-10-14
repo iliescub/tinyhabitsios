@@ -32,12 +32,11 @@ struct GraduationView: View {
                             .matchedGeometryEffect(id: "hero", in: hero)
                             .transition(.opacity)
                     } else {
-                        Image(systemName: "bird.fill")
-                            .font(.system(size: 110))
-                            .foregroundStyle(color)
+                        FledgeBird(phase == .flying ? .flying : .sitting, style: .tinted(color))
+                            .frame(width: 170)
+                            .shadow(color: FledgeTheme.Palette.ink.opacity(0.15), radius: 14, y: 8)
                             .matchedGeometryEffect(id: "hero", in: hero)
-                            .rotationEffect(.degrees(phase == .flying && !reduceMotion ? -18 : 0))
-                            .offset(phase == .flying && !reduceMotion ? CGSize(width: 420, height: -700) : .zero)
+                            .offset(phase == .flying && !reduceMotion ? CGSize(width: -420, height: -700) : .zero)
                             .opacity(phase == .flying && reduceMotion ? 0 : 1)
                             .transition(.opacity)
                     }
@@ -65,7 +64,7 @@ struct GraduationView: View {
                 Spacer()
 
                 VStack(spacing: FledgeTheme.Space.m) {
-                    PrimaryActionButton(title: "Let it fly", systemImage: "bird", action: fly)
+                    PrimaryActionButton(title: "Let it fly", icon: .fledgeGlyph(), action: fly)
                         .disabled(phase == .flying)
                     Button("Keep it in the nest for now", action: onKeep)
                         .font(.subheadline)

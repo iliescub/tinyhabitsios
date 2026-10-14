@@ -73,7 +73,7 @@ for bird and wing, and give the wing the top layer so it lifts off the body in c
 | **Feathers**: 6 small shapes drifting up | A habit done | Completion burst (0.8 s), never decoration |
 
 Poses for the in-app `FledgeBird` (UX-2): **sitting** (the mark), **peeking** (body half-hidden behind the nest, for empty slots),
-**flying** (wing raised further, tilted 12°), **sleeping** (eye as a short arc, for all-done and empty states).
+**flying** (wing raised further, nose up 12°; it always flies toward the upper left, the way it faces), **sleeping** (eye as a short arc, for all-done and empty states).
 
 ## Colour
 Core brand colours are the icon colours. UI tokens, contrast values and habit colours stay in `docs/DESIGN.md` §3.2.

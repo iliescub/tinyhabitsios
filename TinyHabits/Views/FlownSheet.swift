@@ -21,11 +21,17 @@ struct FlownSheet: View {
         NavigationStack {
             Group {
                 if flown.isEmpty {
-                    ContentUnavailableView(
-                        "Nothing has flown yet",
-                        systemImage: "bird",
-                        description: Text("Your first habit can fly from day \(GraduationRule.standard.minDays).")
-                    )
+                    ContentUnavailableView {
+                        Label {
+                            Text("Nothing has flown yet")
+                        } icon: {
+                            FledgeBird(.sleeping, style: .glyph)
+                                .foregroundStyle(FledgeTheme.Palette.ink2)
+                                .frame(width: 64)
+                        }
+                    } description: {
+                        Text("Your first habit can fly from day \(GraduationRule.standard.minDays).")
+                    }
                 } else {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: FledgeTheme.Space.m) {
@@ -80,9 +86,8 @@ struct FlownTile: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
-            Image(systemName: "bird.fill")
-                .font(.system(size: 36))
-                .foregroundStyle(FledgeTheme.habitColor(habit.colorKey))
+            FledgeBird(style: .tinted(FledgeTheme.habitColor(habit.colorKey)))
+                .frame(height: 38)
             Text(habit.name)
                 .font(.headline)
                 .foregroundStyle(FledgeTheme.Palette.ink)
@@ -92,11 +97,7 @@ struct FlownTile: View {
         }
         .padding(FledgeTheme.Space.l)
         .frame(maxWidth: .infinity, minHeight: 130, alignment: .topLeading)
-        .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.tile))
-        .overlay {
-            RoundedRectangle(cornerRadius: FledgeTheme.Radius.tile)
-                .strokeBorder(FledgeTheme.Palette.gold.opacity(0.4), lineWidth: 1)
-        }
+        .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
         .accessibilityElement(children: .combine)
     }
 }

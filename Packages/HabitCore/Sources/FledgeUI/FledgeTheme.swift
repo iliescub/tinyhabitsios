@@ -18,6 +18,11 @@ public enum FledgeTheme {
         public static let cloud = Color(light: 0xF7F5F2, dark: 0x0E1120)
         public static let card = Color(light: 0xFFFFFF, dark: 0x191D33)
         public static let hairline = Color(light: 0xE6E2DC, dark: 0x2A2F4A)
+        /// Label colour on an ink-filled button (white in light mode, ink in dark mode where the fill is light).
+        public static let onInk = Color(light: 0xFFFFFF, dark: 0x1B2240)
+        /// The bird's beak and eye (docs/BRAND.md); the eye stays ink in both modes because the body stays white.
+        public static let beak = Color(light: 0xFFB13D, dark: 0xFFC15E)
+        public static let birdEye = Color(light: 0x1B2240, dark: 0x1B2240)
     }
 
     public enum Radius {
@@ -35,10 +40,34 @@ public enum FledgeTheme {
     }
 
     public enum Ring {
-        public static let card: CGFloat = 64
+        public static let card: CGFloat = 72
         public static let detail: CGFloat = 160
         public static let widget: CGFloat = 28
         public static let stroke: CGFloat = 8
+    }
+
+    /// Cards lift off the cloud background with a soft two-layer shadow in light mode and a hairline in dark mode (UX-1).
+    public enum Elevation {
+        public static let contactOpacity = 0.05
+        public static let contactRadius: CGFloat = 1
+        public static let contactY: CGFloat = 1
+        public static let ambientOpacity = 0.07
+        public static let ambientRadius: CGFloat = 10
+        public static let ambientY: CGFloat = 6
+    }
+
+    /// Type ramp additions (UX-1). Dynamic Type styles only, so everything scales to AX5.
+    public enum Typeface {
+        /// Big rounded numbers: today's value, stats.
+        public static let metric = Font.system(.title2, design: .rounded, weight: .heavy).monospacedDigit()
+        /// Small numbers that sit next to a metric.
+        public static let metricSmall = Font.system(.headline, design: .rounded, weight: .bold).monospacedDigit()
+        /// Screen and card titles.
+        public static let title = Font.system(.largeTitle, design: .rounded, weight: .heavy)
+        /// Uppercase label above a title ("WEDNESDAY · 14 OCT"); pair with `.fledgeEyebrow()`.
+        public static let eyebrow = Font.caption2.weight(.semibold)
+        /// Goals, units, sources, freshness.
+        public static let meta = Font.caption
     }
 
     public static let screenMargin: CGFloat = 20
@@ -61,6 +90,80 @@ public enum FledgeTheme {
         case "slate": Color(light: 0x6B7A99, dark: 0x8C9AB8)
         default: Palette.sky
         }
+    }
+}
+
+// MARK: - Modifiers
+
+/// Solid card surface with the elevation token. Never glass (docs/DESIGN.md §4).
+public struct FledgeCardSurface: ViewModifier {
+    let radius: CGFloat
+    @Environment(\.colorScheme) private var colorScheme
+
+    public func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+        content
+            .background {
+                shape
+                    .fill(FledgeTheme.Palette.card)
+                    .shadow(
+                        color: FledgeTheme.Palette.ink.opacity(colorScheme == .dark ? 0 : FledgeTheme.Elevation.contactOpacity),
+                        radius: FledgeTheme.Elevation.contactRadius, y: FledgeTheme.Elevation.contactY
+                    )
+                    .shadow(
+                        color: FledgeTheme.Palette.ink.opacity(colorScheme == .dark ? 0 : FledgeTheme.Elevation.ambientOpacity),
+                        radius: FledgeTheme.Elevation.ambientRadius, y: FledgeTheme.Elevation.ambientY
+                    )
+            }
+            .overlay {
+                if colorScheme == .dark {
+                    shape.strokeBorder(FledgeTheme.Palette.hairline, lineWidth: 1)
+                }
+            }
+    }
+}
+
+/// Uppercase, tracked, secondary: the eyebrow line above a title.
+public struct FledgeEyebrow: ViewModifier {
+    public func body(content: Content) -> some View {
+        content
+            .font(FledgeTheme.Typeface.eyebrow)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundStyle(FledgeTheme.Palette.ink2)
+    }
+}
+
+extension View {
+    /// A card on the cloud background: solid fill, soft shadow (light) or hairline (dark).
+    public func fledgeCard(cornerRadius: CGFloat = FledgeTheme.Radius.card) -> some View {
+        modifier(FledgeCardSurface(radius: cornerRadius))
+    }
+
+    public func fledgeEyebrow() -> some View {
+        modifier(FledgeEyebrow())
+    }
+}
+
+/// The primary call to action: an ink capsule (14 : 1 contrast), Liquid Glass prominent on iOS 26.
+/// Ink replaced the blue fill so blue is free to mean Apple Health and links (docs/UI-REDESIGN.md, UX-1).
+public struct FledgePrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundStyle(FledgeTheme.Palette.onInk)
+            .padding(.horizontal, FledgeTheme.Space.xl)
+            .padding(.vertical, FledgeTheme.Space.m + 2)
+            .background(FledgeTheme.Palette.ink.opacity(isEnabled ? 1 : 0.35), in: .capsule)
+            .shadow(color: FledgeTheme.Palette.ink.opacity(0.18), radius: 8, y: 4)
+            .opacity(configuration.isPressed ? 0.85 : 1)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+            .contentShape(.capsule)
     }
 }
 

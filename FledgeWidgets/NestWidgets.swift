@@ -124,7 +124,7 @@ struct RingButton: View {
             fraction: item.card.progress.fraction,
             status: item.card.progress.status,
             color: FledgeTheme.habitColor(item.card.colorKey),
-            symbol: item.card.progress.status == .done ? "checkmark" : item.card.symbol,
+            symbol: item.card.symbol,
             size: size,
             lineWidth: lineWidth
         )
@@ -157,7 +157,7 @@ struct FreshnessLabel: View {
 struct ProWidgetView: View {
     var body: some View {
         VStack(spacing: 6) {
-            Image(systemName: "bird.fill").font(.title2).foregroundStyle(FledgeTheme.Palette.dawn)
+            FledgeBird(style: .tinted(FledgeTheme.Palette.sky)).frame(height: 30)
             Text("Fledge Pro")
                 .font(.caption.bold())
                 .foregroundStyle(FledgeTheme.Palette.ink)
@@ -171,7 +171,7 @@ struct ProWidgetView: View {
 struct EmptyNestView: View {
     var body: some View {
         VStack(spacing: 6) {
-            Image(systemName: "bird").font(.title2).foregroundStyle(FledgeTheme.Palette.sky)
+            FledgeBird(.peeking, style: .glyph).foregroundStyle(FledgeTheme.Palette.sky).frame(height: 32)
             Text("Add a habit in Fledge")
                 .font(.caption)
                 .multilineTextAlignment(.center)
@@ -215,16 +215,16 @@ struct NestLockScreenView: View {
 
     var body: some View {
         if !isPro {
-            Label("Fledge Pro", systemImage: "bird")
+            Label { Text("Fledge Pro") } icon: { Image.fledgeGlyph(height: 14) }
         } else if family == .accessoryInline {
-            Label(snapshot.inlineText, systemImage: "bird")
+            Label { Text(snapshot.inlineText) } icon: { Image.fledgeGlyph(height: 14) }
         } else {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     ForEach(snapshot.items.prefix(3)) { item in
                         HabitRing(
                             fraction: item.card.progress.fraction, status: item.card.progress.status, color: .primary,
-                            symbol: item.card.progress.status == .done ? "checkmark" : item.card.symbol, size: 26, lineWidth: 3.5
+                            symbol: item.card.symbol, size: 26, lineWidth: 3.5
                         )
                     }
                 }
@@ -259,18 +259,18 @@ struct HabitRingLockView: View {
     var body: some View {
         let items = entry.snapshot.items
         if !entry.isPro {
-            Image(systemName: "bird").accessibilityLabel("Fledge Pro")
+            Image.fledgeGlyph(height: 24).accessibilityLabel("Fledge Pro")
         } else if let item = items.first(where: { $0.id == entry.selectedHabitID }) ?? items.first {
             ZStack {
                 AccessoryWidgetBackground()
                 HabitRing(
                     fraction: item.card.progress.fraction, status: item.card.progress.status, color: .primary,
-                    symbol: item.card.progress.status == .done ? "checkmark" : item.card.symbol, size: 46, lineWidth: 5
+                    symbol: item.card.symbol, size: 46, lineWidth: 5
                 )
             }
             .accessibilityLabel("\(item.card.name), \(item.card.valueText)")
         } else {
-            Image(systemName: "bird")
+            Image.fledgeGlyph(height: 24)
         }
     }
 }

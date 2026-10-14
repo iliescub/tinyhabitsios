@@ -86,7 +86,7 @@ struct HabitDetailSheet: View {
                     fraction: card.progress.fraction,
                     status: card.progress.status,
                     color: color,
-                    symbol: card.progress.status == .done ? "checkmark" : habit.symbol,
+                    symbol: habit.symbol,
                     size: FledgeTheme.Ring.detail,
                     lineWidth: 14
                 )
@@ -127,7 +127,7 @@ struct HabitDetailSheet: View {
                     .font(.subheadline)
                     .foregroundStyle(FledgeTheme.Palette.ink)
                 if isReady {
-                    PrimaryActionButton(title: "Let it fly", systemImage: "bird") {
+                    PrimaryActionButton(title: "Let it fly", icon: .fledgeGlyph()) {
                         dismiss()
                         onReadyToFly()
                     }
@@ -175,7 +175,7 @@ struct DetailCard<Content: View>: View {
         }
         .padding(FledgeTheme.Space.l)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.card))
+        .fledgeCard()
     }
 }
 
@@ -197,7 +197,7 @@ struct StatTile: View {
         }
         .padding(FledgeTheme.Space.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.tile))
+        .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
         .accessibilityElement(children: .combine)
     }
 }
@@ -216,10 +216,9 @@ struct LargeFlightTrack: View {
                 Capsule().fill(color).frame(width: max(8, width * min(fraction, 1)), height: 8)
                 Rectangle().fill(FledgeTheme.Palette.gold).frame(width: 3, height: 18)
                     .offset(x: width * tick - 1.5)
-                Image(systemName: "bird.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(color)
-                    .offset(x: min(width - 20, max(0, width * min(fraction, 1) - 10)), y: -18)
+                FledgeBird(.flying, style: .tinted(color))
+                    .frame(width: 24)
+                    .offset(x: min(width - 24, max(0, width * min(fraction, 1) - 12)), y: -20)
             }
             .frame(maxHeight: .infinity)
         }

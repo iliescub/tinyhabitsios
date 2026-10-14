@@ -71,8 +71,12 @@ struct SettingsSheet: View {
                 Button {
                     showPaywall = true
                 } label: {
-                    Label("Get Fledge Pro", systemImage: "bird.fill")
-                        .font(.headline)
+                    Label {
+                        Text("Get Fledge Pro")
+                    } icon: {
+                        Image.fledgeGlyph(height: 20).foregroundStyle(FledgeTheme.Palette.skyText)
+                    }
+                    .font(.headline)
                 }
             }
             Button("Restore purchases") {

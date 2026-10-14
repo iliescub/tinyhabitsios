@@ -47,7 +47,9 @@ struct TodayView: View {
             .background(SkyBackground().ignoresSafeArea())
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button("Flown", systemImage: "bird") { sheet = .flown }
+                    Button { sheet = .flown } label: {
+                        Label { Text("Flown") } icon: { Image.fledgeGlyph(height: 20) }
+                    }
                     Button("Settings", systemImage: "gearshape") { sheet = .settings }
                 }
             }

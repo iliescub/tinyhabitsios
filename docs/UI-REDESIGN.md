@@ -41,11 +41,14 @@ New components: `FledgeBird`, `NestGlyph`, `WeekStrip`, `JourneyTrack`, `IconSqu
 ## Tickets
 UI only: no schema or write-API changes. New logic (week model, holding rate) goes in HabitCore/FledgeUI with tests.
 
-### Phase 1: foundation (Oct 15–21, 2.5d)
-- [ ] **UX-1** Tokens: elevation, `FledgeButtonStyle` (ink CTA), type ramp
-- [ ] **UX-2** `FledgeBird` Shape in 4 poses + snapshot tests; replace every `bird.fill` (app + widgets)
-- [ ] **UX-3** `HabitRing` v2: 72 pt, symbol persists, corner badges, soft rest state, Reduce Motion
-- [ ] **UX-4** Screenshot harness: every `-FledgeDemoScreen` × light/dark × default/AX3 → `Design/review/`
+### Phase 1: foundation (Oct 15–21, 2.5d) — ✅ done 2026-10-14
+Notes: `FledgeBird` (FledgeUI) draws the mark in 4 poses + a one-colour glyph (`Image.fledgeGlyph`, `FledgeGlyphShape`);
+SF `bird` stays only where the system needs a symbol name (App Shortcuts, Control Center). Ring v2 keeps the symbol and adds
+badges (check, moon, heart) from 40 pt; smaller rings keep v1 behaviour. Screens: `Design/review/screens/phase1/index.html`.
+- [x] **UX-1** ✅ Tokens: elevation, `FledgeButtonStyle` (ink CTA), type ramp
+- [x] **UX-2** ✅ `FledgeBird` Shape in 4 poses + snapshot tests; replace every `bird.fill` (app + widgets)
+- [x] **UX-3** ✅ `HabitRing` v2: 72 pt, symbol persists, corner badges, soft rest state, Reduce Motion
+- [x] **UX-4** ✅ Screenshot harness: every `-FledgeDemoScreen` × light/dark × default/AX3 → `Design/review/`
 
 ### Phase 2: Today, card, detail (Oct 22 – Nov 1, 4d)
 - [ ] **UX-5** Today: eyebrow date + status title, `NestGlyph`, `WeekStrip` (tested `WeekModel`), Flown shelf preview

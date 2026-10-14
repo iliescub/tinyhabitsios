@@ -275,7 +275,7 @@ struct TemplateTile: View {
         }
         .padding(FledgeTheme.Space.l)
         .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
-        .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.tile))
+        .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
         .accessibilityElement(children: .combine)
         .accessibilityHint("Choose and adjust this habit")
     }
@@ -301,26 +301,39 @@ struct ProBadge: View {
     }
 }
 
-/// Primary call to action; Liquid Glass on iOS 26, prominent bordered before.
+/// Primary call to action: ink (UX-1). Liquid Glass prominent tinted ink on iOS 26, `FledgePrimaryButtonStyle` before.
 struct PrimaryActionButton: View {
     let title: String
-    let systemImage: String
+    let icon: Image
     let action: () -> Void
 
+    init(title: String, systemImage: String, action: @escaping () -> Void) {
+        self.init(title: title, icon: Image(systemName: systemImage), action: action)
+    }
+
+    init(title: String, icon: Image, action: @escaping () -> Void) {
+        self.title = title
+        self.icon = icon
+        self.action = action
+    }
+
     var body: some View {
-        let button = Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.headline)
-                .padding(.horizontal, FledgeTheme.Space.s)
-                .padding(.vertical, FledgeTheme.Space.xs)
-        }
-        .buttonBorderShape(.capsule)
-        .tint(FledgeTheme.Palette.skyText)
+        let label = Label { Text(title) } icon: { icon }
 
         if #available(iOS 26, *) {
-            button.buttonStyle(.glassProminent)
+            Button(action: action) {
+                label
+                    .font(.headline)
+                    .foregroundStyle(FledgeTheme.Palette.onInk)
+                    .padding(.horizontal, FledgeTheme.Space.s)
+                    .padding(.vertical, FledgeTheme.Space.xs)
+            }
+            .buttonBorderShape(.capsule)
+            .tint(FledgeTheme.Palette.ink)
+            .buttonStyle(.glassProminent)
         } else {
-            button.buttonStyle(.borderedProminent)
+            Button(action: action) { label }
+                .buttonStyle(FledgePrimaryButtonStyle())
         }
     }
 }

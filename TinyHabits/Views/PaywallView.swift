@@ -44,9 +44,9 @@ struct PaywallView: View {
         ZStack {
             SkyBackground()
             VStack(spacing: FledgeTheme.Space.l) {
-                Image(systemName: "bird.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(FledgeTheme.Palette.dawn)
+                FledgeBird(.flying)
+                    .frame(height: 76)
+                    .shadow(color: FledgeTheme.Palette.ink.opacity(0.15), radius: 10, y: 6)
                     .padding(.top, FledgeTheme.Space.xxl)
                 Text("Fledge Pro")
                     .font(.largeTitle.bold())

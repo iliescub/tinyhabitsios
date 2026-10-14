@@ -47,7 +47,7 @@ struct HabitCardView: View {
         cardContent
             .padding(FledgeTheme.Space.l)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.card))
+            .fledgeCard()
             .contentShape(.rect(cornerRadius: FledgeTheme.Radius.card))
             .onTapGesture { actions.open() }
             .overlay { readyOutline }
@@ -86,7 +86,7 @@ struct HabitCardView: View {
         Button {
             if status == .skipped { actions.undoSkip() } else { actions.toggleDone() }
         } label: {
-            HabitRing(fraction: model.progress.fraction, status: status, color: color, symbol: status == .done ? "checkmark" : model.symbol)
+            HabitRing(fraction: model.progress.fraction, status: status, color: color, symbol: model.symbol)
         }
         .buttonStyle(.plain)
     }
@@ -144,7 +144,9 @@ struct HabitCardView: View {
             Button("Rest day", systemImage: "moon.zzz", action: actions.skip)
         }
         if model.isReadyToFly {
-            Button("Let it fly", systemImage: "bird", action: actions.readyToFly)
+            Button(action: actions.readyToFly) {
+                Label { Text("Let it fly") } icon: { Image.fledgeGlyph() }
+            }
         }
         Divider()
         Button("Details", systemImage: "chart.bar", action: actions.open)
@@ -215,9 +217,9 @@ struct EmptySlotCard: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: FledgeTheme.Space.l) {
-                Image(systemName: "bird")
-                    .font(.title2)
-                    .foregroundStyle(FledgeTheme.Palette.ink2)
+                FledgeBird(.peeking, style: .glyph)
+                    .foregroundStyle(FledgeTheme.Palette.ink2.opacity(0.7))
+                    .frame(width: FledgeTheme.Ring.card * 0.8)
                     .frame(width: FledgeTheme.Ring.card, height: FledgeTheme.Ring.card)
                 VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
                     Text("Add a habit")

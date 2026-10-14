@@ -177,7 +177,7 @@ struct OnboardingView: View {
                 }
             }
             .padding(FledgeTheme.Space.l)
-            .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: FledgeTheme.Radius.tile))
+            .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
             Spacer()
         }
         .padding(.horizontal, FledgeTheme.screenMargin)
@@ -283,9 +283,9 @@ private struct PromiseAnimation: View {
     var body: some View {
         ZStack {
             if flown {
-                Image(systemName: "bird.fill")
-                    .font(.system(size: 72))
-                    .foregroundStyle(FledgeTheme.Palette.dawn)
+                FledgeBird(.flying)
+                    .frame(width: 150)
+                    .shadow(color: FledgeTheme.Palette.ink.opacity(0.15), radius: 12, y: 8)
                     .transition(.scale.combined(with: .opacity))
             } else {
                 HabitRing(fraction: fill, status: fill >= 1 ? .done : .pending, color: FledgeTheme.Palette.dawn, symbol: "figure.walk", size: 120, lineWidth: 12)
@@ -314,7 +314,7 @@ private struct WidgetHint: View {
             VStack(spacing: 6) {
                 HStack(spacing: 6) {
                     HabitRing(fraction: 0.7, status: .pending, color: FledgeTheme.Palette.dawn, symbol: "figure.walk", size: 34, lineWidth: 4)
-                    HabitRing(fraction: 1, status: .done, color: FledgeTheme.Palette.sky, symbol: "checkmark", size: 34, lineWidth: 4)
+                    HabitRing(fraction: 1, status: .done, color: FledgeTheme.Palette.sky, symbol: "book.fill", size: 34, lineWidth: 4)
                 }
                 HStack(spacing: 6) {
                     HabitRing(fraction: 0.3, status: .pending, color: FledgeTheme.Palette.meadow, symbol: "brain.head.profile", size: 34, lineWidth: 4)
@@ -322,7 +322,7 @@ private struct WidgetHint: View {
                 }
             }
             .padding(FledgeTheme.Space.m)
-            .background(FledgeTheme.Palette.card, in: .rect(cornerRadius: 20))
+            .fledgeCard(cornerRadius: 20)
             .accessibilityHidden(true)
             Text("Touch and hold your Home Screen, tap Edit › Add Widget, and choose Fledge.")
                 .font(.subheadline)
