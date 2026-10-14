@@ -1,5 +1,6 @@
-# Publishes website/ (privacy, terms, support) to GitHub Pages on every push to the default branch that changes it.
-# One-time setup: repository Settings › Pages › Build and deployment › Source: GitHub Actions.
+# Publishes website/ (privacy, terms, support) by copying it to the gh-pages branch on every push that changes it.
+# GitHub Pages serves that branch at https://iliescub.github.io/tinyhabitsios/
+# One-time setup: repository Settings › Pages › Build and deployment › Source: Deploy from a branch › gh-pages / (root).
 name: Website
 on:
   push:
@@ -7,23 +8,18 @@ on:
     paths: ["website/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
         with:
-          path: website
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          fetch-depth: 0
+      - name: Push website/ to gh-pages
+        run: |
+          git subtree split --prefix website -b gh-pages-new
+          git push --force origin gh-pages-new:gh-pages

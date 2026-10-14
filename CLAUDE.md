@@ -77,7 +77,8 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - Review checklist: `swift scripts/asc.swift review-status` (read-only), `review-setup` (category, content rights, age rating, free
   price), `review-contact` (contact + copyright from git-ignored `Configuration/review-contact.json`). `status` also lists review
   submissions and in-app purchase states. 1.0 (2) was submitted 2026-10-14 without the products, then withdrawn; build 3 has the paywall fix.
-- Website (privacy, terms, support) lives in `website/` and is published to `https://iliescub.github.io/tinyhabitsios/` by
-  `.github/workflows/pages.yml` on push (one-time: repo Settings › Pages › Source: GitHub Actions). App URLs: `AppLinks.swift`.
+- Website (privacy, terms, support) lives in `website/`. `.github/workflows/pages.yml` copies it to the `gh-pages` branch on every
+  push that changes it; GitHub Pages serves that branch at `https://iliescub.github.io/tinyhabitsios/` (privacy/, terms/, support/).
+  One-time: repo Settings › Pages › Deploy from a branch › `gh-pages` / root. Links in the pages are relative; app URLs: `AppLinks.swift`.
 - App Store Connect API key: `~/APIkeys/appstoreconnect/AuthKey_YLSMVZ7F79.p8` (issuer ID in the .rtf next to it). Never print files from `~/APIkeys`; reference paths only.
 - Required for validation (already set): privacy manifests (`PrivacyInfo.xcprivacy` in app + widget), `ITSAppUsesNonExemptEncryption = NO`, `NSHealthShareUsageDescription` and `NSHealthUpdateUsageDescription`.

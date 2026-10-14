@@ -12,8 +12,8 @@ Listing, category, age rating, content rights, free price, copyright "© 2026 He
 Release option is still **AFTER_APPROVAL**.
 
 **To resubmit (owner, App Store Connect)**
-1. **Push and enable GitHub Pages first**: the privacy, terms and support URLs return 404 until `website/` is live
-   (`git push`, then Settings › Pages › Source: GitHub Actions). App Review opens the privacy link.
+1. **Enable GitHub Pages first** (code and `gh-pages` are pushed): Settings › Pages › Build and deployment › Source: **Deploy from a
+   branch** › `gh-pages` / (root) › Save. The privacy, terms and support URLs return 404 until then; App Review opens the privacy link.
 2. On the 1.0 version page, under **In-App Purchases and Subscriptions**, add yearly, monthly and lifetime (first products must go
    with a version), check build 3 is selected, decide manual vs automatic release, then **Submit for Review**.
 
@@ -121,7 +121,7 @@ Positioning: **the habit tracker that lets go** (graduation is the one claim no 
   Still to do: add them to the 1.0 version and submit; revisit prices after the price decision
 - [~] **REL-1** ✅ 2026-10-14: privacy policy (lists every HealthKit type), terms (Apple EULA + subscription terms) and support pages in
   `website/`, published by GitHub Pages; URLs set in the app (`AppLinks`) and in App Store Connect (privacy, support, marketing).
-  Status 2026-10-14: **not live yet** (privacy URL returns 404) — push + enable Pages. App Privacy answered by the owner at submission
+  Status 2026-10-14: pushed; `website/` is published to the `gh-pages` branch by the workflow — **enable Pages from `gh-pages`** to go live. App Privacy answered by the owner at submission
 - [~] **REL-2** ✅ 2026-10-14: description, keywords, promotional text, subtitle and both screenshot sets uploaded via `scripts/asc.swift`
   (order: graduation → Today → head start → Flown → widgets → privacy). Still to do: 15 s preview video; Lock Screen and Siri shots from a device
 - [~] **REL-3** ✅ 0.1 (1) uploaded 2026-10-11; **1.0 (2)** uploaded with the API key, VALID and attached to version 1.0 on 2026-10-14
