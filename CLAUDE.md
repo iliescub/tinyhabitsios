@@ -1,17 +1,25 @@
-# Fledge (relaunch of TinyHabits)
+# Fledge → Yearling (relaunch of TinyHabits)
 
-"Three habits. Done for you. Then they fly." — at most 3 active habits, auto-completed from Apple Health where possible,
-graduating once they stick. Full product spec and roadmap:
+**2026-11-01:** 1.0 was rejected under App Review 4.3 (Spam). The app is becoming **Yearling**, a New Year's resolution app
+(one resolution → up to three habits; spec section "Update 2026-11-01", tickets RES-0…RES-12 in `docs/BACKLOG.md`, brand v3
+in `docs/BRAND.md`). Code names (Fledge*, bundle IDs, App Group) stay; user-facing copy moves to Yearling in RES-10.
+
+
+"One resolution. Kept by December." — one resolution turned into at most 3 active habits with if-then cues, auto-completed
+from Apple Health where possible, graduating once they stick; the resolution is kept when all have flown. Design: `docs/DESIGN.md`
+§13 (resolution layer). Full product spec and roadmap:
 https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 · offline copy: `docs/SPEC.md` · tickets: `docs/BACKLOG.md`.
 
-Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026-12-04.
+Target: App Store release **2026-12-15**, build 4 to review **2026-11-20** (one app at a time), feature freeze 2026-11-29.
 
 ## Layout
-- `TinyHabits/` — the app target (display name Fledge).
+- `TinyHabits/` — the app target (display name Yearling since 2026-11-02; code and type names keep "Fledge").
 - `FledgeWidgets/` — widget extension target: widgets, Lock Screen, Control Center control.
 - `Shared/` — compiled into BOTH targets: App Intents + `HabitEntity`, `IntentStore`, `Reminders`. Keep it free of app-only code.
 - `Packages/HabitCore/` — local package with two products:
-  - `HabitCore`: SwiftData `SchemaV1`, `DayKey`, `DayEvaluator`, `StreakCalculator`, `GraduationEvaluator`, write API, packs (JSON).
+  - `HabitCore`: SwiftData `SchemaV2` (V1 → V2 lightweight migration; adds `Resolution`, `Habit.cue`, `Habit.resolutionID`),
+    `DayKey`, `DayEvaluator`, `StreakCalculator`, `GraduationEvaluator`, write API (incl. `ResolutionStore`), packs and
+    resolution templates (JSON), resolution engine (`ResolutionYear`, `FreshStart`, `ResolutionFraming`, `YearMap`, `KeptCheck`).
   - `FledgeUI`: `FledgeTheme` tokens, `HabitRing`, `SkyBackground`, `HabitCardModel`, `TodaySummary` (shared with widgets).
   - `FledgeHealth`: `HealthMetric` (source → HealthKit query), `HealthReader` (read-only daily values), `HealthObserver`
     (observer queries + background delivery). Aggregation math lives in HabitCore (`HealthAggregation`).
@@ -46,7 +54,7 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
   xcodebuild under the watchdog (no output looks like a stall). Full log path is printed at the end.
 - Tests (build dir outside Documents, which is iCloud-synced and breaks codesign with xattrs):
   `scripts/watchdog.sh --timeout 600 --idle 180 --name tests -- swift test --package-path Packages/HabitCore --scratch-path /tmp/habitcore-build`
-- App: open `TinyHabits.xcodeproj`, scheme `TinyHabits` (app display name "Fledge").
+- App: open `TinyHabits.xcodeproj`, scheme `TinyHabits` (app display name "Yearling").
 - UI tests (`FledgeAppUITests`: main flows on demo data + Xcode accessibility audit with a documented allowlist); run on iPhone and iPad:
   `scripts/watchdog.sh --timeout 1800 --idle 600 --name ui -- xcodebuild test -project TinyHabits.xcodeproj -scheme TinyHabits -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/fledge-dd -only-testing:FledgeAppUITests`
   (and `name=iPad Pro 13-inch (M5)`). These runs take ~5 min each; run them in the background, not as a blocking command.
@@ -57,8 +65,9 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - Simulator steps (boot, install, screenshots) also go through the watchdog with `--timeout 180`; shut the simulator down when done (`xcrun simctl shutdown all`).
 - Screenshots of every demo screen × light/dark × default/AX3 + contact sheet: `scripts/screenshots.sh [LABEL] [--no-build]`
   → `Design/review/screens/LABEL/index.html` (builds and boots through the watchdog; shuts the simulator down after).
+- App Store listing prepared locally: `Design/AppStore/LISTING.md` (text, screenshot order, what to do before uploading).
 - App Store screenshots (iPhone 1320 × 2868; `--ipad` for the 13" set 2064 × 2752; captions in `Design/AppStore/compose.swift`): `scripts/appstore-screenshots.sh [--no-build] [--ipad]`. iPad screens in the harness: `scripts/screenshots.sh LABEL --device "iPad Pro 13-inch (M5)"`.
-- Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|configure|flown|settings|paywall|sharecard|widgets|onboarding[-pick|-health|-headstart|-reminders]` to open a screen or onboarding step (screenshots). `-FledgePro` forces Pro.
+- Demo data (DEBUG, in-memory, real data untouched): launch argument `-FledgeDemoData`; add `-FledgeDemoScreen detail|graduation|add|configure|flown|settings|paywall|sharecard|widgets|onboarding[-pick|-health|-headstart|-reminders]` to open a screen or onboarding step (screenshots). `-FledgePro` forces Pro. `-FledgeDemoToday yyyy-MM-dd` pins the demo day (App Store screenshots use 2027-02-12); extra demo screens: `firstweek`, `freshstart`, `onboarding-plan|-letter|-seal|-reframe`.
 - StoreKit testing: the shared scheme uses `Configuration/Fledge.storekit` (run from Xcode; CLI `simctl launch` doesn't load it).
 - Pro rules: `ProPolicy` (free = 1 Health habit); widgets read `ProStatus` from the App Group. Never sell more than 3 slots.
 
@@ -82,8 +91,8 @@ Target: App Store release **2026-12-15**, feature freeze 2026-11-29, submit 2026
 - Submissions: `submission-status` (read-only), `submit-prepare` (draft with the version + products), `submit-send`,
   `submit-cancel` (empties a draft; drafts can't be canceled).
 - Review checklist: `swift scripts/asc.swift review-status` (read-only), `review-setup` (category, content rights, age rating, free
-  price), `review-contact` (contact + copyright from git-ignored `Configuration/review-contact.json`). `status` also lists review
-  submissions and in-app purchase states. 1.0 (3) is in review since 2026-10-14 with the group and all three products.
+  price), `review-contact` (contact + copyright from git-ignored `Configuration/review-contact.json`), `copyright "<text>"` (that line only). `status` also lists review
+  submissions and in-app purchase states. 1.0 (3) was rejected on 2026-11-01 (4.3(a), 4.3(b), 4.2.6); build 4 (Yearling) is next. `iap-rename` sets the products' store names to "Yearling Pro".
 - Website (privacy, terms, support) lives in `website/`. `.github/workflows/pages.yml` copies it to the `gh-pages` branch on every
   push that changes it; GitHub Pages serves that branch at `https://iliescub.github.io/tinyhabitsios/` (privacy/, terms/, support/).
   Live since 2026-10-14 (Pages enabled on `gh-pages`). Links in the pages are relative; app URLs: `AppLinks.swift`.

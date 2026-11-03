@@ -1,4 +1,9 @@
-# Fledge — Brand, UI and UX concept
+# Yearling (formerly Fledge) — Brand, UI and UX concept
+
+> **v3, 2026-11-02 — resolution relaunch.** After the 4.3 rejection the app is **Yearling**, a New Year's resolution app.
+> §13 below is the resolution layer (new screens, components, copy); it overrides earlier sections where they conflict.
+> Names and words: `docs/BRAND.md` › v3. Research behind the changes: spec › "Differentiators" and "UI/UX research, round 2".
+> Everything else in this file (nest, rings, palette, Liquid Glass rules, accessibility, iPad) still applies.
 
 Status: v1 concept, 2026-10-11 · Spec: https://claude.ai/code/artifact/3570cc79-5f90-4826-9950-d1f0ee305d54 (offline: `docs/SPEC.md`)
 Icon sources: `Design/Icon/` · Tickets: `docs/BACKLOG.md` (DES-*)
@@ -200,7 +205,7 @@ Layout top to bottom:
 - **Slip check** (GRAD-3): one notification per slip — "Walk has slipped a little since it flew. Bring it back to the nest for a
   while?" — opens this shelf. Only for Health graduates; never repeated until the habit holds again.
 
-### 6.6 Onboarding (4 screens; segmented progress bar + back button since UX-11; Health step shows the head start after Connect)
+### 6.6 Onboarding (superseded by §13.2 in v3; segmented progress bar + back button since UX-11; Health step shows the head start after Connect)
 1. **Promise** — animated ring filling by itself → turns into the bird. "Three habits. Done for you. Then they fly." CTA "Start".
 2. **Pick up to 3** — same tiles as Add habit, multi-select with a "2 of 3" counter; targets editable inline.
 3. **Connect Apple Health** — shown only if a Health template is picked. Three bullets: reads only · stays on your iPhone · you choose what. CTA "Connect" → system sheet. "Not now" turns those habits manual.
@@ -320,3 +325,59 @@ over it*, so a check-in and a look at the history are one glance.
   content capped at 600 pt wide, centred on the sky.
 - Keyboard: ⌘N add a habit (when a slot is free), ⌘, Settings, ⌘1–3 select a habit. Cards get the pointer hover effect.
 - Both orientations; Dynamic Type to AX5 falls back to the single column.
+
+
+## 13. Resolution layer (v3, 2026-11-02)
+
+The nest stays; a resolution sits on top of it. One resolution at a time, up to three habits, each with an "after X" cue.
+Status per item: ✅ built · ◻︎ planned (ticket).
+
+### 13.1 Copy rules
+- Say *resolution*, *plan*, *fresh start*, *kept*; habits stay the unit inside a resolution; *nest* and *fly* stay.
+- Never "habit tracker" in UI or listing. Never "failed", "missed" as a label, "streak broken".
+- The user's own words appear wherever possible: the resolution sentence, the "why", the cues (UXR-4).
+- Templates read as a sentence: "In 2027 I'm *sleeping better*"; custom ones: "My 2027 resolution: *Learn the cello*".
+
+### 13.2 Onboarding (RES-9, UXR-1)
+1. ✅ **Your 2027 resolution** — title, one-line promise, the fledgling; a text field ("In 2027 I want to…", 40 chars) and the
+   7 common resolutions as `TemplateRow`s (symbol, title, their habits). A typed resolution shows a sky-tinted hint: the match
+   ("Sounds like *Move more*") or, for "stop/quit/less…", the approach note with a one-tap swap (RES-3).
+2. ✅ **Your habits** — "For your resolution" group first (pre-picked within the free tier's one Health habit), then the library.
+3. ✅ **When will you do it?** — one row per habit: icon, cue text field ("After…", 40 chars), goal; a menu of everyday cues.
+4. ✅ **A note to December** — "Why it matters" (280) and a gold-tinted "Sealed until December" letter (2,000); *Skip for now*.
+5. ✅ Connect Health (only with a Health habit) with the head start; ✅ reminders + widget.
+6. ✅ **Seal the plan** (UXR-1) — one card: resolution sentence, the habits with their cues, the year; a press-and-hold button
+   ("Hold to commit") fills a ring for 1.2 s, success haptic, then the paywall. Reduce Motion: a plain button, same copy.
+
+### 13.3 Today
+- ✅ **Resolution card** (`ResolutionCard`, `ResolutionHeaderModel`) between the header and the week strip: sentence
+  (title3 rounded heavy), progress line ("Day 12 of 365 · 1 of 3 flown", "Head start · 61 days to 2027", "Kept · every habit
+  flew"), `YearStrip` (365 marks; full = meadow, partial = meadow 50 % and shorter, empty = faint and shortest, future = ink 8 %),
+  Jan/Dec labels. Gold tint and gold marks when kept. One VoiceOver element with a year-map summary.
+- ✅ The "why" as an italic footnote under the sentence (UXR-4).
+- ✅ **First week** (UXR-2): on days 1–7 the strip is replaced by 7 dots labelled with weekdays (full = filled with a check, partial = ring + small fill, empty = outline). ✅ Tap-to-log cards say "First week: 2 minutes counts."
+- ✅ Card shows the cue under the name (`arrow.turn.down.right`), also read by VoiceOver.
+- ✅ **Never miss twice** (UXR-3): after one missed day a calm line on the card; after a lapse (`FreshStart.hasLapsed`) a
+  fresh-start card at the top: "Monday is a fresh start. Same plan, or a smaller one?" → *Same plan* / *Smaller steps* (halves
+  goals with `FreshStart.smallerTarget`) / *Not now*. Shown once per lapse (`FreshStart.shouldOffer`). Never red.
+
+### 13.4 New sheets and covers
+- ✅ **Your year** (UXR-5, `ResolutionSheet` + `YearGrid`): 12 columns × 31 rows, one cell per day, same states as the strip plus shape for "never colour
+  alone" (UXR-8); month totals; scrubbing shows the day's habits. Opened from the resolution card.
+- ✅ **Kept** (RES-7, `KeptView`, `KeptShareCard`): full-screen cover when the last habit flies; the year map fills in gold, the letter can be opened, share
+  card "Resolution kept: Sleep better, 2027" with the year grid.
+- ✅ **The letter** (RES-6, UXR-7, `LetterView`): on 1 December (or Kept) an envelope opens to the letter and the "why"; a local notification.
+- ✅ **Wobble week** (RES-8, `ReminderPlan.resolutionMoments`): one notification on the second Friday of January offering the 2-minute versions.
+
+### 13.4b Also built (2026-11-02)
+- "Make it a resolution" card when there are habits but no resolution (`MakeResolutionCard` → `NewResolutionSheet`, adopts the nest).
+- Flown shelf grouped by resolution and year (`FlownGroups`), "Other habits" last.
+- Resolution sheet: edit (text, why, letter while sealed), "Let this resolution go", "Start your next resolution" after Kept.
+
+### 13.5 Reminders (UXR-6)
+✅ Titles lead with the cue ("After lunch: Walk"). One per habit at a steady time, worded from the cue ("After lunch: walk 6,000 steps"), cancelled when done; the evening
+summary as before. Resolution moments (wobble week, fresh start, letter) are the only other notifications, at most once each.
+
+### 13.6 App Store screenshots (RES-11)
+1 the resolution as a plan (real sample data) → 2 Health filling in a habit → 3 if-then plans → 4 the year → 5 Kept → 6 widgets.
+Captions say *resolution*, never *habit tracker*.

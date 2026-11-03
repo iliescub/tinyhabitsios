@@ -1,3 +1,34 @@
+# Yearling brand (v3, 2026-11-01): replaces the name, story and words below; the mark stays
+
+Why: 1.0 was rejected under App Review 4.3 (Spam) as one more habit tracker. The app becomes a New Year's resolution app
+(spec › "Update 2026-11-01", tickets RES-0…RES-12 in `docs/BACKLOG.md`). The rejection was about the product, not the look,
+so the **icon, palette, type and the mark's rules stay**; the name, story, pillars and voice change. Everything in the v2
+sections below still applies unless this section overrides it.
+
+| Item | v2 (Fledge) | v3 (Yearling) |
+| --- | --- | --- |
+| Name | Fledge | **Yearling** (a young animal in its first year). Trademark (USPTO + EUIPO) and App Store name check: RES-0 |
+| App Store title / subtitle | Fledge: Habit Tracker / Habits that stick, then fly | Yearling: Keep Your Resolution / One resolution. Three habits. |
+| Brand idea | Done becomes flight; the checkmark is the wing | Unchanged. A resolution grows up over one year; its habits fly one by one until it's **kept** |
+| Promise | Three habits. Done for you. Then they fly. | One resolution. Kept by December. |
+| Campaign (New Year 2027) | This year, fewer habits. | This year, one resolution. Kept. |
+| Pillars | Few, Effortless, Kind, Private, Native | Few, Effortless, Kind (*fresh starts, not failures*), Private, **Year-long** (built for December, not day 1). "Native" moves to the design rules in DESIGN.md |
+| Gold `#FFB13D` | Flight only | Flight **and Kept**; still rare and earned |
+| Words | habit tracker, nest, fly | resolution, plan, fresh start, kept; habits stay the unit inside a resolution; "nest" and "fly" stay. Never "habit tracker" in UI or listing |
+| Wordmark / lockup | `fledge-lockup.png` | `yearling-lockup.png` from `Design/Icon/render-icon.swift` (same geometry, new word; RES-10) |
+| Icon | Fledgling, checkmark wing, sky-to-dawn | **Unchanged.** The dawn now also reads as the first morning of the year. Optional later: a thin sunrise arc at the bottom, only if screenshots look too close to v2 |
+
+**Voice, added:** "Monday is a fresh start. Same plan or a smaller one?" · "Sleep better is kept. See you next year." ·
+"Most resolutions wobble this week. Want the 2-minute version?" · "After coffee: stretch." Existing lines ("Walk is ready to fly.") stay.
+
+**Guardrail:** "yearling" is also a horse word. The bird is the only mascot; never horse imagery or horseshoe puns.
+
+**Places the name appears (RES-10/RES-11):** `CFBundleDisplayName` (app + widget), widget gallery names, Siri phrases, notification
+copy, share cards, onboarding, Settings › About, `compose.swift` captions, website (`website/`), press kit, App Store metadata,
+review notes, this file and the brand book. Bundle IDs, App Group and product IDs stay (`com.smartapps.TinyHabits…`).
+
+---
+
 # Fledge brand: "First flight"
 
 Status: v2, 2026-10-14 (replaces the v1 icon in DESIGN.md §3.1) · Visual brand book: `Design/review/brand.html` (published as an artifact)

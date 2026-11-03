@@ -1,5 +1,8 @@
 # Fledge UI/UX redesign plan (UX-*)
 
+> **2026-11-02:** all UX-* tickets are done. The next round is the resolution layer and UI round 2 (UXR-1…UXR-9):
+> `docs/DESIGN.md` §13, spec › "UI/UX research, round 2", tickets in `docs/BACKLOG.md`.
+
 Status: proposal, 2026-10-14 · Visual version with mockups: `Design/review/redesign-plan.html` (published as an artifact; link in BACKLOG)
 Before screenshots: `Design/review/current/` (simulator, demo data, iPhone 17). `docs/DESIGN.md` stays the source of truth;
 this plan changes how it is expressed, not the concept (one screen + sheets, no guilt, glass only on navigation).
