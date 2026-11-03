@@ -17,13 +17,15 @@ let ink = NSColor(srgbRed: 0x1B / 255.0, green: 0x22 / 255.0, blue: 0x40 / 255.0
 let ink2 = NSColor(srgbRed: 0x5B / 255.0, green: 0x62 / 255.0, blue: 0x80 / 255.0, alpha: 1)
 
 /// (file, headline, subline)
+/// Yearling (v3, docs/DESIGN.md §13.6): the resolution as a plan first; never "habit tracker".
 let shots: [(String, String, String)] = [
-    ("graduation", "When a habit sticks,\nit flies.", "Most habit apps want you forever. Fledge lets go after about 66 days."),
-    ("today", "Three habits.\nDone for you.", "Fledge fills them in from Apple Health."),
-    ("configure", "Starts from\nyour own data.", "Your last 30 days from Apple Health, and a goal you can win."),
-    ("flown", "See what stuck.", "Flown habits keep tracking quietly. If one slips, you hear once."),
+    ("today", "One resolution.\nThree small habits.", "Yearling turns your New Year's resolution into a plan you can keep."),
+    ("onboarding-reframe", "Start something,\ndon't just stop.", "Resolutions about starting are kept more often. Yearling helps you phrase yours."),
+    ("onboarding-plan", "A plan for\nevery habit.", "\u{201C}After lunch, walk.\u{201D} If-then plans make habits happen."),
+    ("configure", "Done for you,\nfrom Apple Health.", "Habits fill in by themselves, starting from your own last 30 days."),
+    ("freshstart", "A quiet week\nisn't the end.", "No broken streaks. Monday is a fresh start, with smaller steps if you like."),
+    ("graduation", "When a habit sticks,\nit flies.", "When every habit has flown, your resolution is kept."),
     ("widgets", "Check in without\nopening the app.", isPad ? "Widgets for the Home Screen and the Lock Screen." : "Widgets for the Home Screen, Lock Screen and StandBy."),
-    ("onboarding-health", "No account.\nYour data stays put.", "Health data never leaves your \(device)."),
 ]
 
 func roundedFont(_ size: CGFloat, _ weight: NSFont.Weight) -> NSFont {

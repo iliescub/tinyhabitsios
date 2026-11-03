@@ -3,7 +3,7 @@
 // Outputs:
 //   fledge-icon-1024.png, fledge-icon-dark-1024.png, fledge-icon-tinted-1024.png  (asset catalog appearances)
 //   layer-background.png, layer-bird.png, layer-wing.png                          (transparent layers for Icon Composer)
-//   fledge-mark.png (mark only, transparent), fledge-lockup.png (mark + wordmark, for the press kit)
+//   fledge-mark.png (mark only, transparent), yearling-lockup.png (mark + wordmark, press kit; fledge-lockup.png = old name)
 //   icon-preview-dawn.png, icon-preview-night.png (180 px, Settings › App icon)
 // The same geometry lives in fledge-icon.svg.
 
@@ -148,9 +148,9 @@ do {
     let c = context(); placeMark(c, scale: 1.5); drawBird(c, .of(.dawn)); drawWing(c, .of(.dawn)); save(c, "fledge-mark.png")
 }
 
-// Lockup: mark on a sky disc + wordmark in SF Pro Rounded Bold, ink.
-do {
-    let height = 400, width = 1400
+// Lockup: mark on a sky disc + wordmark in SF Pro Rounded Bold, ink. Yearling (brand v3, 2026-11-02) and the old Fledge one.
+for (word, file, width) in [("Yearling", "yearling-lockup.png", 1640), ("Fledge", "fledge-lockup.png", 1400)] {
+    let height = 400
     let c = context(height, width)
     c.saveGState()
     c.translateBy(x: 30, y: 30)
@@ -169,7 +169,7 @@ do {
     NSGraphicsContext.current = NSGraphicsContext(cgContext: c, flipped: false)
     let base = NSFont.systemFont(ofSize: 230, weight: .bold)
     let font = base.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: 230) } ?? base
-    let text = NSAttributedString(string: "Fledge", attributes: [
+    let text = NSAttributedString(string: word, attributes: [
         .font: font,
         .foregroundColor: NSColor(cgColor: rgb(0x1B2240))!,
         .kern: -4,
@@ -177,5 +177,5 @@ do {
     text.draw(at: NSPoint(x: 420, y: 92))
     NSGraphicsContext.restoreGraphicsState()
     c.restoreGState()
-    save(c, "fledge-lockup.png")
+    save(c, file)
 }

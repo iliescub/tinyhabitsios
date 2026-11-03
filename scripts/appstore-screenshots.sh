@@ -13,7 +13,7 @@ device="iPhone 17"
 bundle="com.smartapps.TinyHabits"
 app="/tmp/fledge-dd/Build/Products/Debug-iphonesimulator/TinyHabits.app"
 raw="/tmp/fledge-appstore-raw"
-screens="graduation today configure flown widgets onboarding-health"
+screens="today onboarding-reframe onboarding-plan configure freshstart graduation widgets"
 build=1
 ipad=0
 for arg in "$@"; do
@@ -42,11 +42,14 @@ scripts/watchdog.sh --timeout 180 --idle 0 --name boot -- bash -c \
 xcrun simctl install "$device" "$app"
 xcrun simctl ui "$device" appearance light
 xcrun simctl ui "$device" content_size large
-xcrun simctl status_bar "$device" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4
+# Status bar: simctl shows the weekday a year on, so 2026-02-12 reads "Fri 12 Feb", matching the demo day 2027-02-12.
+xcrun simctl status_bar "$device" override --time "$(TZ="$(readlink /etc/localtime | sed "s#.*/zoneinfo/##")" date -j -f "%Y-%m-%dT%H:%M:%S" "2026-02-12T09:41:00" +%s | xargs -I{} date -u -r {} +%Y-%m-%dT%H:%M:%S.000Z)" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4
 
 rm -rf "$raw" && mkdir -p "$raw"
+rm -f "$out"/[0-9][0-9]-*.png   # the set is renumbered on every run
 for screen in $screens; do
-    args=(-FledgeDemoData)
+    # A resolution in progress in February 2027 (Friday 12 Feb), so the year on screen matches the listing's season.
+    args=(-FledgeDemoData -FledgeDemoToday 2027-02-12 -AppleLanguages "(en)" -AppleLocale en_US)
     [[ "$screen" != "today" ]] && args+=(-FledgeDemoScreen "$screen")
     xcrun simctl terminate "$device" "$bundle" 2>/dev/null || true
     xcrun simctl launch "$device" "$bundle" "${args[@]}" > /dev/null

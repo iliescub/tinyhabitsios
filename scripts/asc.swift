@@ -1,17 +1,19 @@
-// App Store Connect API for Fledge's listing (MKT-6, REL-2). Never prints the key or the token.
+// App Store Connect API for the Yearling listing (code name Fledge) (MKT-6, REL-2). Never prints the key or the token.
 //
 // Usage (run through scripts/watchdog.sh):
 //   swift scripts/asc.swift status                 read-only: app, versions, current subtitle/keywords, screenshot sets
-//   swift scripts/asc.swift metadata [file.json]   subtitle (app info) + description, keywords, promotional text (version)
+//   swift scripts/asc.swift metadata [file.json]   name + subtitle (app info) + description, keywords, promotional text (version)
 //   swift scripts/asc.swift screenshots            replaces the iPhone 6.9" and iPad 13" sets with Design/AppStore/*.png
-//   swift scripts/asc.swift iap                    creates Fledge Pro (subscription group, yearly + monthly, lifetime): names,
+//   swift scripts/asc.swift iap                    creates Yearling Pro (subscription group, yearly + monthly, lifetime): names,
 //                                                  prices (all territories, equalized from USA), 7-day free trial, availability
 //   swift scripts/asc.swift review-status          read-only: category, age rating, content rights, price, contact, copyright
 //   swift scripts/asc.swift review-setup           sets categories, content rights, age rating answers and the free price
 //   swift scripts/asc.swift review-contact [file]  App Review contact + copyright from a git-ignored JSON file
 //   swift scripts/asc.swift iap-status             read-only: each product's state, localizations, prices, review screenshot, note
+//   swift scripts/asc.swift iap-rename             store names + descriptions of all products -> Yearling Pro (IDs stay)
 //   swift scripts/asc.swift iap-review [png]       App Review screenshot + review note on all three products
 //                                                  (png from the UI test testPaywallShowsPlansForAppReview)
+//   swift scripts/asc.swift copyright "<text>"     the version's copyright line only
 //   swift scripts/asc.swift review-notes [txt]     App Review notes only (Design/AppStore/review-notes.txt)
 //   swift scripts/asc.swift submission-status      read-only: open review submissions, their items, subscription states
 //   swift scripts/asc.swift submit-prepare         draft submission with the version (+ products that aren't first-time)
@@ -167,7 +169,7 @@ func metadata(_ file: String) async throws {
     let info = try await editableAppInfo(appID: id(app))
     if let loc = items(try await call("GET", "/v1/appInfos/\(id(info))/appInfoLocalizations")).first(where: { attrs($0)["locale"] as? String == locale }) {
         var infoFields: [String: String] = [:]
-        for key in ["subtitle", "privacyPolicyUrl"] { if let value = meta[key] { infoFields[key] = value } }
+        for key in ["name", "subtitle", "privacyPolicyUrl"] { if let value = meta[key] { infoFields[key] = value } }
         try await call("PATCH", "/v1/appInfoLocalizations/\(id(loc))", ["data": ["type": "appInfoLocalizations", "id": id(loc), "attributes": infoFields]])
         print("app info \(locale): set \(infoFields.keys.sorted().joined(separator: ", "))")
     }
@@ -261,13 +263,16 @@ struct PlanSpec {
 }
 
 let plans = [
-    PlanSpec(productID: "com.smartapps.TinyHabits.pro.yearly", reference: "Pro Yearly", displayName: "Fledge Pro Yearly",
+    PlanSpec(productID: "com.smartapps.TinyHabits.pro.yearly", reference: "Pro Yearly", displayName: "Yearling Pro Yearly",
              description: "All three habits from Apple Health, every widget.", price: "19.99", period: "ONE_YEAR", level: 1, freeTrial: true),
-    PlanSpec(productID: "com.smartapps.TinyHabits.pro.monthly", reference: "Pro Monthly", displayName: "Fledge Pro Monthly",
+    PlanSpec(productID: "com.smartapps.TinyHabits.pro.monthly", reference: "Pro Monthly", displayName: "Yearling Pro Monthly",
              description: "All three habits from Apple Health, every widget.", price: "2.99", period: "ONE_MONTH", level: 2, freeTrial: false),
 ]
-let lifetime = PlanSpec(productID: "com.smartapps.TinyHabits.pro.lifetime", reference: "Pro Lifetime", displayName: "Fledge Pro Lifetime",
-                        description: "Fledge Pro forever. One payment.", price: "39.99", period: nil, level: 0, freeTrial: false)
+/// Store-facing group name. The group's internal reference name stays "Fledge Pro" (`iap` finds the group by it).
+let proDisplayName = "Yearling Pro"
+
+let lifetime = PlanSpec(productID: "com.smartapps.TinyHabits.pro.lifetime", reference: "Pro Lifetime", displayName: "Yearling Pro Lifetime",
+                        description: "Yearling Pro forever. One payment.", price: "39.99", period: nil, level: 0, freeTrial: false)
 
 func iap() async throws {
     let appID = id(try await app())
@@ -281,7 +286,7 @@ func iap() async throws {
             "type": "subscriptionGroups", "attributes": ["referenceName": "Fledge Pro"], "relationships": ["app": ref("apps", appID)],
         ]])["data"] as? [String: Any]
         try await call("POST", "/v1/subscriptionGroupLocalizations", ["data": [
-            "type": "subscriptionGroupLocalizations", "attributes": ["name": "Fledge Pro", "locale": "en-US"],
+            "type": "subscriptionGroupLocalizations", "attributes": ["name": proDisplayName, "locale": "en-US"],
             "relationships": ["subscriptionGroup": ref("subscriptionGroups", id(group ?? [:]))],
         ]])
         print("created subscription group Fledge Pro")
@@ -515,6 +520,14 @@ func reviewContact(_ file: String) async throws {
     print("App Review contact set (no demo account needed)")
 }
 
+/// Sets only the version's copyright line (contact details and review notes untouched).
+func setCopyright(_ text: String) async throws {
+    guard !text.isEmpty else { throw ASCError.setup("usage: copyright \"© 2026 Name\"") }
+    let version = try await editableVersion(appID: id(try await app()))
+    try await call("PATCH", "/v1/appStoreVersions/\(id(version))", ["data": ["type": "appStoreVersions", "id": id(version), "attributes": ["copyright": text]]])
+    print("copyright: \(text)")
+}
+
 /// Sets only the App Review notes (contact details untouched) from Design/AppStore/review-notes.txt.
 func reviewNotes(_ file: String) async throws {
     let notes = try String(contentsOfFile: file, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -556,8 +569,8 @@ func uploadAsset(type: String, relationship: String, relatedType: String, relate
 }
 
 let reviewNote = """
-Fledge Pro unlocks Apple Health auto-completion for all three habits (free includes one), every widget size, Lock Screen widgets, \
-app icons and CSV export. Open the paywall from Settings › Fledge Pro, from the banner in Add a habit when a second Health habit is \
+Yearling Pro unlocks Apple Health auto-completion for all three habits (free includes one), every widget size, Lock Screen widgets, \
+app icons and CSV export. Open the paywall from Settings › Yearling Pro, from the banner in Add a habit when a second Health habit is \
 chosen, or at the end of onboarding. No account or login is needed.
 """
 
@@ -594,7 +607,44 @@ func iapStatus() async throws {
     }
 }
 
-/// Adds the App Review screenshot (replacing an existing one) and the review note to every Fledge Pro product.
+/// Renames the store-facing names and descriptions of the existing products to Yearling (RES-11): the group's display
+/// name, each subscription's and the lifetime purchase's localizations. Product IDs and reference names stay.
+/// Resumable: a localization that already matches is left alone.
+func iapRename() async throws {
+    let appID = id(try await app())
+    for group in try await all("/v1/apps/\(appID)/subscriptionGroups") {
+        for loc in try await all("/v1/subscriptionGroups/\(id(group))/subscriptionGroupLocalizations") where attrs(loc)["name"] as? String != proDisplayName {
+            try await call("PATCH", "/v1/subscriptionGroupLocalizations/\(id(loc))", ["data": [
+                "type": "subscriptionGroupLocalizations", "id": id(loc), "attributes": ["name": proDisplayName],
+            ]])
+            print("group \(attrs(group)["referenceName"] ?? "?") (\(attrs(loc)["locale"] ?? "?")): \(proDisplayName)")
+        }
+        for sub in try await all("/v1/subscriptionGroups/\(id(group))/subscriptions") {
+            guard let plan = plans.first(where: { $0.productID == attrs(sub)["productId"] as? String }) else { continue }
+            for loc in try await all("/v1/subscriptions/\(id(sub))/subscriptionLocalizations")
+                where attrs(loc)["name"] as? String != plan.displayName || attrs(loc)["description"] as? String != plan.description {
+                try await call("PATCH", "/v1/subscriptionLocalizations/\(id(loc))", ["data": [
+                    "type": "subscriptionLocalizations", "id": id(loc),
+                    "attributes": ["name": plan.displayName, "description": plan.description],
+                ]])
+                print("\(plan.productID) (\(attrs(loc)["locale"] ?? "?")): \(plan.displayName)")
+            }
+        }
+    }
+    for product in try await all("/v1/apps/\(appID)/inAppPurchasesV2?limit=200") where attrs(product)["productId"] as? String == lifetime.productID {
+        for loc in try await all("/v2/inAppPurchases/\(id(product))/inAppPurchaseLocalizations")
+            where attrs(loc)["name"] as? String != lifetime.displayName || attrs(loc)["description"] as? String != lifetime.description {
+            try await call("PATCH", "/v1/inAppPurchaseLocalizations/\(id(loc))", ["data": [
+                "type": "inAppPurchaseLocalizations", "id": id(loc),
+                "attributes": ["name": lifetime.displayName, "description": lifetime.description],
+            ]])
+            print("\(lifetime.productID) (\(attrs(loc)["locale"] ?? "?")): \(lifetime.displayName)")
+        }
+    }
+    print("names checked; run iap-status to confirm, then iap-review to replace the review screenshot")
+}
+
+/// Adds the App Review screenshot (replacing an existing one) and the review note to every Pro product.
 func iapReview(_ file: String) async throws {
     let url = URL(fileURLWithPath: file)
     guard FileManager.default.fileExists(atPath: url.path) else { throw ASCError.setup("no screenshot at \(file)") }
@@ -734,6 +784,7 @@ do {
     case "iap": try await iap()
     case "builds": try await builds()
     case "iap-status": try await iapStatus()
+    case "iap-rename": try await iapRename()
     case "review-notes": try await reviewNotes(arguments.dropFirst().first ?? "Design/AppStore/review-notes.txt")
     case "submission-status": try await submissionStatus()
     case "submit-prepare": try await submitPrepare()
@@ -751,6 +802,7 @@ do {
     case "iap-review": try await iapReview(arguments.dropFirst().first ?? "/tmp/fledge-paywall-review.png")
     case "review-status": try await reviewStatus()
     case "review-setup": try await reviewSetup()
+    case "copyright": try await setCopyright(arguments.dropFirst().joined(separator: " "))
     case "review-contact": try await reviewContact(arguments.dropFirst().first ?? "Configuration/review-contact.json")
     case "attach-build": try await attachBuild(arguments.dropFirst().first ?? "")
     default: print("usage: swift scripts/asc.swift status | metadata [file.json] | screenshots")
