@@ -22,28 +22,41 @@ public struct DayKey: RawRepresentable, Hashable, Comparable, Codable, Sendable,
     }
 
     /// The day `date` belongs to. Times before `dayEndHour` (default 3 AM) count for the previous day.
-    public init(_ date: Date, calendar: Calendar = .current, dayEndHour: Int = 3) {
+    public init(_ date: Date, calendar: Calendar = .fledge, dayEndHour: Int = 3) {
         let shifted = calendar.date(byAdding: .hour, value: -dayEndHour, to: date) ?? date
         let parts = calendar.dateComponents([.year, .month, .day], from: shifted)
         self.init(year: parts.year ?? 1970, month: parts.month ?? 1, day: parts.day ?? 1)
     }
 
     /// Noon of this day, a safe anchor for calendar arithmetic.
-    public func date(in calendar: Calendar = .current) -> Date {
+    public func date(in calendar: Calendar = .fledge) -> Date {
         calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 12)) ?? .distantPast
     }
 
-    public func adding(days: Int, calendar: Calendar = .current) -> DayKey {
+    public func adding(days: Int, calendar: Calendar = .fledge) -> DayKey {
         let moved = calendar.date(byAdding: .day, value: days, to: date(in: calendar)) ?? date(in: calendar)
         return DayKey(moved, calendar: calendar, dayEndHour: 0)
     }
 
     /// Whole days from `self` to `other` (positive when `other` is later).
-    public func days(to other: DayKey, calendar: Calendar = .current) -> Int {
+    public func days(to other: DayKey, calendar: Calendar = .fledge) -> Int {
         calendar.dateComponents([.day], from: date(in: calendar), to: other.date(in: calendar)).day ?? 0
     }
 
     public static func < (lhs: DayKey, rhs: DayKey) -> Bool { lhs.rawValue < rhs.rawValue }
 
     public var description: String { rawValue }
+}
+
+extension Calendar {
+    /// The calendar every `DayKey` is computed in: Gregorian ("yyyy-MM-dd", 12 months, December last) in the device's
+    /// time zone, with the user's first weekday and locale. Keys and resolution years stay the same whichever calendar
+    /// (Hebrew, Persian, Japanese…) the user chose in Settings.
+    public static var fledge: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        calendar.locale = .current
+        calendar.firstWeekday = Calendar.current.firstWeekday
+        return calendar
+    }
 }

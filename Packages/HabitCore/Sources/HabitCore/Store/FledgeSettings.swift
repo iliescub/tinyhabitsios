@@ -53,7 +53,7 @@ extension FledgeSettings {
 
 extension DayKey {
     /// "Today" using the user's day-end hour.
-    public static func today(now: Date = .now, calendar: Calendar = .current) -> DayKey {
+    public static func today(now: Date = .now, calendar: Calendar = .fledge) -> DayKey {
         DayKey(now, calendar: calendar, dayEndHour: FledgeSettings.dayEndHour)
     }
 }

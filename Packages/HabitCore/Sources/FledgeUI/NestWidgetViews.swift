@@ -225,7 +225,7 @@ public struct ProWidget: View {
     public var body: some View {
         VStack(spacing: 6) {
             FledgeBird(.flying, style: .tinted(FledgeTheme.Palette.sky)).frame(height: 34)
-            Text("Fledge Pro")
+            Text("Yearling Pro")
                 .font(.system(.subheadline, design: .rounded, weight: .heavy))
                 .foregroundStyle(FledgeTheme.Palette.ink)
             Text("Every widget size, in the app")
@@ -244,7 +244,7 @@ public struct EmptyNestWidget: View {
             FledgeBird(.peeking, style: .glyph)
                 .foregroundStyle(FledgeTheme.Palette.sky)
                 .frame(height: 34)
-            Text("Add a habit in Fledge")
+            Text("Add a habit in Yearling")
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(FledgeTheme.Palette.ink2)

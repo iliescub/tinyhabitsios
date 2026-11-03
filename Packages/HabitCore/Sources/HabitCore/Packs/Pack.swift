@@ -9,14 +9,17 @@ public struct Pack: Codable, Identifiable, Hashable, Sendable {
         public var target: Double
         public var unit: String
         public var perWeek: Int?
+        /// A suggested if-then cue (resolution templates), e.g. "After dinner".
+        public var cue: String?
 
-        public init(name: String, symbol: String, source: HabitSourceID, target: Double, unit: String, perWeek: Int? = nil) {
+        public init(name: String, symbol: String, source: HabitSourceID, target: Double, unit: String, perWeek: Int? = nil, cue: String? = nil) {
             self.name = name
             self.symbol = symbol
             self.source = source
             self.target = target
             self.unit = unit
             self.perWeek = perWeek
+            self.cue = cue
         }
 
         public var cadence: Cadence { Cadence(perWeek: perWeek ?? 7) }

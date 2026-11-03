@@ -100,11 +100,3 @@ public enum SchemaV1: VersionedSchema {
         }
     }
 }
-
-public typealias Habit = SchemaV1.Habit
-public typealias DayLog = SchemaV1.DayLog
-
-public enum HabitMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] { [SchemaV1.self] }
-    public static var stages: [MigrationStage] { [] }
-}

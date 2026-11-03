@@ -16,7 +16,7 @@ public struct HeatmapModel: Equatable, Sendable {
     }
 
     public let weeks: [[Cell]]
-    /// True when any cell is `earlier`, so the legend can explain "Before Fledge".
+    /// True when any cell is `earlier`, so the legend can explain "Before Yearling".
     public var hasEarlierDays: Bool { weeks.contains { $0.contains { $0.state == .earlier } } }
     /// Month name over the first column of each month ("Jul", "Aug"…), as (column, text).
     public let monthLabels: [MonthLabel]
@@ -30,7 +30,7 @@ public struct HeatmapModel: Equatable, Sendable {
 
     public init(
         snapshots: [DaySnapshot], startedOn: DayKey, today: DayKey, weekCount: Int = 12,
-        calendar: Calendar = .current, locale: Locale = .current
+        calendar: Calendar = .fledge, locale: Locale = .current
     ) {
         var calendar = calendar
         calendar.locale = locale
@@ -91,7 +91,7 @@ public struct HabitDetailStats: Equatable, Sendable {
         startedOn: DayKey,
         today: DayKey,
         rule: GraduationRule = .standard,
-        calendar: Calendar = .current
+        calendar: Calendar = .fledge
     ) {
         self.rule = rule
         streak = StreakCalculator.streak(snapshots: snapshots, cadence: cadence, today: today, startedOn: startedOn, calendar: calendar)
@@ -116,10 +116,6 @@ public struct HabitDetailStats: Equatable, Sendable {
     /// "Day 37 · 86 % of the last 30 days"
     public var flightLine: String {
         "Day \(graduation.daysActive) · \(rateText) of the last \(rule.windowDays) days"
-    }
-
-    public var flightFraction: Double {
-        min(1, Double(graduation.daysActive) / Double(max(rule.suggestedDays, 1)))
     }
 
     public var tickFraction: Double {

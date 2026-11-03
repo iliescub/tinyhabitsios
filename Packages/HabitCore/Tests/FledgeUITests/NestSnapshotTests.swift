@@ -29,6 +29,6 @@ struct NestSnapshotTests {
     }
 
     @Test func emptyNest() {
-        #expect(NestSnapshot.placeholder.inlineText == "Add a habit in Fledge")
+        #expect(NestSnapshot.placeholder.inlineText == "Add a habit in Yearling")
     }
 }

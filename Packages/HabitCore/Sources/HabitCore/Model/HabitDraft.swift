@@ -14,6 +14,12 @@ public struct HabitDraft: Equatable, Sendable {
     /// Minutes after midnight, nil = no reminder.
     public var reminderMinutes: Int?
     public var packID: String
+    /// The "if" of the if-then plan (RES-4), e.g. "After my morning coffee". Empty = no plan.
+    public var cue: String
+    /// The resolution this habit serves.
+    public var resolutionID: UUID?
+
+    public static let maxCueLength = 40
 
     public init(
         name: String = "",
@@ -24,7 +30,9 @@ public struct HabitDraft: Equatable, Sendable {
         unit: String = "times",
         perWeek: Int = 7,
         reminderMinutes: Int? = nil,
-        packID: String = "essentials"
+        packID: String = "essentials",
+        cue: String = "",
+        resolutionID: UUID? = nil
     ) {
         self.name = name
         self.symbol = symbol
@@ -35,12 +43,15 @@ public struct HabitDraft: Equatable, Sendable {
         self.perWeek = perWeek
         self.reminderMinutes = reminderMinutes
         self.packID = packID
+        self.cue = cue
+        self.resolutionID = resolutionID
     }
 
-    public init(template: Pack.Template, colorKey: String, packID: String) {
+    public init(template: Pack.Template, colorKey: String, packID: String, resolutionID: UUID? = nil) {
         self.init(
             name: template.name, symbol: template.symbol, colorKey: colorKey, source: template.source,
-            target: template.target, unit: template.unit, perWeek: template.perWeek ?? 7, packID: packID
+            target: template.target, unit: template.unit, perWeek: template.perWeek ?? 7, packID: packID,
+            cue: template.cue ?? "", resolutionID: resolutionID
         )
     }
 
@@ -48,7 +59,8 @@ public struct HabitDraft: Equatable, Sendable {
         self.init(
             name: habit.name, symbol: habit.symbol, colorKey: habit.colorKey, source: habit.source,
             target: habit.target, unit: habit.unit, perWeek: habit.perWeek,
-            reminderMinutes: habit.reminderMinutes, packID: habit.packID
+            reminderMinutes: habit.reminderMinutes, packID: habit.packID, cue: habit.cue,
+            resolutionID: habit.resolutionID
         )
     }
 
@@ -56,9 +68,14 @@ public struct HabitDraft: Equatable, Sendable {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    public var trimmedCue: String {
+        cue.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     public enum Problem: Error, Equatable, Sendable {
         case emptyName
         case nameTooLong
+        case cueTooLong
         case targetNotPositive
         case invalidReminder
     }
@@ -67,6 +84,7 @@ public struct HabitDraft: Equatable, Sendable {
     public var problem: Problem? {
         if trimmedName.isEmpty { return .emptyName }
         if trimmedName.count > Self.maxNameLength { return .nameTooLong }
+        if trimmedCue.count > Self.maxCueLength { return .cueTooLong }
         if !(target > 0) { return .targetNotPositive }
         if let minutes = reminderMinutes, !(0..<(24 * 60)).contains(minutes) { return .invalidReminder }
         return nil

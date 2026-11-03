@@ -38,7 +38,7 @@ public enum GraduationEvaluator {
         startedOn: DayKey,
         today: DayKey,
         rule: GraduationRule = .standard,
-        calendar: Calendar = .current
+        calendar: Calendar = .fledge
     ) -> GraduationStatus {
         let daysActive = max(0, startedOn.days(to: today, calendar: calendar)) + 1
         let windowStart = max(startedOn, today.adding(days: -(rule.windowDays - 1), calendar: calendar))

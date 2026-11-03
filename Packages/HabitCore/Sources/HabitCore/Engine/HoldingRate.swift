@@ -14,7 +14,7 @@ public enum HoldingRate {
     /// Rest days count as met, the same as for streaks. Days before `since` (the graduation day) are not counted,
     /// so a habit that flew a week ago is judged on that week only. Nil when there is no day to judge yet.
     public static func rate(
-        snapshots: [DaySnapshot], today: DayKey, since: DayKey? = nil, window: Int = window, calendar: Calendar = .current
+        snapshots: [DaySnapshot], today: DayKey, since: DayKey? = nil, window: Int = window, calendar: Calendar = .fledge
     ) -> Double? {
         let days = judgedDays(today: today, since: since, window: window, calendar: calendar)
         guard !days.isEmpty else { return nil }
@@ -25,7 +25,7 @@ public enum HoldingRate {
     /// One point per day for the sparkline: the rate over the 7 days ending that day (fewer at the start),
     /// for the `window` days before today.
     public static func trend(
-        snapshots: [DaySnapshot], today: DayKey, window: Int = window, smoothing: Int = 7, calendar: Calendar = .current
+        snapshots: [DaySnapshot], today: DayKey, window: Int = window, smoothing: Int = 7, calendar: Calendar = .fledge
     ) -> [Double] {
         let met = metDays(snapshots)
         return (1...window).reversed().map { offset in

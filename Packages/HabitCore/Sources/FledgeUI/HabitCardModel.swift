@@ -38,7 +38,7 @@ public struct HabitCardModel: Equatable, Sendable {
         history: [DaySnapshot],
         rule: GraduationRule = .standard,
         locale: Locale = .current,
-        calendar: Calendar = .current
+        calendar: Calendar = .fledge
     ) {
         self.name = name
         self.symbol = symbol

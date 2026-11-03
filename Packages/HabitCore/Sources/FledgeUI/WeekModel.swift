@@ -45,7 +45,7 @@ public struct WeekModel: Equatable, Sendable {
 
     public let days: [Day]
 
-    public init(habits: [Habit], today: DayKey, calendar: Calendar = .current, locale: Locale = .current) {
+    public init(habits: [Habit], today: DayKey, calendar: Calendar = .fledge, locale: Locale = .current) {
         var calendar = calendar
         calendar.locale = locale
         let lookup = habits.map { habit in
@@ -108,7 +108,7 @@ public struct JourneyModel: Equatable, Sendable {
     public let forecast: String?
 
     /// - Parameter flyDate: from `FlightForecast.flyDate` (nil when ready or out of reach).
-    public init(stats: HabitDetailStats, startedOn: DayKey, flyDate: DayKey? = nil, locale: Locale = .current, calendar: Calendar = .current) {
+    public init(stats: HabitDetailStats, startedOn: DayKey, flyDate: DayKey? = nil, locale: Locale = .current, calendar: Calendar = .fledge) {
         let rule = stats.rule
         let days = stats.graduation.daysActive
         let suggested = Double(max(rule.suggestedDays, 1))

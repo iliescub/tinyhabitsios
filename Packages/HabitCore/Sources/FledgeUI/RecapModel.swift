@@ -22,7 +22,7 @@ public struct RecapModel: Equatable, Sendable {
 
     public init(
         stats: HabitDetailStats, snapshots: [DaySnapshot], startedOn: DayKey, today: DayKey,
-        target: Double, unit: String, perWeek: Int, locale: Locale = .current, calendar: Calendar = .current
+        target: Double, unit: String, perWeek: Int, locale: Locale = .current, calendar: Calendar = .fledge
     ) {
         daysText = "\(stats.graduation.daysActive)"
         rateText = "\(Int((stats.graduation.recentRate * 100).rounded()))%"

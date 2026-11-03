@@ -62,14 +62,14 @@ public struct NestSnapshot: Sendable {
 
     /// Inline Lock Screen text: "2/3 · Walk 1.8K steps left" or "All 3 done".
     public var inlineText: String {
-        if items.isEmpty { return "Add a habit in Fledge" }
+        if items.isEmpty { return "Add a habit in Yearling" }
         if doneCount == items.count { return items.count == 1 ? "Done for today" : "All \(items.count) done" }
         return [countText, nextUpText].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// Spoken by Siri: "2 of 3 done. Walk: 4,210 of 6,000 steps."
     public var spokenSummary: String {
-        if items.isEmpty { return "Your nest is empty. Add a habit in Fledge." }
+        if items.isEmpty { return "Your nest is empty. Add a habit in Yearling." }
         var parts = ["\(doneCount) of \(items.count) done."]
         for item in items where item.card.progress.status == .pending {
             parts.append("\(item.card.name): \(item.card.valueText).")

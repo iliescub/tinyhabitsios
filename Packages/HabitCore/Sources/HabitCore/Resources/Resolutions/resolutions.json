@@ -1,0 +1,65 @@
+{
+  "resolutions": [
+    {
+      "id": "move-more", "title": "Move more", "sentence": "moving more", "symbol": "figure.walk", "accent": "sky",
+      "keywords": ["move", "walk", "steps", "exercise", "active", "fit", "fitness", "gym", "run", "running", "workout", "weight", "sit", "sitting", "couch", "lazy"],
+      "habits": [
+        { "name": "Walk", "symbol": "figure.walk", "source": "hk.stepCount", "target": 6000, "unit": "steps", "cue": "After lunch" },
+        { "name": "Move", "symbol": "flame.fill", "source": "hk.appleExerciseTime", "target": 20, "unit": "min", "cue": "Before dinner" },
+        { "name": "Stand", "symbol": "figure.stand", "source": "hk.appleStandHour", "target": 10, "unit": "hours", "cue": "When I sit down to work" }
+      ]
+    },
+    {
+      "id": "get-stronger", "title": "Get stronger", "sentence": "getting stronger", "symbol": "dumbbell.fill", "accent": "dawn",
+      "keywords": ["strong", "stronger", "strength", "lift", "lifting", "muscle", "gym", "train", "training", "workout", "fit", "abs"],
+      "habits": [
+        { "name": "Work out", "symbol": "dumbbell.fill", "source": "hk.workout", "target": 1, "unit": "workout", "perWeek": 3, "cue": "After work" },
+        { "name": "Move", "symbol": "flame.fill", "source": "hk.appleExerciseTime", "target": 20, "unit": "min", "cue": "Before dinner" },
+        { "name": "Stretch", "symbol": "figure.cooldown", "source": "manual", "target": 1, "unit": "times", "cue": "After I brush my teeth" }
+      ]
+    },
+    {
+      "id": "sleep-better", "title": "Sleep better", "sentence": "sleeping better", "symbol": "bed.double.fill", "accent": "lilac",
+      "keywords": ["sleep", "sleeping", "bed", "bedtime", "tired", "rest", "insomnia", "night", "early", "late", "wake"],
+      "habits": [
+        { "name": "Sleep", "symbol": "bed.double.fill", "source": "hk.sleepAnalysis", "target": 7, "unit": "h", "cue": "When my alarm for bed goes off" },
+        { "name": "Get daylight", "symbol": "sun.max.fill", "source": "hk.timeInDaylight", "target": 20, "unit": "min", "cue": "After breakfast" },
+        { "name": "Wind down", "symbol": "brain.head.profile", "source": "hk.mindfulSession", "target": 5, "unit": "min", "cue": "When I get into bed" }
+      ]
+    },
+    {
+      "id": "calmer-mind", "title": "Feel calmer", "sentence": "feeling calmer", "symbol": "leaf.fill", "accent": "meadow",
+      "keywords": ["calm", "calmer", "stress", "stressed", "anxiety", "anxious", "meditate", "meditation", "mindful", "mindfulness", "mental", "relax", "breathe", "worry", "angry"],
+      "habits": [
+        { "name": "Meditate", "symbol": "brain.head.profile", "source": "hk.mindfulSession", "target": 5, "unit": "min", "cue": "After my morning coffee" },
+        { "name": "Get daylight", "symbol": "sun.max.fill", "source": "hk.timeInDaylight", "target": 20, "unit": "min", "cue": "At lunch" },
+        { "name": "Walk", "symbol": "figure.walk", "source": "hk.stepCount", "target": 6000, "unit": "steps", "cue": "After work" }
+      ]
+    },
+    {
+      "id": "drink-water", "title": "Drink more water", "sentence": "drinking more water", "symbol": "drop.fill", "accent": "sky",
+      "keywords": ["water", "hydrate", "hydrated", "hydration", "drink", "drinking", "soda", "coke", "sugar", "juice", "thirsty"],
+      "habits": [
+        { "name": "Drink water", "symbol": "drop.fill", "source": "hk.dietaryWater", "target": 2.0, "unit": "L", "cue": "With every meal" },
+        { "name": "Walk", "symbol": "figure.walk", "source": "hk.stepCount", "target": 6000, "unit": "steps", "cue": "After lunch" }
+      ]
+    },
+    {
+      "id": "read-more", "title": "Read more", "sentence": "reading more", "symbol": "book.fill", "accent": "lilac",
+      "keywords": ["read", "reading", "books", "book", "learn", "learning", "study", "novel"],
+      "habits": [
+        { "name": "Read", "symbol": "book.fill", "source": "manual", "target": 1, "unit": "times", "cue": "When I get into bed" },
+        { "name": "Wind down", "symbol": "brain.head.profile", "source": "hk.mindfulSession", "target": 5, "unit": "min", "cue": "Before I pick up my phone" }
+      ]
+    },
+    {
+      "id": "evenings-off-phone", "title": "Evenings off the phone", "sentence": "taking my evenings back", "symbol": "moon.stars.fill", "accent": "lilac",
+      "keywords": ["phone", "scroll", "scrolling", "screen", "screens", "social", "instagram", "tiktok", "doomscroll", "doomscrolling", "netflix", "youtube", "internet", "online", "addicted"],
+      "habits": [
+        { "name": "Read in bed", "symbol": "book.fill", "source": "manual", "target": 1, "unit": "times", "cue": "When I plug in my phone at 10" },
+        { "name": "Wind down", "symbol": "brain.head.profile", "source": "hk.mindfulSession", "target": 5, "unit": "min", "cue": "When I get into bed" },
+        { "name": "Sleep", "symbol": "bed.double.fill", "source": "hk.sleepAnalysis", "target": 7, "unit": "h", "cue": "When my alarm for bed goes off" }
+      ]
+    }
+  ]
+}

@@ -7,7 +7,7 @@ public enum SharedStore {
     public static let appGroupID = "group.com.smartapps.TinyHabits"
 
     public static func makeContainer(inMemory: Bool = false, appGroupID: String = appGroupID) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: SchemaV1.self)
+        let schema = Schema(versionedSchema: SchemaV2.self)
         let configuration = inMemory
             ? ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             : ModelConfiguration(schema: schema, groupContainer: .identifier(appGroupID), cloudKitDatabase: .none)
@@ -31,6 +31,10 @@ public enum HabitStoreError: Error, Equatable {
     case invalidDraft(HabitDraft.Problem)
     /// The daily habit already used its free rest days this month.
     case noRestDaysLeft
+    /// One resolution at a time: keep or archive the current one first.
+    case resolutionActive
+    case resolutionNotFound
+    case invalidResolution(ResolutionDraft.Problem)
 }
 
 /// The single write API. The app calls these on its main context; `HabitWriter` runs the same code
@@ -94,12 +98,17 @@ extension ModelContext {
             target: draft.target, unit: draft.unit, perWeek: draft.perWeek, packID: draft.packID, startedAt: startedAt
         )
         habit.reminderMinutes = draft.reminderMinutes
+        habit.cue = draft.trimmedCue
+        // A habit added while a resolution is in progress serves it (Add sheet, onboarding), so Kept stays reachable.
+        habit.resolutionID = try draft.resolutionID ?? activeResolution()?.id
         try save()
         return habit
     }
 
-    /// Applies edited fields. History and graduation progress are kept.
-    public func updateHabit(habitID: UUID, with draft: HabitDraft) throws {
+    /// Applies edited fields. History and graduation progress are kept. With `day` (today), that day's value is
+    /// checked against the new goal right away, so a lowered goal that's already met shows as done without waiting for
+    /// the next Health sync. Manual "done" stays sticky.
+    public func updateHabit(habitID: UUID, with draft: HabitDraft, reevaluating day: DayKey? = nil) throws {
         if let problem = draft.problem { throw HabitStoreError.invalidDraft(problem) }
         guard let habit = try habit(id: habitID) else { throw HabitStoreError.habitNotFound }
         habit.name = draft.trimmedName
@@ -110,7 +119,16 @@ extension ModelContext {
         habit.unit = draft.unit
         habit.perWeek = min(max(draft.perWeek, 1), 7)
         habit.reminderMinutes = draft.reminderMinutes
+        habit.cue = draft.trimmedCue
         try save()
+        if let day, let log = try existingLog(for: habitID, on: day), log.value > 0 {
+            try record(value: log.value, habitID: habitID, on: day, by: habit.source.isAuto ? .auto : .manual)
+        }
+    }
+
+    private func existingLog(for habitID: UUID, on day: DayKey) throws -> DayLog? {
+        let key = day.rawValue
+        return try fetch(FetchDescriptor<DayLog>(predicate: #Predicate { $0.dayKey == key && $0.habit?.id == habitID })).first
     }
 
     /// Frees the slot; history is kept.
@@ -130,6 +148,7 @@ extension ModelContext {
         habit.state = .active
         habit.slot = slot
         habit.graduatedAt = nil
+        try updateKeptState(resolutionID: habit.resolutionID, on: .now)
         try save()
     }
 
@@ -138,12 +157,17 @@ extension ModelContext {
         habit.state = .graduated
         habit.slot = nil
         habit.graduatedAt = date
+        try updateKeptState(resolutionID: habit.resolutionID, on: date)
         try save()
     }
 
     public func deleteHabit(habitID: UUID) throws {
         guard let habit = try habit(id: habitID) else { return }
+        let resolutionID = habit.resolutionID
         delete(habit)
+        try save()
+        // Deleting the last habit that hadn't flown keeps the resolution.
+        try updateKeptState(resolutionID: resolutionID, on: .now)
         try save()
     }
 

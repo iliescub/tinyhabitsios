@@ -18,7 +18,7 @@ public enum StreakCalculator {
         cadence: Cadence,
         today: DayKey,
         startedOn: DayKey,
-        calendar: Calendar = .current
+        calendar: Calendar = .fledge
     ) -> Streak {
         let byDay = Dictionary(snapshots.map { ($0.day, $0.status) }, uniquingKeysWith: { _, last in last })
         return cadence.isDaily

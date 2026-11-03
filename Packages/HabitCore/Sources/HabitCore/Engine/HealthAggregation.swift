@@ -3,7 +3,7 @@ import Foundation
 /// Pure helpers that turn Health samples into one daily value. HealthKit itself lives in FledgeHealth.
 public enum HealthAggregation {
     /// The real-time span of a `DayKey`: from the day-end hour on that date to the same hour the next day.
-    public static func dayInterval(_ day: DayKey, dayEndHour: Int, calendar: Calendar = .current) -> DateInterval {
+    public static func dayInterval(_ day: DayKey, dayEndHour: Int, calendar: Calendar = .fledge) -> DateInterval {
         let midnight = calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day)) ?? day.date(in: calendar)
         let start = calendar.date(byAdding: .hour, value: dayEndHour, to: midnight) ?? midnight
         let end = calendar.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(86_400)
@@ -11,7 +11,7 @@ public enum HealthAggregation {
     }
 
     /// The night that belongs to `day`: 18:00 the evening before until 14:00 on the day.
-    public static func sleepWindow(for day: DayKey, calendar: Calendar = .current) -> DateInterval {
+    public static func sleepWindow(for day: DayKey, calendar: Calendar = .fledge) -> DateInterval {
         let midnight = calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day)) ?? day.date(in: calendar)
         let start = calendar.date(byAdding: .hour, value: -6, to: midnight) ?? midnight
         let end = calendar.date(byAdding: .hour, value: 14, to: midnight) ?? midnight

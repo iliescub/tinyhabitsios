@@ -19,7 +19,7 @@ public final class HealthReader: @unchecked Sendable {
     }
 
     /// The value for `day` in the habit's unit (steps, minutes, litres, hours, workouts…).
-    public func value(for metric: HealthMetric, on day: DayKey, dayEndHour: Int, calendar: Calendar = .current) async throws -> Double {
+    public func value(for metric: HealthMetric, on day: DayKey, dayEndHour: Int, calendar: Calendar = .fledge) async throws -> Double {
         let range = HealthAggregation.dayInterval(day, dayEndHour: dayEndHour, calendar: calendar)
         switch metric {
         case .quantity(let identifier, let unit):

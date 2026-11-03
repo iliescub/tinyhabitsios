@@ -91,7 +91,7 @@ extension ReminderPlan {
     public static let slipIdentifierPrefix = "fledge.slip."
 
     /// The slip nudge: an hour from now between 9:00 and 19:00, otherwise at 10:00 the next morning.
-    public static func slipNudge(habitID: UUID, name: String, now: Date, calendar: Calendar = .current) -> Reminder {
+    public static func slipNudge(habitID: UUID, name: String, now: Date, calendar: Calendar = .fledge) -> Reminder {
         let hour = calendar.component(.hour, from: now)
         let fire: Date
         if (9..<19).contains(hour) {
@@ -120,7 +120,7 @@ public enum FlightForecast {
         today: DayKey,
         rule: GraduationRule = .standard,
         horizon: Int = 120,
-        calendar: Calendar = .current
+        calendar: Calendar = .fledge
     ) -> DayKey? {
         if GraduationEvaluator.status(snapshots: snapshots, cadence: cadence, startedOn: startedOn, today: today, rule: rule, calendar: calendar).isReady {
             return nil
