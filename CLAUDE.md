@@ -3,6 +3,8 @@
 **2026-11-01:** 1.0 was rejected under App Review 4.3 (Spam). The app is becoming **Yearling**, a New Year's resolution app
 (one resolution → up to three habits; spec section "Update 2026-11-01", tickets RES-0…RES-12 in `docs/BACKLOG.md`, brand v3
 in `docs/BRAND.md`). Code names (Fledge*, bundle IDs, App Group) stay; user-facing copy moves to Yearling in RES-10.
+**2026-11-03:** Yearling build 4 uploaded and attached to 1.0, listing/IAPs/copyright updated in App Store Connect, website
+live as Yearling; **not submitted** (remaining steps: `docs/BACKLOG.md` › "Start here").
 
 
 "One resolution. Kept by December." — one resolution turned into at most 3 active habits with if-then cues, auto-completed
@@ -72,7 +74,7 @@ Target: App Store release **2026-12-15**, build 4 to review **2026-11-20** (one 
 - Pro rules: `ProPolicy` (free = 1 Health habit); widgets read `ProStatus` from the App Group. Never sell more than 3 slots.
 
 ## Release (App Store Connect)
-- App record: "Fledge: Habit Tracker" (Apple ID 6821628229), bundle IDs `com.smartapps.TinyHabits` + `.Widgets`, App Group `group.com.smartapps.TinyHabits`, team `USASBWPY7T`.
+- App record: "Yearling: Keep Your Resolution" (renamed 2026-11-03 from "Fledge: Habit Tracker"; Apple ID 6821628229), bundle IDs `com.smartapps.TinyHabits` + `.Widgets`, App Group `group.com.smartapps.TinyHabits`, team `USASBWPY7T`.
 - Signing: **Xcode cloud signing** (automatic). No local distribution certificate — don't create one (it triggers keychain password prompts).
 - Before each upload bump `CURRENT_PROJECT_VERSION` in both targets (app + widget must match).
 - Archive + upload, signed with the App Store Connect API key (no Xcode account needed): `scripts/release.sh` (run it in the background;
@@ -92,7 +94,7 @@ Target: App Store release **2026-12-15**, build 4 to review **2026-11-20** (one 
   `submit-cancel` (empties a draft; drafts can't be canceled).
 - Review checklist: `swift scripts/asc.swift review-status` (read-only), `review-setup` (category, content rights, age rating, free
   price), `review-contact` (contact + copyright from git-ignored `Configuration/review-contact.json`), `copyright "<text>"` (that line only). `status` also lists review
-  submissions and in-app purchase states. 1.0 (3) was rejected on 2026-11-01 (4.3(a), 4.3(b), 4.2.6); build 4 (Yearling) is next. `iap-rename` sets the products' store names to "Yearling Pro".
+  submissions and in-app purchase states. 1.0 (3) was rejected on 2026-11-01 (4.3(a), 4.3(b), 4.2.6); build 4 (Yearling) is uploaded and attached, not submitted (2026-11-03). `iap-rename` sets the products' store names to "Yearling Pro".
 - Website (privacy, terms, support) lives in `website/`. `.github/workflows/pages.yml` copies it to the `gh-pages` branch on every
   push that changes it; GitHub Pages serves that branch at `https://iliescub.github.io/tinyhabitsios/` (privacy/, terms/, support/).
   Live since 2026-10-14 (Pages enabled on `gh-pages`). Links in the pages are relative; app URLs: `AppLinks.swift`.

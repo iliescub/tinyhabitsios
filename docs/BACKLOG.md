@@ -5,19 +5,21 @@ Estimates are focused-work days (d). Cut order if late is at the bottom. ✅ = d
 
 ## Start here (status as of 2026-11-03)
 
-**Yearling is built** (resolution layer, UI round 2, rename) and **not committed**: everything is in the working tree on
-`relaunch/v1`. 1.0 (3) was rejected under 4.3(a), 4.3(b) and 4.2.6; build 4 isn't uploaded yet. Nothing was sent to App
-Store Connect. Listing prepared locally: `Design/AppStore/LISTING.md`.
+**Yearling build 4 is on App Store Connect, attached to version 1.0 and NOT submitted.** Everything is committed and
+pushed on `relaunch/v1` (2026-11-03, `29592ca`…`3e2c747`; not merged into `main`). The website is live as Yearling
+(`https://iliescub.github.io/tinyhabitsios/`, all four pages checked). 1.0 (3) was rejected on 2026-11-01 under 4.3(a),
+4.3(b) and 4.2.6.
 
-**Next steps (you)**
-1. Review and commit the working tree (one commit per area is fine: HabitCore, app, docs, App Store assets).
-2. Fill in the **[FILL IN]** parts of `Design/AppStore/review-reply-4.3.md` (beta testing, Shapewright/Torn, WellFit's account).
-3. EUIPO/TMview search for "Yearling" (classes 9, 42) by hand; fix the version copyright ("© 2026 HealthyLiving").
-4. Device checks (TestFlight): HK-5, HEAD-2, WID-5, IPAD-2, POL-1 (VoiceOver, Increased Contrast), the new resolution screens,
-   and the letter / wobble-week notifications (set the device date).
-5. Push `relaunch/v1` (publishes the Yearling website), then follow `Design/AppStore/LISTING.md` › "Before uploading":
-   `asc.swift iap-rename` → `iap-review` → `metadata` → `screenshots` → `review-notes` → `scripts/release.sh` (build 4,
-   already bumped) → `attach-build 4` → reply with the nine answers → submit (RES-12). One app at a time.
+**Next steps (you), in this order**
+1. Device checks on TestFlight build 4: HK-5, HEAD-2, WID-5, IPAD-2, POL-1 (VoiceOver, Increased Contrast), the resolution
+   screens, and the letter / wobble-week notifications (set the device date).
+2. EUIPO/TMview search for "Yearling" (classes 9, 42) by hand.
+3. Fill in the **[FILL IN]** parts of `Design/AppStore/review-reply-4.3.md` (beta testing, Shapewright/Torn, WellFit's
+   account) and send it as the reply to the nine questions in App Review.
+4. On the App Store Connect website: **Add for Review** on the subscription group, both subscriptions and the lifetime
+   purchase (one draft; the API refuses first-time products) → `swift scripts/asc.swift submit-prepare` → check App Review ›
+   Drafts has the version + 4 items → submit (RES-12). One app at a time from this account.
+If code changes before submitting: bump `CURRENT_PROJECT_VERSION` to 5 (both targets), retest, upload, `attach-build 5`.
 
 **Sent to App Store Connect — 2026-11-03:** IAP store names → "Yearling Pro" (`iap-rename`) + new review screenshot and
 note (`iap-review`; all three READY_TO_SUBMIT); name "Yearling: Keep Your Resolution", subtitle, description, keywords,
@@ -106,8 +108,9 @@ retitled "Fledge: New Year Resolutions", Twelvemonth. Engine and `SlotPolicy.max
 - [~] **RES-11** (P0, 1d) Listing. ✅ Prepared locally (not uploaded): `Design/AppStore/LISTING.md`, `metadata.en-US.json`
   (name, subtitle, promo, keywords, description), 7 iPhone + 7 iPad screenshots (demo pinned to Fri 12 Feb 2027,
   `-FledgeDemoToday`), `review-notes.txt`. ✅ `asc.swift metadata` sets `name`; ✅ `asc.swift iap-rename`
-  (2026-11-03). To do: run `iap-rename` + `iap-review` (screenshot retaken by the UI tests); fix the copyright.
-- [ ] **RES-12** (P0, 0.5d, Nov 20) UI tests on iPhone + iPad, build 4, attach, submit with the products (website flow).
+  (2026-11-03). ✅ 2026-11-03 uploaded: metadata, 7 + 7 screenshots, review notes, IAP names + review screenshot, copyright.
+- [~] **RES-12** (P0, 0.5d, Nov 20) ✅ 2026-11-03 UI tests on iPhone + iPad, build 4 uploaded and attached, listing,
+  IAP names/screenshot, copyright. To do: reply to the nine questions, submit with the products (website flow).
 Cut order if late: RES-8 → RES-7 share card → RES-6. Never cut RES-1…5, RES-9…12.
 
 ## UI/UX round 2 — Nov 2 → Nov 29 (spec › "UI/UX research, round 2")

@@ -41,19 +41,14 @@ says "Friday · Feb 12"); the iPhone status bar shows no date.
 - Reply to the nine questions: `review-reply-4.3.md` — fill in the **[FILL IN]** parts (beta testing, Shapewright and
   Torn one-liners, WellFit's account) before sending.
 
-## Before uploading (checked 2026-11-03)
+## Upload status (2026-11-03)
 
-Done in code: the letter and Kept moment are built (RES-6, RES-7); `asc.swift metadata` sets the **name**; the website
-says Yearling; `Fledge.storekit` and `asc.swift` use "Yearling Pro"; `CURRENT_PROJECT_VERSION` is **4** in both targets.
+Uploaded to App Store Connect with `asc.swift`: name, subtitle, description, keywords, promo text, URLs (`metadata`);
+7 iPhone + 7 iPad screenshots (`screenshots`); review notes (`review-notes`); copyright "© 2026 Bogdan Iliescu"
+(`copyright`); in-app purchase store names "Yearling Pro" (`iap-rename`) and review screenshot + note (`iap-review`; all
+three READY_TO_SUBMIT); build 4 uploaded (`scripts/release.sh`) and attached (`attach-build 4`); version 1.0 is
+PREPARE_FOR_SUBMISSION. Website published as Yearling by the push of `relaunch/v1`.
 
-Still to do, in this order (one app at a time from this account):
-0. Commit and push `relaunch/v1`: the push publishes `website/` (the live privacy/terms/support pages still say Fledge
-   until then, and App Review opens them).
-1. Fill in the **[FILL IN]** parts of `review-reply-4.3.md`; fix the copyright in `Configuration/review-contact.json`,
-   then `swift scripts/asc.swift review-contact`.
-2. `swift scripts/asc.swift iap-rename` (store names of the group and all three products → "Yearling Pro"), then
-   `iap-review` with the fresh `/tmp/fledge-paywall-review.png` from `testPaywallShowsPlansForAppReview`, then `iap-status`.
-3. `metadata` → `screenshots` → `review-notes`.
-4. `scripts/release.sh` (build 4) → `builds` until VALID → `attach-build 4`.
-5. Reply to the nine questions in App Review, add the group and products to the draft on the website, `submit-prepare`,
-   check App Review › Drafts, submit.
+Still to do: fill in and send `review-reply-4.3.md` (the nine answers); add the group and the three products to a draft on
+the website (Add for Review), `submit-prepare`, check App Review › Drafts, submit. After editing anything here, re-run the
+matching `asc.swift` command.
