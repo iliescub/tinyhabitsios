@@ -84,7 +84,7 @@ struct AddHabitSheet: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Fledge found no \(noDataDraft?.name ?? "") data from the last 7 days. If you don't track it with your iPhone or Apple Watch, tap to log it instead. You can also check access in the Health app.")
+                Text("Yearling found no \(noDataDraft?.name ?? "") data from the last 7 days. If you don't track it with your iPhone or Apple Watch, tap to log it instead. You can also check access in the Health app.")
             }
             .alert("Couldn't add habit", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
                 Button("OK", role: .cancel) {}
@@ -140,7 +140,7 @@ struct AddHabitSheet: View {
                 TemplateRow(symbol: template.symbol, color: color, title: template.name, subtitle: subtitle, trailing: .locked)
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Needs Fledge Pro")
+            .accessibilityHint("Needs Yearling Pro")
         } else {
             NavigationLink(value: HabitDraftRoute(draft: draft(for: template, pack: pack))) {
                 TemplateRow(symbol: template.symbol, color: color, title: template.name, subtitle: subtitle, trailing: .chevron)
@@ -308,7 +308,7 @@ struct EditHabitSheet: View {
 
     private func save() {
         do {
-            try context.updateHabit(habitID: habit.id, with: draft)
+            try context.updateHabit(habitID: habit.id, with: draft, reevaluating: DayKey.today())
             let needsNotifications = draft.reminderMinutes != nil
             AppRefresh.afterWrite(context: context, structural: true)
             if needsNotifications {
@@ -396,7 +396,7 @@ struct ProBanner: View {
                     Text(usedOn.map { "Your free Health habit is \($0)." } ?? "Free includes one Health habit.")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(FledgeTheme.Palette.ink)
-                    Text("Fledge Pro lets all three fill in by themselves.")
+                    Text("Yearling Pro lets all three fill in by themselves.")
                         .font(.footnote)
                         .foregroundStyle(FledgeTheme.Palette.ink2)
                 }
@@ -409,7 +409,7 @@ struct ProBanner: View {
             .fledgeCard(cornerRadius: FledgeTheme.Radius.tile, tint: FledgeTheme.Palette.gold)
         }
         .buttonStyle(.plain)
-        .accessibilityHint("Opens Fledge Pro")
+        .accessibilityHint("Opens Yearling Pro")
     }
 }
 

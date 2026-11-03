@@ -3,15 +3,16 @@ import SwiftData
 import HabitCore
 import FledgeUI
 
-/// First run (docs/DESIGN.md §6.6, v2 in UX-11): Promise → Pick up to 3 → Connect Health → Reminders & widget → Paywall → Today.
-/// Under a minute; asks for nothing the app doesn't use. A progress bar and a back button sit on top of every step.
+/// First run (RES-9, spec › "Update 2026-11-01"): Resolution → Habits → If-then plans → Letter to December → Connect Health →
+/// Reminders & widget → Paywall → Today. Asks for nothing the app doesn't use. A progress bar and a back button sit on top of
+/// every step; the Health step only appears when a Health habit is picked.
 struct OnboardingView: View {
     let onFinish: () -> Void
 
     @Environment(\.modelContext) private var context
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @State private var step: Step = .promise
+    @State private var step: Step = .resolution
     @State private var goingBack = false
     @State private var pack: Pack?
     @State private var picked: [Pack.Template] = []
@@ -23,8 +24,28 @@ struct OnboardingView: View {
     @State private var showPaywall = false
     @State private var paywallForLockedTile = false
     @State private var purchases = Purchases.shared
+    /// RES-2/3: the resolution in the user's words and the template it matches (picked or typed).
+    @State private var resolutionTemplates: [ResolutionTemplate] = []
+    @State private var resolutionText = ""
+    @State private var chosenTemplate: ResolutionTemplate?
+    /// RES-4: the "if" of each picked habit's plan, by habit name.
+    @State private var cues: [String: String] = [:]
+    /// RES-6: why it matters, and the letter that opens on Dec 1.
+    @State private var why = ""
+    @State private var letter = ""
+    @FocusState private var resolutionFieldFocused: Bool
+    /// The template whose habits were last pre-picked, so going back and forth doesn't undo the user's own picks.
+    @State private var lastPrefill: String?
 
-    enum Step: Int, CaseIterable { case promise, pick, health, reminders }
+    enum Step: Int, CaseIterable { case resolution, pick, plan, letter, health, reminders, seal }
+
+    private var resolutionYear: Int { ResolutionYear.year(startingOn: DayKey(.now)) }
+
+    /// The template the typed text points to; an explicit pick wins.
+    private var matchedTemplate: ResolutionTemplate? {
+        if let chosenTemplate, chosenTemplate.title == resolutionText { return chosenTemplate }
+        return ResolutionLibrary.match(resolutionText, in: resolutionTemplates)
+    }
 
     private var pickedAuto: [Pack.Template] { picked.filter { $0.source.isAuto } }
 
@@ -48,6 +69,7 @@ struct OnboardingView: View {
         .animation(.snappy, value: step)
         .task {
             pack = try? PackLibrary.essentials()
+            resolutionTemplates = (try? ResolutionLibrary.all()) ?? []
             #if DEBUG
             openDemoStep()
             #endif
@@ -60,10 +82,13 @@ struct OnboardingView: View {
     @ViewBuilder
     private var content: some View {
         switch step {
-        case .promise: FittingScroll { promise }
+        case .resolution: resolution
         case .pick: pick
+        case .plan: plan
+        case .letter: FittingScroll { letterStep }
         case .health: FittingScroll { health }
         case .reminders: FittingScroll { reminders }
+        case .seal: FittingScroll { seal }
         }
     }
 
@@ -80,8 +105,8 @@ struct OnboardingView: View {
                     .foregroundStyle(FledgeTheme.Palette.ink)
             }
             .buttonStyle(.plain)
-            .opacity(step == .promise ? 0 : 1)
-            .disabled(step == .promise)
+            .opacity(step == .resolution ? 0 : 1)
+            .disabled(step == .resolution)
             .accessibilityLabel("Back")
 
             HStack(spacing: 6) {
@@ -105,47 +130,305 @@ struct OnboardingView: View {
 
     // MARK: Screens
 
-    private var promise: some View {
-        VStack(spacing: FledgeTheme.Space.xl) {
-            Spacer()
-            PromiseAnimation()
-            Text("Three habits.\nDone for you.\nThen they fly.")
-                .font(FledgeTheme.Typeface.title)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(FledgeTheme.Palette.ink)
-            Text("Fledge fills in your habits from Apple Health, and lets them go once they stick.")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(FledgeTheme.Palette.ink2)
-                .padding(.horizontal, FledgeTheme.Space.xxl)
-            Spacer()
+    /// Step 1 (RES-2/3): the resolution, picked from common ones or typed. "Stop …" wording gets an approach suggestion.
+    private var resolution: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
+                HStack(alignment: .bottom, spacing: FledgeTheme.Space.m) {
+                    VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
+                        Text("Your \(String(resolutionYear)) resolution")
+                            .font(FledgeTheme.Typeface.title)
+                            .foregroundStyle(FledgeTheme.Palette.ink)
+                        Text("One resolution, up to three small habits. Apple Health fills in what it can, and each habit flies once it sticks.")
+                            .font(.subheadline)
+                            .foregroundStyle(FledgeTheme.Palette.ink2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        FledgeBird(.flying)
+                            .frame(width: 64)
+                            .accessibilityHidden(true)
+                    }
+                }
+
+                TextField("In \(String(resolutionYear)) I want to…", text: $resolutionText)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                    .focused($resolutionFieldFocused)
+                    .submitLabel(.done)
+                    .padding(FledgeTheme.Space.l)
+                    .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
+                    .onChange(of: resolutionText) { _, text in
+                        if text.count > ResolutionDraft.maxTextLength { resolutionText = String(text.prefix(ResolutionDraft.maxTextLength)) }
+                    }
+                    .accessibilityLabel("Your resolution")
+
+                if let hint = framingHint {
+                    hint
+                }
+
+                VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
+                    Text("Common resolutions").fledgeEyebrow()
+                    VStack(spacing: 0) {
+                        ForEach(Array(resolutionTemplates.enumerated()), id: \.element.id) { index, template in
+                            Button {
+                                choose(template)
+                            } label: {
+                                TemplateRow(
+                                    symbol: template.symbol,
+                                    color: FledgeTheme.habitColor(template.accent),
+                                    title: template.title,
+                                    subtitle: template.habits.map(\.name).formatted(.list(type: .and)),
+                                    trailing: .selectable(matchedTemplate?.id == template.id)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .sensoryFeedback(.selection, trigger: matchedTemplate?.id == template.id)
+                            if index < resolutionTemplates.count - 1 {
+                                Divider().padding(.leading, 64)
+                            }
+                        }
+                    }
+                    .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
+                }
+            }
+            .padding(.horizontal, FledgeTheme.screenMargin)
+            .padding(.vertical, FledgeTheme.Space.l)
         }
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    /// RES-3: a calm note under a typed resolution. Avoidance wording → the approach version; otherwise the plan it matches.
+    private var framingHint: AnyView? {
+        let text = resolutionText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, chosenTemplate?.title != text else { return nil }
+        let match = matchedTemplate
+        let avoidance = ResolutionFraming.isAvoidance(text)
+        guard avoidance || match != nil else { return nil }
+        let message: String = if avoidance, let match {
+            "Resolutions about starting something are kept more often than ones about stopping. Plan it as \u{201C}\(match.title)\u{201D}?"
+        } else if avoidance {
+            "Resolutions about starting something are kept more often than ones about stopping. What will you do instead?"
+        } else {
+            "Sounds like \u{201C}\(match?.title ?? "")\u{201D}. We'll suggest habits for it."
+        }
+        return AnyView(
+            HStack(alignment: .top, spacing: FledgeTheme.Space.m) {
+                Image(systemName: avoidance ? "arrow.uturn.right.circle.fill" : "sparkles")
+                    .font(.title3)
+                    .foregroundStyle(FledgeTheme.Palette.skyText)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(FledgeTheme.Palette.ink)
+                    if avoidance, let match {
+                        Button("Use \u{201C}\(match.title)\u{201D}") { choose(match) }
+                            .font(.footnote.weight(.semibold))
+                            .tint(FledgeTheme.Palette.skyText)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(FledgeTheme.Space.l)
+            .fledgeCard(cornerRadius: FledgeTheme.Radius.tile, tint: FledgeTheme.Palette.sky)
+            .accessibilityElement(children: .combine)
+        )
+    }
+
+    private func choose(_ template: ResolutionTemplate) {
+        chosenTemplate = template
+        resolutionText = template.title
+        resolutionFieldFocused = false
     }
 
     private var pick: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
                 VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
-                    Text("Pick up to three")
+                    Text("Your habits")
                         .font(FledgeTheme.Typeface.title)
                         .foregroundStyle(FledgeTheme.Palette.ink)
-                    Text("Fewer is fine. You can change goals later.")
+                    Text("Up to three small habits that add up to \u{201C}\(resolutionText.trimmingCharacters(in: .whitespaces))\u{201D}. Fewer is fine.")
                         .font(.subheadline)
                         .foregroundStyle(FledgeTheme.Palette.ink2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                let suggested = suggestedTemplates
+                if !suggested.isEmpty {
+                    pickGroup("For your resolution", templates: suggested)
                 }
                 if let pack {
+                    let others = pack.templates.filter { template in !suggested.contains { $0.name == template.name } }
                     if DeviceInfo.isHealthAvailable {
-                        pickGroup("Done for you · Apple Health", templates: pack.templates.filter { $0.source.isAuto })
-                        pickGroup("Tap to log", templates: pack.templates.filter { !$0.source.isAuto })
+                        pickGroup("Done for you · Apple Health", templates: others.filter { $0.source.isAuto })
+                        pickGroup("Tap to log", templates: others.filter { !$0.source.isAuto })
                     } else {
                         // No Apple Health on this device: every template is logged by tapping.
-                        pickGroup("Tap to log", templates: pack.templates.map(\.tapToLog))
+                        pickGroup("Tap to log", templates: others.map(\.tapToLog))
                     }
                 }
             }
             .padding(.horizontal, FledgeTheme.screenMargin)
             .padding(.vertical, FledgeTheme.Space.l)
         }
+    }
+
+    /// The matched resolution's habits (tap-to-log versions when Apple Health isn't available).
+    private var suggestedTemplates: [Pack.Template] {
+        let habits = matchedTemplate?.habits ?? []
+        return DeviceInfo.isHealthAvailable ? habits : habits.map(\.tapToLog)
+    }
+
+    /// Step 3 (RES-4): an if-then plan per picked habit, prefilled from the template.
+    private var plan: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
+                VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
+                    Text("When will you do it?")
+                        .font(FledgeTheme.Typeface.title)
+                        .foregroundStyle(FledgeTheme.Palette.ink)
+                    Text("Tie each habit to something you already do. Plans like \u{201C}After lunch, walk\u{201D} make a habit far more likely to happen.")
+                        .font(.subheadline)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+                VStack(spacing: 0) {
+                    ForEach(Array(picked.enumerated()), id: \.element.name) { index, template in
+                        planRow(template)
+                        if index < picked.count - 1 { Divider().padding(.leading, 64) }
+                    }
+                }
+                .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
+            }
+            .padding(.horizontal, FledgeTheme.screenMargin)
+            .padding(.vertical, FledgeTheme.Space.l)
+        }
+        .scrollDismissesKeyboard(.interactively)
+    }
+
+    private func planRow(_ template: Pack.Template) -> some View {
+        let binding = Binding(
+            get: { cues[template.name] ?? template.cue ?? "" },
+            set: { cues[template.name] = String($0.prefix(HabitDraft.maxCueLength)) }
+        )
+        return HStack(spacing: FledgeTheme.Space.m) {
+            IconSquare(symbol: template.symbol, color: FledgeTheme.habitColor(colorKey(for: template)))
+            VStack(alignment: .leading, spacing: 2) {
+                TextField("After…", text: binding)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                    .submitLabel(.next)
+                    .accessibilityLabel(Text("When you'll do \(template.name)"))
+                Text("\(template.name) · \(TemplateStyle.targetText(for: template))")
+                    .font(.footnote)
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Menu {
+                ForEach(Self.commonCues, id: \.self) { cue in
+                    Button(cue) { cues[template.name] = cue }
+                }
+            } label: {
+                Image(systemName: "text.badge.plus")
+                    .font(.title3)
+                    .foregroundStyle(FledgeTheme.Palette.skyText)
+                    .frame(minWidth: 44, minHeight: 44)
+            }
+            .accessibilityLabel(Text("Suggestions for \(template.name)"))
+        }
+        .padding(.horizontal, FledgeTheme.Space.l)
+        .padding(.vertical, FledgeTheme.Space.m)
+    }
+
+    /// Everyday anchors for an if-then plan (RES-4).
+    private static let commonCues = [
+        "After my morning coffee", "After breakfast", "At lunch", "After lunch", "After work",
+        "Before dinner", "After dinner", "When I get into bed", "When I plug in my phone",
+    ]
+
+    /// Step 4 (RES-6): why it matters, and a letter that stays sealed until 1 December. Skippable.
+    private var letterStep: some View {
+        VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
+            Spacer(minLength: FledgeTheme.Space.l)
+            VStack(alignment: .leading, spacing: FledgeTheme.Space.xs) {
+                Text("A note to December")
+                    .font(FledgeTheme.Typeface.title)
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                Text("Why does this matter to you? It stays sealed on your \(DeviceInfo.name) and opens on 1 December, or the day your resolution is kept.")
+                    .font(.subheadline)
+                    .foregroundStyle(FledgeTheme.Palette.ink2)
+            }
+            VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
+                Text("Why it matters").fledgeEyebrow()
+                TextField("So I have energy for the kids after work", text: $why, axis: .vertical)
+                    .lineLimit(2...4)
+                    .padding(FledgeTheme.Space.l)
+                    .fledgeCard(cornerRadius: FledgeTheme.Radius.tile)
+                    .onChange(of: why) { _, text in
+                        if text.count > ResolutionDraft.maxWhyLength { why = String(text.prefix(ResolutionDraft.maxWhyLength)) }
+                    }
+            }
+            VStack(alignment: .leading, spacing: FledgeTheme.Space.s) {
+                Label("Sealed until December", systemImage: "envelope.fill")
+                    .fledgeEyebrow()
+                TextField("Dear December me…", text: $letter, axis: .vertical)
+                    .lineLimit(4...8)
+                    .padding(FledgeTheme.Space.l)
+                    .fledgeCard(cornerRadius: FledgeTheme.Radius.tile, tint: FledgeTheme.Palette.gold)
+                    .onChange(of: letter) { _, text in
+                        if text.count > ResolutionDraft.maxLetterLength { letter = String(text.prefix(ResolutionDraft.maxLetterLength)) }
+                    }
+            }
+            Spacer(minLength: FledgeTheme.Space.l)
+        }
+        .padding(.horizontal, FledgeTheme.screenMargin)
+    }
+
+    /// Last step (UXR-1): the whole plan on one card, then press and hold to commit to it.
+    private var seal: some View {
+        VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
+            Spacer(minLength: FledgeTheme.Space.l)
+            Text("Your plan")
+                .font(FledgeTheme.Typeface.title)
+                .foregroundStyle(FledgeTheme.Palette.ink)
+            VStack(alignment: .leading, spacing: FledgeTheme.Space.m) {
+                Text(String(resolutionYear)).fledgeEyebrow()
+                Text(trimmedResolution)
+                    .font(.system(.title2, design: .rounded, weight: .heavy))
+                    .foregroundStyle(FledgeTheme.Palette.ink)
+                if !why.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(why)
+                        .font(.footnote.italic())
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+                Divider()
+                ForEach(Array(zip(picked, pickedColorKeys)), id: \.0.name) { template, colorKey in
+                    HStack(spacing: FledgeTheme.Space.m) {
+                        IconSquare(symbol: template.symbol, color: FledgeTheme.habitColor(colorKey))
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(template.name).font(.body.weight(.semibold)).foregroundStyle(FledgeTheme.Palette.ink)
+                            let cue = (cues[template.name] ?? template.cue ?? "").trimmingCharacters(in: .whitespaces)
+                            Text(cue.isEmpty ? TemplateStyle.targetText(for: template) : "\(cue) · \(TemplateStyle.targetText(for: template))")
+                                .font(.footnote)
+                                .foregroundStyle(FledgeTheme.Palette.ink2)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+                if !letter.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Label("Letter sealed until 1 December", systemImage: "envelope.fill")
+                        .font(FledgeTheme.Typeface.meta)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+            }
+            .padding(FledgeTheme.Space.l)
+            .fledgeCard(cornerRadius: FledgeTheme.Radius.tile, tint: FledgeTheme.Palette.gold)
+            Text("Habits fly once they stick. When all of them have, your resolution is kept.")
+                .font(.footnote)
+                .foregroundStyle(FledgeTheme.Palette.ink2)
+            Spacer(minLength: FledgeTheme.Space.l)
+        }
+        .padding(.horizontal, FledgeTheme.screenMargin)
     }
 
     private func pickGroup(_ title: String, templates: [Pack.Template]) -> some View {
@@ -189,7 +472,7 @@ struct OnboardingView: View {
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.selection, trigger: isPicked)
-        .accessibilityHint(isLocked ? "Needs Fledge Pro" : isFull ? "Your nest holds three" : "")
+        .accessibilityHint(isLocked ? "Needs Yearling Pro" : isFull ? "Your nest holds three" : "")
     }
 
     private var health: some View {
@@ -258,7 +541,7 @@ struct OnboardingView: View {
         let chosen = startGoals[template.name]
         let average = baseline.average.formatted(.number.precision(.fractionLength(baseline.average < 10 ? 0...1 : 0...0)))
         let summary: String = switch baseline.verdict {
-        case .notEnoughData: "Not much data yet. Fledge fills it in from today."
+        case .notEnoughData: "Not much data yet. Yearling fills it in from today."
         case .alreadyHabit: "Already a habit: \(baseline.daysMet) of 30 days. Aim higher, or swap it."
         case .withinReach: "Within reach: \(baseline.daysMet) of 30 days at your goal."
         case .startSmaller: "Usually about \(average) \(template.unit). Start a little lower."
@@ -300,7 +583,7 @@ struct OnboardingView: View {
                 Text("Check in without opening the app")
                     .font(FledgeTheme.Typeface.title)
                     .foregroundStyle(FledgeTheme.Palette.ink)
-                Text("Add the widget, and let Fledge remind you only when something is left.")
+                Text("Add the widget, and let Yearling remind you only when something is left.")
                     .font(.subheadline)
                     .foregroundStyle(FledgeTheme.Palette.ink2)
             }
@@ -328,8 +611,17 @@ struct OnboardingView: View {
             if step == .pick {
                 pickSummary
             }
-            PrimaryActionButton(title: primaryTitle, systemImage: "arrow.right", action: next)
-                .disabled(step == .pick && picked.isEmpty)
+            if step == .seal {
+                HoldToCommitButton(title: primaryTitle, action: next)
+            } else {
+                PrimaryActionButton(title: primaryTitle, systemImage: "arrow.right", action: next)
+                    .disabled(step == .pick && picked.isEmpty || step == .resolution && trimmedResolution.isEmpty)
+            }
+            if step == .letter && why.isEmpty && letter.isEmpty {
+                Button("Skip for now") { next() }
+                    .font(.footnote)
+                    .tint(FledgeTheme.Palette.skyText)
+            }
             if step == .health {
                 Button("Not now — track them by tapping") {
                     picked = picked.map { $0.source.isAuto ? manual($0) : $0 }
@@ -381,21 +673,38 @@ struct OnboardingView: View {
         pickedAuto.isEmpty && step != .health ? Step.allCases.filter { $0 != .health } : Step.allCases
     }
 
+    private var trimmedResolution: String { resolutionText.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    /// The template the user picked (tapped, or accepted from the hint), if the text is still its title.
+    private var pickedTemplateID: String? {
+        guard let chosenTemplate, chosenTemplate.title == trimmedResolution else { return nil }
+        return chosenTemplate.id
+    }
+
     private var primaryTitle: String {
         switch step {
-        case .promise: "Start"
+        case .resolution: trimmedResolution.isEmpty ? "Write or pick one" : "Continue"
         case .pick: picked.isEmpty ? "Pick at least one" : "Continue"
+        case .plan: "Continue"
+        case .letter: "Seal it"
         case .health: healthConnected ? "Continue" : "Connect"
-        case .reminders: "Finish"
+        case .reminders: "Continue"
+        case .seal: "Commit to my resolution"
         }
     }
 
     private func next() {
         goingBack = false
         switch step {
-        case .promise:
+        case .resolution:
+            resolutionFieldFocused = false
+            prefillSuggestedHabits()
             step = .pick
         case .pick:
+            step = .plan
+        case .plan:
+            step = .letter
+        case .letter:
             step = pickedAuto.isEmpty ? .reminders : .health
         case .health:
             if healthConnected {
@@ -406,6 +715,10 @@ struct OnboardingView: View {
         case .reminders:
             Task {
                 if remindersOn { await Reminders.requestAuthorizationIfNeeded() }
+                step = .seal
+            }
+        case .seal:
+            Task {
                 createHabits()
                 if purchases.isPro {
                     onFinish()
@@ -420,10 +733,13 @@ struct OnboardingView: View {
     private func back() {
         goingBack = true
         switch step {
-        case .promise: break
-        case .pick: step = .promise
-        case .health: step = .pick
-        case .reminders: step = pickedAuto.isEmpty ? .pick : .health
+        case .resolution: break
+        case .pick: step = .resolution
+        case .plan: step = .pick
+        case .letter: step = .plan
+        case .health: step = .letter
+        case .reminders: step = pickedAuto.isEmpty ? .letter : .health
+        case .seal: step = .reminders
         }
     }
 
@@ -460,10 +776,32 @@ struct OnboardingView: View {
         return TemplateStyle.colorKey(for: template)
     }
 
+    /// Picks the matched resolution's habits the first time the user lands on step 2, within the free tier's Health limit.
+    private func prefillSuggestedHabits() {
+        guard let id = matchedTemplate?.id, id != lastPrefill else { return }
+        lastPrefill = id
+        let suggested = suggestedTemplates
+        picked = []
+        for template in suggested where picked.count < SlotPolicy.maxActive {
+            if template.source.isAuto && !ProPolicy.canAddAutoHabit(isPro: purchases.isPro, activeAutoCount: pickedAuto.count) { continue }
+            picked.append(template)
+        }
+    }
+
     private func createHabits() {
         var added: [Habit] = []
+        let resolution = try? context.startResolution(
+            // The template's sentence replaces the user's words on Today, so only a picked template counts
+            // (a typed "Learn the cello" may match Read more for suggestions, but stays the user's own).
+            ResolutionDraft(text: trimmedResolution, templateID: pickedTemplateID ?? "", why: why, letter: letter),
+            startDay: DayKey(.now)
+        )
         for (template, colorKey) in zip(picked, pickedColorKeys) {
-            var draft = HabitDraft(template: template, colorKey: colorKey, packID: pack?.id ?? "essentials")
+            var draft = HabitDraft(
+                template: template, colorKey: colorKey, packID: matchedTemplate?.id ?? pack?.id ?? "essentials",
+                resolutionID: resolution?.id
+            )
+            draft.cue = cues[template.name] ?? template.cue ?? ""
             if remindersOn { draft.reminderMinutes = 19 * 60 }
             if let goal = startGoals[template.name] { draft.target = goal }
             if let habit = try? context.addHabit(draft: draft) { added.append(habit) }
@@ -484,8 +822,25 @@ struct OnboardingView: View {
     private func openDemoStep() {
         guard let screen = DemoData.screen, screen.hasPrefix("onboarding-"), let pack else { return }
         picked = pack.templates.filter { ["Walk", "Read"].contains($0.name) }
+        if let sleep = resolutionTemplates.first(where: { $0.id == "sleep-better" }) {
+            choose(sleep)
+            prefillSuggestedHabits()
+            if let read = pack.templates.first(where: { $0.name == "Read" }) { picked.append(read) }
+        }
         switch screen {
         case "onboarding-pick": step = .pick
+        case "onboarding-plan":
+            picked = suggestedTemplates   // all three of the resolution's habits, with their cues
+            step = .plan
+        case "onboarding-reframe":
+            chosenTemplate = nil
+            resolutionText = "Stop scrolling in bed"
+            step = .resolution
+        case "onboarding-letter": step = .letter
+        case "onboarding-seal":
+            cues["Read"] = "When I get into bed"
+            why = "So evenings feel like mine again"
+            step = .seal
         case "onboarding-health": step = .health
         case "onboarding-headstart":
             picked = pack.templates.filter { ["Walk", "Read", "Move"].contains($0.name) }
@@ -520,68 +875,6 @@ struct FittingScroll<Content: View>: View {
     }
 }
 
-/// Three rings fill by themselves, one after another; then the fledgling hops out of the nest.
-private struct PromiseAnimation: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var fills: [Double] = [0, 0, 0]
-    @State private var flown = false
-
-    private let rings: [(Color, String)] = [
-        (FledgeTheme.Palette.dawn, "figure.walk"),
-        (FledgeTheme.Palette.sky, "book.fill"),
-        (FledgeTheme.Palette.meadow, "brain.head.profile"),
-    ]
-
-    var body: some View {
-        ZStack {
-            nest
-                .scaleEffect(flown ? 0.55 : 1)
-                .offset(y: flown ? 52 : 0)
-                .opacity(flown ? 0.35 : 1)
-            if flown {
-                FledgeBird(.flying)
-                    .frame(width: 130)
-                    .shadow(color: FledgeTheme.Palette.ink.opacity(0.15), radius: 12, y: 8)
-                    .offset(y: -18)
-                    .transition(.scale(scale: 0.3, anchor: .bottom).combined(with: .opacity))
-            }
-        }
-        .frame(height: 180)
-        .accessibilityHidden(true)
-        .task {
-            if reduceMotion {
-                fills = [1, 1, 1]
-                flown = true
-                return
-            }
-            try? await Task.sleep(for: .milliseconds(300))
-            for index in rings.indices {
-                withAnimation(.easeInOut(duration: 0.7)) { fills[index] = 1 }
-                try? await Task.sleep(for: .milliseconds(450))
-            }
-            try? await Task.sleep(for: .milliseconds(500))
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.65)) { flown = true }
-        }
-    }
-
-    private var nest: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 10) {
-                ring(0)
-                ring(1)
-            }
-            ring(2)
-        }
-    }
-
-    private func ring(_ index: Int) -> some View {
-        HabitRing(
-            fraction: fills[index], status: fills[index] >= 1 ? .done : .pending,
-            color: rings[index].0, symbol: rings[index].1, size: 72, lineWidth: 8
-        )
-    }
-}
-
 /// The small widget, drawn with the same nest glyph the widget uses, plus how to add it.
 private struct WidgetHint: View {
     let colors: [Color]
@@ -598,7 +891,7 @@ private struct WidgetHint: View {
             .frame(width: 128, height: 128)
             .fledgeCard(cornerRadius: 26)
             .accessibilityHidden(true)
-            Text("Touch and hold your Home Screen, tap Edit › Add Widget, and choose Fledge.")
+            Text("Touch and hold your Home Screen, tap Edit › Add Widget, and choose Yearling.")
                 .font(.subheadline)
                 .foregroundStyle(FledgeTheme.Palette.ink2)
         }
@@ -610,6 +903,58 @@ private struct WidgetHint: View {
         let fractions = [1.0, 0.6, 0.25]
         return palette.enumerated().map { index, color in
             NestGlyph.Ring(fraction: fractions[index % 3], status: index == 0 ? .done : .pending, color: color)
+        }
+    }
+}
+
+/// Press and hold to commit (UXR-1): the ink capsule fills from the left over 1.2 s, then a success haptic.
+/// Reduce Motion and VoiceOver get a plain tap (the same action, no hold).
+private struct HoldToCommitButton: View {
+    let title: String
+    let action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
+    @State private var progress: CGFloat = 0
+    @State private var committed = false
+
+    private static let duration = 1.2
+
+    var body: some View {
+        if reduceMotion || voiceOver {
+            PrimaryActionButton(title: title, systemImage: "checkmark.seal.fill", action: action)
+        } else {
+            Label(title, systemImage: "checkmark.seal.fill")
+                .font(.headline)
+                .foregroundStyle(FledgeTheme.Palette.onInk)
+                .padding(.horizontal, FledgeTheme.Space.xl)
+                .padding(.vertical, FledgeTheme.Space.l)
+                .background {
+                    GeometryReader { proxy in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(FledgeTheme.Palette.ink)
+                            Capsule().fill(FledgeTheme.Palette.gold)
+                                .frame(width: proxy.size.width * progress)
+                        }
+                    }
+                }
+                .clipShape(.capsule)
+                .contentShape(.capsule)
+                .onLongPressGesture(minimumDuration: Self.duration) {
+                    committed = true
+                    action()
+                } onPressingChanged: { pressing in
+                    withAnimation(pressing ? .linear(duration: Self.duration) : .easeOut(duration: 0.2)) {
+                        progress = pressing ? 1 : 0
+                    }
+                }
+                .sensoryFeedback(.success, trigger: committed)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint("Press and hold")
+                .accessibilityAction { action() }
+            Text("Press and hold")
+                .font(.footnote)
+                .foregroundStyle(FledgeTheme.Palette.ink2)
         }
     }
 }

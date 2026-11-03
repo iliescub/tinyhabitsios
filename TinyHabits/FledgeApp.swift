@@ -70,18 +70,32 @@ final class AppModel {
 /// Keeps `TodayView` on the current `DayKey`, which changes at the user's day-end hour (3 AM by default).
 struct RootView: View {
     let onBecameActive: () -> Void
-    @State private var today = DayKey.today()
+    @State private var today = RootView.currentDay()
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @Query private var allHabits: [Habit]
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(FledgeSettings.dayEndHourKey, store: FledgeSettings.defaults) private var dayEndHour = FledgeSettings.defaultDayEndHour
 
+    /// Demo onboarding hands over to Today once it's finished, like the real one.
+    @State private var finishedThisLaunch = false
+
     var body: some View {
-        if Self.forcesOnboarding || (!hasCompletedOnboarding && allHabits.isEmpty && !Self.skipsOnboarding) {
-            OnboardingView { hasCompletedOnboarding = true }
+        if (Self.forcesOnboarding && !finishedThisLaunch) || (!hasCompletedOnboarding && allHabits.isEmpty && !Self.skipsOnboarding) {
+            OnboardingView {
+                hasCompletedOnboarding = true
+                finishedThisLaunch = true
+            }
         } else {
             today_
         }
+    }
+
+    /// The day Today shows; DEBUG demo data can pin it with `-FledgeDemoToday`.
+    static func currentDay() -> DayKey {
+        #if DEBUG
+        if DemoData.isEnabled { return DayKey(DemoData.now, dayEndHour: FledgeSettings.dayEndHour) }
+        #endif
+        return DayKey.today()
     }
 
     /// DEBUG: `-FledgeDemoScreen onboarding[-pick|-health|-reminders]` always shows onboarding (at that step).
@@ -121,7 +135,7 @@ struct RootView: View {
     }
 
     private func refreshDay() {
-        let now = DayKey.today()
+        let now = Self.currentDay()
         if now != today { today = now }
     }
 }
@@ -131,7 +145,7 @@ struct StoreErrorView: View {
 
     var body: some View {
         ContentUnavailableView {
-            Label("Fledge can't open its data", systemImage: "externaldrive.badge.exclamationmark")
+            Label("Yearling can't open its data", systemImage: "externaldrive.badge.exclamationmark")
         } description: {
             Text("Your habits are safe on this \(DeviceInfo.name). Please restart the app or update it.\n\n\(error.localizedDescription)")
         }

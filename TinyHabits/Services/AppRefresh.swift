@@ -2,6 +2,7 @@ import AppIntents
 import WidgetKit
 import SwiftData
 import HabitCore
+import FledgeHealth
 
 /// What has to happen after the app writes: widgets, controls and Siri phrases see the new state,
 /// and reminders are rebuilt.
@@ -12,7 +13,11 @@ enum AppRefresh {
         ControlCenter.shared.reloadAllControls()
         if structural {
             FledgeShortcuts.updateAppShortcutParameters()
-            HealthSync.shared?.updateObservers()
+        }
+        // Adding, pausing or graduating a habit changes reminders too. When Health is syncing, its refresh
+        // (started by `updateObservers`) reconciles once at the end; otherwise reconcile here. Never both.
+        if structural, let sync = HealthSync.shared, HealthReader.isAvailable {
+            sync.updateObservers()
         } else {
             Task { await Reminders.reconcile(context: context) }
         }

@@ -21,6 +21,6 @@ enum DeviceInfo {
 extension Pack.Template {
     /// The same habit, logged by tapping: for "Not now" in onboarding and devices without Apple Health.
     var tapToLog: Pack.Template {
-        Pack.Template(name: name, symbol: symbol, source: .manual, target: 1, unit: "times", perWeek: perWeek)
+        Pack.Template(name: name, symbol: symbol, source: .manual, target: 1, unit: "times", perWeek: perWeek, cue: cue)
     }
 }

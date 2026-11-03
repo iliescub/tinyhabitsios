@@ -15,7 +15,7 @@ enum HeadStart {
         return await sync.baselineValues(source: source, unit: unit)
     }
 
-    /// Fills the 30 days before a new Health habit from Apple Health ("Before Fledge" on the heatmap).
+    /// Fills the 30 days before a new Health habit from Apple Health ("Before Yearling" on the heatmap).
     static func backfill(_ habit: Habit) async {
         #if DEBUG
         if DemoData.isEnabled { return }

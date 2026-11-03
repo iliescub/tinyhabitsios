@@ -10,8 +10,8 @@
       "internalID" : "6740000003",
       "localizations" : [
         {
-          "description" : "Fledge Pro forever. One payment.",
-          "displayName" : "Fledge Pro Lifetime",
+          "description" : "Yearling Pro forever. One payment.",
+          "displayName" : "Yearling Pro Lifetime",
           "locale" : "en_US"
         }
       ],
@@ -34,7 +34,7 @@
       "localizations" : [
 
       ],
-      "name" : "Fledge Pro",
+      "name" : "Yearling Pro",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -55,7 +55,7 @@
           "localizations" : [
             {
               "description" : "All three habits done for you, every widget, Lock Screen and Control Center.",
-              "displayName" : "Fledge Pro Yearly",
+              "displayName" : "Yearling Pro Yearly",
               "locale" : "en_US"
             }
           ],
@@ -82,7 +82,7 @@
           "localizations" : [
             {
               "description" : "All three habits done for you, every widget, Lock Screen and Control Center.",
-              "displayName" : "Fledge Pro Monthly",
+              "displayName" : "Yearling Pro Monthly",
               "locale" : "en_US"
             }
           ],

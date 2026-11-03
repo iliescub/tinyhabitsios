@@ -74,7 +74,7 @@ struct SettingsSheet: View {
                         .frame(width: 54)
                         .shadow(color: FledgeTheme.Palette.ink.opacity(0.15), radius: 6, y: 3)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(purchases.isPro ? "Fledge Pro is on" : "Fledge Pro")
+                        Text(purchases.isPro ? "Yearling Pro is on" : "Yearling Pro")
                             .font(.system(.title3, design: .rounded, weight: .heavy))
                             .foregroundStyle(FledgeTheme.Palette.ink)
                         Text(purchases.isPro
@@ -98,7 +98,7 @@ struct SettingsSheet: View {
                 )
                 .background(FledgeTheme.Palette.card)
             )
-            .accessibilityHint(purchases.isPro ? "Manage your subscription" : "Opens Fledge Pro")
+            .accessibilityHint(purchases.isPro ? "Manage your subscription" : "Opens Yearling Pro")
         }
     }
 
@@ -170,7 +170,7 @@ struct SettingsSheet: View {
         } header: {
             Text("Apple Health")
         } footer: {
-            Text("Fledge only reads the data for habits you choose, and it never leaves your \(DeviceInfo.name). To change access, open Health › your profile › Apps › Fledge.")
+            Text("Yearling only reads the data for habits you choose, and it never leaves your \(DeviceInfo.name). To change access, open Health › your profile › Apps › Yearling.")
         }
     }
 
@@ -315,7 +315,7 @@ struct SettingsSheet: View {
     private func makeExport() -> URL? {
         guard let habits = try? context.fetch(FetchDescriptor<Habit>()) else { return nil }
         let csv = CSVExporter.csv(CSVExporter.rows(from: habits))
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Fledge history.csv")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Yearling history.csv")
         do {
             try csv.write(to: url, atomically: true, encoding: .utf8)
             return url

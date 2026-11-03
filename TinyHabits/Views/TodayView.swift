@@ -12,10 +12,17 @@ struct TodayView: View {
     @Query private var activeHabits: [Habit]
     @Query private var todayLogs: [DayLog]
     @Query private var flownHabits: [Habit]
+    /// RES-7: the current resolution (active or kept) sits above the nest.
+    @Query(sort: \Resolution.createdAt, order: .reverse) private var resolutions: [Resolution]
+    @Query private var allHabits: [Habit]
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var sheet: TodaySheet?
     @State private var detailHabit: Habit?
     @State private var graduatingHabit: Habit?
+    @State private var keptResolution: Resolution?
+    /// Follow-ups presented from the dismissal of the cover/sheet before them, never with a timer (review finding).
+    @State private var keptAfterGraduation: Resolution?
+    @State private var newResolutionAfterSheet = false
     @State private var amountHabit: Habit?
     @State private var amountText = ""
     @State private var errorMessage: String?
@@ -59,6 +66,10 @@ struct TodayView: View {
                 if route == .flown {
                     sheet = .flown
                     NotificationRouter.shared.pending = nil
+                } else if route == .resolution {
+                    // The letter on 1 December opens the resolution, where the letter is now open (RES-6).
+                    sheet = currentResolution == nil ? nil : .resolution
+                    NotificationRouter.shared.pending = nil
                 }
             }
             .background(SkyBackground().ignoresSafeArea())
@@ -71,12 +82,24 @@ struct TodayView: View {
                         .keyboardShortcut(",", modifiers: .command)
                 }
             }
-            .sheet(item: $sheet) { sheet in
+            .sheet(item: $sheet, onDismiss: {
+                if newResolutionAfterSheet {
+                    newResolutionAfterSheet = false
+                    sheet = .newResolution
+                }
+            }) { sheet in
                 switch sheet {
                 case .add: AddHabitSheet()
                 case .flown: FlownSheet()
                 case .settings: SettingsSheet()
                 case .paywall: PaywallView()
+                case .resolution:
+                    if let resolution = currentResolution {
+                        ResolutionSheet(resolution: resolution, day: day) {
+                            newResolutionAfterSheet = true
+                        }
+                    }
+                case .newResolution: NewResolutionSheet(day: day)
                 }
             }
             .sheet(item: $detailHabit) { habit in
@@ -107,11 +130,30 @@ struct TodayView: View {
                 WidgetGallery(snapshot: NestSnapshot(context: context, day: day))
             }
             #endif
-            .fullScreenCover(item: $graduatingHabit) { habit in
-                GraduationView(habit: habit, day: day) {
-                    graduatingHabit = nil
-                    perform(structural: true) { try context.graduate(habitID: habit.id) }
+            .fullScreenCover(item: $keptResolution) { resolution in
+                KeptView(resolution: resolution, day: day) {
+                    keptResolution = nil
                     askForReviewOnce()
+                }
+            }
+            .fullScreenCover(item: $graduatingHabit, onDismiss: {
+                // RES-7: shown once the graduation cover has gone.
+                if let resolution = keptAfterGraduation {
+                    keptAfterGraduation = nil
+                    keptResolution = resolution
+                }
+            }) { habit in
+                GraduationView(habit: habit, day: day) {
+                    let resolution = habit.resolutionID.flatMap { try? context.resolution(id: $0) }
+                    let wasKept = resolution?.state == .kept
+                    perform(structural: true) { try context.graduate(habitID: habit.id) }
+                    // Kept only when this flight completed the resolution, not for one that was kept before.
+                    if let resolution, !wasKept, resolution.state == .kept {
+                        keptAfterGraduation = resolution
+                    } else {
+                        askForReviewOnce()
+                    }
+                    graduatingHabit = nil
                 } onKeep: {
                     graduatingHabit = nil
                 }
@@ -139,15 +181,34 @@ struct TodayView: View {
 
     /// The nest: header, week strip, three slots, the Flown preview, and Add floating at the bottom of the column.
     private var nest: some View {
-        ScrollView {
+        // Built once per pass: it reads every habit's logs for the year (review finding: it was rebuilt per card).
+        let resolutionHeader = resolutionHeader
+        return ScrollView {
             VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
                 header
+                if let offer = freshStartOffer, let resolution = currentResolution {
+                    FreshStartCard(
+                        offer: offer,
+                        samePlan: { perform { try context.scheduleFreshStart(resolutionID: resolution.id, on: offer.day) } },
+                        smallerSteps: { startSmaller(resolution: resolution, on: offer.day) },
+                        notNow: { perform { try context.scheduleFreshStart(resolutionID: resolution.id, on: day) } }
+                    )
+                }
+                if let resolutionHeader {
+                    Button { sheet = .resolution } label: {
+                        ResolutionCard(model: resolutionHeader)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Opens your year")
+                } else if !activeHabits.isEmpty {
+                    MakeResolutionCard { sheet = .newResolution }
+                }
                 if !activeHabits.isEmpty {
                     WeekStrip(model: weekModel)
                 }
                 ForEach(0..<SlotPolicy.maxActive, id: \.self) { slot in
                     if let habit = habit(inSlot: slot) {
-                        card(for: habit)
+                        card(for: habit, firstWeek: resolutionHeader?.isFirstWeek == true && habit.resolutionID == currentResolution?.id)
                     } else {
                         EmptySlotCard { sheet = .add }
                     }
@@ -254,6 +315,45 @@ struct TodayView: View {
         return "\(date.formatted(.dateTime.weekday(.wide))) · \(date.formatted(.dateTime.day().month(.abbreviated)))"
     }
 
+    private var currentResolution: Resolution? {
+        resolutions.first { $0.state != .archived }
+    }
+
+    private var resolutionHeader: ResolutionHeaderModel? {
+        currentResolution.flatMap { ResolutionHeaderModel(resolution: $0, habits: allHabits, today: day) }
+    }
+
+    /// RES-5 / UXR-3: after a quiet week, offer the next Monday or 1st instead of a broken streak. Once per lapse.
+    private var freshStartOffer: FreshStart.Offer? {
+        guard let resolution = currentResolution, resolution.state == .active, let start = resolution.startDay else { return nil }
+        let habits = activeHabits.filter { $0.resolutionID == resolution.id }
+        let lapsed = FreshStart.hasLapsed(
+            habits: habits.map { habit in
+                FreshStart.Habit(
+                    perWeek: habit.perWeek, startedOn: DayKey(habit.startedAt, dayEndHour: FledgeSettings.dayEndHour),
+                    snapshots: habit.logs?.compactMap(\.snapshot) ?? []
+                )
+            },
+            startedOn: start, today: day
+        )
+        guard FreshStart.shouldOffer(lapsed: lapsed, lastFreshStart: DayKey(rawValue: resolution.freshStartDayKey), today: day) else {
+            return nil
+        }
+        return FreshStart.nextLandmark(after: day)
+    }
+
+    /// "Smaller steps": halve each goal of the resolution's habits on the stepper's grid, then record the fresh start.
+    private func startSmaller(resolution: Resolution, on freshDay: DayKey) {
+        perform {
+            for habit in activeHabits where habit.resolutionID == resolution.id && habit.target > 1 {
+                var draft = HabitDraft(habit: habit)
+                draft.target = FreshStart.smallerTarget(habit.target, step: TargetSteps.step(for: habit.unit))
+                try context.updateHabit(habitID: habit.id, with: draft, reevaluating: day)
+            }
+            try context.scheduleFreshStart(resolutionID: resolution.id, on: freshDay)
+        }
+    }
+
     private var weekModel: WeekModel {
         WeekModel(habits: sortedHabits.map { habit in
             WeekModel.Habit(
@@ -270,7 +370,7 @@ struct TodayView: View {
 
     // MARK: - Cards
 
-    private func card(for habit: Habit) -> some View {
+    private func card(for habit: Habit, firstWeek: Bool) -> some View {
         let model = model(for: habit)
         let isDone = model.progress.status == .done
         return HabitCardView(
@@ -297,6 +397,12 @@ struct TodayView: View {
                 delete: { perform(structural: true) { try context.deleteHabit(habitID: habit.id) } }
             ),
             showsNoDataHint: showsNoDataHint(for: habit, model: model),
+            cue: habit.cue,
+            firstWeek: firstWeek,
+            missedYesterday: MissCheck.missedOnlyYesterday(
+                snapshots: habit.logs?.compactMap(\.snapshot) ?? [], perWeek: habit.perWeek,
+                startedOn: DayKey(habit.startedAt, dayEndHour: FledgeSettings.dayEndHour), today: day
+            ),
             isSelected: isSplit && selectedHabit?.id == habit.id,
             lastUpdated: habit.source.isAuto ? todayLogs.first { $0.habit?.id == habit.id }?.updatedAt : nil
         )
@@ -397,6 +503,9 @@ struct TodayView: View {
         case "paywall": sheet = .paywall
         case "sharecard": shareCardHabit = first
         case "widgets": showsWidgetGallery = true
+        case "resolution": sheet = .resolution
+        case "newresolution": sheet = .newResolution
+        case "kept": keptResolution = currentResolution
         default: break
         }
     }
@@ -466,6 +575,6 @@ struct FlownShelfRow: View {
 }
 
 enum TodaySheet: String, Identifiable {
-    case add, flown, settings, paywall
+    case add, flown, settings, paywall, resolution, newResolution
     var id: String { rawValue }
 }

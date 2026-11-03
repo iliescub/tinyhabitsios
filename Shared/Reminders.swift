@@ -38,19 +38,30 @@ enum Reminders {
                 todayStatus: DayEvaluator.evaluate(
                     value: log?.value ?? 0, target: habit.target, stored: log?.status ?? .pending, completedBy: log?.completedBy
                 ).status,
-                remainingText: remainingText(for: habit, value: log?.value ?? 0)
+                remainingText: remainingText(for: habit, value: log?.value ?? 0),
+                cue: habit.cue
             )
         }
-        let plan = ReminderPlan.reminders(for: inputs, today: today, now: .now)
+        var plan = ReminderPlan.reminders(for: inputs, today: today, now: .now)
             + ReminderPlan.eveningSummaries(minutes: FledgeSettings.eveningSummaryMinutes, habits: inputs, today: today, now: .now)
+        if let resolution = try? context.activeResolution(), let start = resolution.startDay {
+            plan += ReminderPlan.resolutionMoments(
+                resolutionText: resolution.text, year: resolution.year, startDay: start, isActive: true,
+                hasLetter: !resolution.letter.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, now: .now
+            )
+        }
 
         let ours = await center.pendingNotificationRequests()
             .map(\.identifier)
-            .filter { $0.hasPrefix(ReminderPlan.identifierPrefix) || $0.hasPrefix(ReminderPlan.summaryIdentifierPrefix) }
+            .filter {
+                $0.hasPrefix(ReminderPlan.identifierPrefix) || $0.hasPrefix(ReminderPlan.summaryIdentifierPrefix)
+                    || $0.hasPrefix(ReminderPlan.momentIdentifierPrefix)
+            }
         center.removePendingNotificationRequests(withIdentifiers: ours)
 
         for reminder in plan {
-            await schedule(reminder, in: center)
+            let isLetter = reminder.identifier.hasPrefix(ReminderPlan.momentIdentifierPrefix + "letter")
+            await schedule(reminder, in: center, route: isLetter ? "resolution" : nil)
         }
         await checkFlownHabits(context: context, today: today, center: center)
     }

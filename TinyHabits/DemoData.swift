@@ -19,6 +19,14 @@ enum DemoData {
         return arguments[index + 1]
     }
 
+    /// `-FledgeDemoToday yyyy-MM-dd` pins the demo's "now" (App Store screenshots show a resolution in progress in 2027).
+    static var now: Date {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-FledgeDemoToday"), arguments.indices.contains(index + 1),
+              let day = DayKey(rawValue: arguments[index + 1]) else { return .now }
+        return Calendar.fledge.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 10)) ?? .now
+    }
+
     static func makeContainer() throws -> ModelContainer {
         let container = try SharedStore.makeContainer(inMemory: true)
         try seed(ModelContext(container))
@@ -26,54 +34,70 @@ enum DemoData {
     }
 
     private static func seed(_ context: ModelContext) throws {
-        let today = DayKey(.now)
-        let calendar = Calendar.current
+        let now = DemoData.now
+        let today = DayKey(now)
+        let calendar = Calendar.fledge
+        // `-FledgeDemoScreen freshstart`: a quiet last week (RES-5); `firstweek`: a resolution started 2 days ago (UXR-2).
+        let quietWeek = screen == "freshstart"
+        // `kept`: every habit of the resolution has flown (RES-7); `newresolution`: habits but no resolution yet.
+        let keptDemo = screen == "kept"
+        let noResolution = screen == "newresolution"
+        let firstWeek = screen == "firstweek"
 
-        // One graduate for the Flown shelf.
-        let stretch = try context.addHabit(
-            name: "Stretch", symbol: "figure.cooldown", colorKey: "lilac", source: .manual, target: 1, unit: "times",
-            startedAt: calendar.date(byAdding: .day, value: -80, to: .now) ?? .now
-        )
-        try context.graduate(habitID: stretch.id, on: calendar.date(byAdding: .day, value: -14, to: .now) ?? .now)
+        func daysAgo(_ days: Int) -> Date { calendar.date(byAdding: .day, value: -days, to: now) ?? now }
+        func add(_ name: String, _ symbol: String, _ color: String, _ source: HabitSourceID, _ target: Double, _ unit: String,
+                 cue: String = "", startedDaysAgo: Int) throws -> Habit {
+            try context.addHabit(
+                draft: HabitDraft(name: name, symbol: symbol, colorKey: color, source: source, target: target, unit: unit, cue: cue),
+                startedAt: daysAgo(startedDaysAgo)
+            )
+        }
 
-        // A Health graduate that keeps tracking, for the Flown shelf's holding trend.
-        let water = try context.addHabit(
-            name: "Drink water", symbol: "drop.fill", colorKey: "teal", source: .water, target: 2, unit: "L",
-            startedAt: calendar.date(byAdding: .day, value: -75, to: .now) ?? .now
-        )
-        try context.graduate(habitID: water.id, on: calendar.date(byAdding: .day, value: -20, to: .now) ?? .now)
+        // A Health graduate from before the resolution, for the Flown shelf's holding trend ("Other habits").
+        let water = try add("Drink water", "drop.fill", "teal", .water, 2, "L", startedDaysAgo: 75)
+        try context.graduate(habitID: water.id, on: daysAgo(20))
         for offset in 1...20 where offset % 6 != 0 && offset != 2 {
             try context.setDone(true, habitID: water.id, on: today.adding(days: -offset), by: .auto)
         }
 
+        // RES-7: the resolution, with "why" and a letter. Habits added while it's active serve it (write API),
+        // so they're added after it; `newresolution` leaves it out.
+        if !noResolution {
+            try context.startResolution(
+                ResolutionDraft(
+                    text: "Feel calmer", templateID: "calmer-mind", why: "So evenings feel like mine again",
+                    letter: "Dear December me, I hope the walks stuck."
+                ),
+                startDay: today.adding(days: firstWeek ? -2 : -39)
+            )
+        }
+
         // Walk: auto, 40 days in, strong history → ready to fly; partly done today.
-        let walk = try context.addHabit(
-            name: "Walk", symbol: "figure.walk", colorKey: "dawn", source: .steps, target: 6_000, unit: "steps",
-            startedAt: calendar.date(byAdding: .day, value: -39, to: .now) ?? .now
-        )
-        for offset in 1...39 where offset % 9 != 0 {
+        let walk = try add("Walk", "figure.walk", "dawn", .steps, 6_000, "steps", cue: "After lunch", startedDaysAgo: 39)
+        for offset in 1...39 where offset % 9 != 0 && !(quietWeek && offset <= 7) {
             try context.setDone(true, habitID: walk.id, on: today.adding(days: -offset), by: .auto)
         }
         try context.record(value: 4_210, habitID: walk.id, on: today, by: .auto)
 
+        // Stretch: flew two weeks ago (Walk is still in the nest, so the resolution isn't kept).
+        let stretch = try add("Stretch", "figure.cooldown", "lilac", .manual, 1, "times", cue: "After I brush my teeth", startedDaysAgo: 80)
+        try context.graduate(habitID: stretch.id, on: daysAgo(14))
+
         // Read: manual, 12 days in, done today.
-        let read = try context.addHabit(
-            name: "Read", symbol: "book.fill", colorKey: "sky", source: .manual, target: 1, unit: "times",
-            startedAt: calendar.date(byAdding: .day, value: -11, to: .now) ?? .now
-        )
+        let read = try add("Read", "book.fill", "sky", .manual, 1, "times", cue: "When I get into bed", startedDaysAgo: 11)
         try context.setDone(true, habitID: read.id, on: today, by: .manual)
 
         // Meditate: auto, 3 days in, rest day today.
-        let meditate = try context.addHabit(
-            name: "Meditate", symbol: "brain.head.profile", colorKey: "meadow", source: .mindfulMinutes, target: 5, unit: "min",
-            startedAt: calendar.date(byAdding: .day, value: -2, to: .now) ?? .now
-        )
+        let meditate = try add("Meditate", "brain.head.profile", "meadow", .mindfulMinutes, 5, "min", cue: "After my morning coffee", startedDaysAgo: 2)
         try context.skip(habitID: meditate.id, on: today)
-        // HEAD-1 backfill: the Health days before Meditate started ("Before Fledge" on its heatmap).
+        // HEAD-1 backfill: the Health days before Meditate started ("Before Yearling" on its heatmap).
         for offset in 3...30 where offset % 4 != 0 {
             try context.record(value: 6, habitID: meditate.id, on: today.adding(days: -offset), by: .auto)
         }
 
+        if keptDemo {
+            for habit in [walk, read, meditate] { try context.graduate(habitID: habit.id, on: now) }
+        }
     }
 }
 extension DemoData {

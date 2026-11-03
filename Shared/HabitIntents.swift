@@ -72,7 +72,7 @@ enum IntentStore {
 
 struct CompleteHabitIntent: AppIntent {
     static let title: LocalizedStringResource = "Mark Habit Done"
-    static let description = IntentDescription("Marks a habit done for today in Fledge.")
+    static let description = IntentDescription("Marks a habit done for today in Yearling.")
 
     @Parameter(title: "Habit") var habit: HabitEntity
 
@@ -171,7 +171,7 @@ struct HabitStatusIntent: AppIntent {
 
 /// Opens Fledge (used by Pro-only widgets and controls when Pro isn't active).
 struct OpenFledgeIntent: AppIntent {
-    static let title: LocalizedStringResource = "Open Fledge"
+    static let title: LocalizedStringResource = "Open Yearling"
     static let isDiscoverable = false
     static let openAppWhenRun = true
 

@@ -106,7 +106,7 @@ struct GraduationView: View {
                     ShareLink(
                         item: shareImage,
                         subject: Text("\(habit.name) stuck"),
-                        message: Text("\(habit.name) flew after \(recap.daysText) days with Fledge."),
+                        message: Text("\(habit.name) flew after \(recap.daysText) days with Yearling."),
                         preview: SharePreview("\(habit.name) is ready to fly", image: shareImage)
                     ) {
                         Label("Share", systemImage: "square.and.arrow.up").frame(minHeight: 44).contentShape(.rect)
@@ -252,7 +252,7 @@ struct ShareRecapCard: View {
                     .frame(width: 26)
                     .padding(5)
                     .background(Color(red: 0.29, green: 0.53, blue: 1), in: .circle)
-                Text("Fledge")
+                Text("Yearling")
                     .font(.system(size: 20, weight: .heavy, design: .rounded))
                 Text("· 3 habits that track themselves")
                     .font(.system(size: 13, weight: .medium, design: .rounded))

@@ -20,6 +20,12 @@ struct HabitCardView: View {
     let model: HabitCardModel
     let actions: HabitCardActions
     var showsNoDataHint = false
+    /// The "if" of the habit's if-then plan (RES-4), e.g. "After lunch". Empty = none.
+    var cue = ""
+    /// Days 1–7 of the resolution (UXR-2): the smallest version counts.
+    var firstWeek = false
+    /// "Never miss twice" (UXR-3): yesterday was missed but the day before wasn't.
+    var missedYesterday = false
     /// Shown in the iPad detail pane right now: a habit-colour edge.
     var isSelected = false
     /// When Apple Health last updated today's value (auto habits).
@@ -92,7 +98,23 @@ struct HabitCardView: View {
                         sourceMeta
                     }
                 }
+                if !cue.isEmpty {
+                    Label(cue, systemImage: "arrow.turn.down.right")
+                        .font(FledgeTheme.Typeface.meta)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                }
                 ValueLine(model: model)
+                // The hints sit above the flight row; they never hide "Ready to fly" (review finding).
+                if missedYesterday && status == .pending {
+                    Label("Missed yesterday. Today keeps it on track.", systemImage: "arrow.uturn.forward")
+                        .font(FledgeTheme.Typeface.meta)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                } else if firstWeek && status == .pending && !model.isAuto {
+                    Label("First week: 2 minutes counts.", systemImage: "leaf")
+                        .font(FledgeTheme.Typeface.meta)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
                 if showsNoDataHint {
                     NoDataHint()
                 } else {
@@ -198,7 +220,8 @@ struct HabitCardView: View {
 
     private var accessibilityText: String {
         let source = model.isAuto ? "from Apple Health" : "tap to log"
-        return "\(model.name), \(model.valueText), \(source), \(model.flightText)"
+        let plan = cue.isEmpty ? "" : ", \(cue)"
+        return "\(model.name)\(plan), \(model.valueText), \(source), \(model.flightText)"
     }
 }
 

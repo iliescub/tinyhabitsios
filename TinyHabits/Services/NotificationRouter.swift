@@ -10,6 +10,8 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
 
     enum Route: String {
         case flown
+        /// The letter on 1 December (RES-6).
+        case resolution
     }
 
     /// Set when a notification asked for a screen; Today opens it and clears this.

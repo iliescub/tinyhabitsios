@@ -96,6 +96,21 @@ struct HabitEditorView: View {
             }
 
             Section {
+                LabeledContent("Plan") {
+                    TextField("After…", text: $draft.cue)
+                        .multilineTextAlignment(.trailing)
+                        .accessibilityLabel("When you'll do it")
+                }
+                if draft.problem == .cueTooLong {
+                    Text("Keep it under \(HabitDraft.maxCueLength) characters.")
+                        .font(.footnote)
+                        .foregroundStyle(FledgeTheme.Palette.ink2)
+                }
+            } footer: {
+                Text("Tie it to something you already do, like \u{201C}After lunch\u{201D}. Reminders lead with it.")
+            }
+
+            Section {
                 Toggle("Reminder", isOn: reminderBinding)
                     .tint(FledgeTheme.Palette.meadow)
                 if draft.reminderMinutes != nil {
@@ -256,7 +271,7 @@ struct HeadStartView: View {
         let name = draft.trimmedName.isEmpty ? "This" : draft.trimmedName
         switch baseline.verdict {
         case .notEnoughData:
-            return "There's not much \(name) data in Apple Health yet. Fledge fills it in from today."
+            return "There's not much \(name) data in Apple Health yet. Yearling fills it in from today."
         case .alreadyHabit:
             return "\(name) is already a habit for you. Aim a little higher, or pick something new and let this one be."
         case .withinReach:

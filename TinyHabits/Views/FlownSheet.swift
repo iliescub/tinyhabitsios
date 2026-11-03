@@ -10,6 +10,7 @@ struct FlownSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var flown: [Habit]
     @Query private var active: [Habit]
+    @Query private var resolutions: [Resolution]
     @State private var errorMessage: String?
     @State private var bringingBack: Habit?
 
@@ -22,6 +23,15 @@ struct FlownSheet: View {
 
     private var sorted: [Habit] {
         flown.sorted { ($0.graduatedAt ?? .distantPast) > ($1.graduatedAt ?? .distantPast) }
+    }
+
+    private var groups: [FlownGroups.Group<Habit>] {
+        let infos = Dictionary(resolutions.map { resolution in
+            (resolution.id, FlownGroups.ResolutionInfo(
+                text: resolution.text, year: resolution.year, isKept: resolution.state == .kept, createdAt: resolution.createdAt
+            ))
+        }, uniquingKeysWith: { first, _ in first })
+        return FlownGroups.groups(sorted, resolutionID: \.resolutionID, resolutions: infos)
     }
 
     var body: some View {
@@ -43,13 +53,20 @@ struct FlownSheet: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: FledgeTheme.Space.l) {
                             header
-                            VStack(spacing: FledgeTheme.Space.m) {
-                                ForEach(sorted) { habit in
-                                    Button { bringingBack = habit } label: {
-                                        FlownRow(habit: habit, today: today)
+                            // RES-7: grouped by the resolution each habit served.
+                            ForEach(Array(groups.enumerated()), id: \.offset) { _, group in
+                                VStack(alignment: .leading, spacing: FledgeTheme.Space.m) {
+                                    if let title = group.title {
+                                        Text(title).fledgeEyebrow()
+                                            .accessibilityAddTraits(.isHeader)
                                     }
-                                    .buttonStyle(.plain)
-                                    .accessibilityHint("Bring back to the nest")
+                                    ForEach(group.items) { habit in
+                                        Button { bringingBack = habit } label: {
+                                            FlownRow(habit: habit, today: today)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .accessibilityHint("Bring back to the nest")
+                                    }
                                 }
                             }
                             footer

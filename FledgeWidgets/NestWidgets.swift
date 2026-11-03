@@ -94,7 +94,7 @@ struct NestLockScreenView: View {
 
     var body: some View {
         if !isPro {
-            Label { Text("Fledge Pro") } icon: { Image.fledgeGlyph(height: 14) }
+            Label { Text("Yearling Pro") } icon: { Image.fledgeGlyph(height: 14) }
         } else if family == .accessoryInline {
             Label { Text(snapshot.inlineText) } icon: { Image.fledgeGlyph(height: 14) }
         } else {
@@ -138,7 +138,7 @@ struct HabitRingLockView: View {
     var body: some View {
         let items = entry.snapshot.items
         if !entry.isPro {
-            Image.fledgeGlyph(height: 24).accessibilityLabel("Fledge Pro")
+            Image.fledgeGlyph(height: 24).accessibilityLabel("Yearling Pro")
         } else if let item = items.first(where: { $0.id == entry.selectedHabitID }) ?? items.first {
             ZStack {
                 AccessoryWidgetBackground()

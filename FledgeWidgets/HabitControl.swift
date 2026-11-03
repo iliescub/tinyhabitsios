@@ -16,7 +16,7 @@ struct HabitControl: ControlWidget {
             }
         }
         .displayName("Mark habit done")
-        .description("Mark one of your habits done without opening Fledge.")
+        .description("Mark one of your habits done without opening Yearling.")
     }
 }
 

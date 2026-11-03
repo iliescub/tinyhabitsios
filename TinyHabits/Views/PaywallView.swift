@@ -22,6 +22,7 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query private var activeHabits: [Habit]
+    @Query(sort: \Resolution.createdAt, order: .reverse) private var resolutions: [Resolution]
     @State private var purchases = Purchases.shared
     @State private var loadState: LoadState = .loading
     @State private var yearly: Product?
@@ -92,7 +93,7 @@ struct PaywallView: View {
                     .frame(height: 70)
                     .shadow(color: FledgeTheme.Palette.ink.opacity(0.15), radius: 10, y: 6)
                     .padding(.top, FledgeTheme.Space.xl)
-                Text("Fledge Pro").fledgeEyebrow()
+                Text("Yearling Pro").fledgeEyebrow()
                 Text("Let all three fill in by themselves")
                     .font(.system(.title, design: .rounded, weight: .heavy))
                     .foregroundStyle(FledgeTheme.Palette.ink)
@@ -134,6 +135,10 @@ struct PaywallView: View {
             }
             return "Free includes one habit from Apple Health."
         case .general, .onboarding:
+            // UXR-4: the user's own resolution, when there is one.
+            if let resolution = resolutions.first(where: { $0.state == .active }) {
+                return "Keep \u{201C}\(resolution.text)\u{201D} with \(names.isEmpty ? "your habits" : names.formatted(.list(type: .and))) filling in by themselves."
+            }
             return names.isEmpty ? nil : "Your nest: \(names.formatted(.list(type: .and)))."
         }
     }

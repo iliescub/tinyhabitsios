@@ -62,7 +62,7 @@ final class HealthSync {
 
     /// HEAD-1: records the 30 days before a new Health habit started, so its history isn't empty on day one.
     /// Streaks and graduation count from the start date only (StreakCalculator, GraduationEvaluator), and the
-    /// heatmap shows these days as "Before Fledge".
+    /// heatmap shows these days as "Before Yearling".
     func backfill(habitID: UUID, source: HabitSourceID, unit: String) async {
         guard let values = await baselineValues(source: source, unit: unit) else { return }
         let context = container.mainContext

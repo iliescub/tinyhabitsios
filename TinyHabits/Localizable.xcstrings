@@ -162,31 +162,10 @@
     "Export history (CSV)" : {
 
     },
-    "Fledge can't open its data" : {
-
-    },
-    "Fledge fills in your habits from Apple Health, and lets them go once they stick." : {
-
-    },
-    "Fledge found no %@ data from the last 7 days. If you don't track it with your iPhone or Apple Watch, tap to log it instead. You can also check access in the Health app." : {
-
-    },
-    "Fledge only reads the data for habits you choose, and it never leaves your iPhone. To change access, open Health › your profile › Apps › Fledge." : {
-
-    },
-    "Fledge Pro" : {
-
-    },
-    "Fledge Pro is active" : {
-
-    },
     "Flown" : {
 
     },
     "Flown habits keep tracking quietly. We'll nudge you only if it slips." : {
-
-    },
-    "Get Fledge Pro" : {
 
     },
     "Habit" : {
@@ -243,9 +222,6 @@
     "Mark Habit Done" : {
 
     },
-    "Marks a habit done for today in Fledge." : {
-
-    },
     "Marks today as a rest day for a habit." : {
 
     },
@@ -253,9 +229,6 @@
 
     },
     "Name" : {
-
-    },
-    "Needs Fledge Pro" : {
 
     },
     "No account. Your Health data stays on your iPhone." : {
@@ -283,9 +256,6 @@
 
     },
     "Only if a habit isn't done yet. Change the time per habit later." : {
-
-    },
-    "Open Fledge" : {
 
     },
     "Open the Health app" : {

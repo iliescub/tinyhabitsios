@@ -326,7 +326,7 @@ struct HeatmapView: View {
                 legend("Today") { RoundedRectangle(cornerRadius: 3).strokeBorder(FledgeTheme.Palette.ink, lineWidth: 1.5) }
                 if model.hasEarlierDays {
                     // HEAD-1: days met before the habit started in Fledge, read from Apple Health.
-                    legend("Before Fledge") { RoundedRectangle(cornerRadius: 3).fill(color.opacity(0.3)) }
+                    legend("Before Yearling") { RoundedRectangle(cornerRadius: 3).fill(color.opacity(0.3)) }
                 }
             }
             .font(.caption2)
